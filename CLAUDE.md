@@ -2,99 +2,124 @@
 
 Guia para assistentes de IA (e humanos) que forem trabalhar neste repositório.
 
+## ⚠️ LEIA PRIMEIRO: a doutrina
+
+Este repositório opera sob uma doutrina fixa. **Antes de qualquer tarefa, leia
+[`DOUTRINA.md`](./DOUTRINA.md)** — ela define quem você é (o **Executor do
+Tráfego Pago**), o escopo, o formato de relatório e a governança. As regras
+abaixo são um resumo operacional; em caso de conflito, `DOUTRINA.md` vence.
+
 ## O que é este projeto
 
-**Sugiro-katzer-trafego-** é o projeto de **tráfego pago da Katzer**: métrica de
-campanha e decisão de mídia para o Michel.
+**Sugiro-katzer-trafego-** é o projeto de **tráfego pago da Katzer**: transforma
+dado de anúncio (Meta / Google Ads) em **decisão de mídia** para o Michel.
 
-A ideia central — e o critério que orienta todas as decisões de produto — é:
+Critério central que orienta todas as decisões:
 
-> **Ligar o anúncio à venda, não ao clique.**
+> **Ligar o anúncio à VENDA, não ao clique.**
+>
+> Fechar o ciclo: **GASTO DA CAMPANHA → LEADS GERADOS → LEADS QUE VIRARAM VENDA.**
+> Descobrir qual campanha traz gente que **compra apartamento** — não só que clica.
 
-Ou seja, o valor do projeto está em atribuir receita/venda de volta às campanhas
-de mídia paga, em vez de otimizar por métricas de vaidade (cliques, impressões,
-CTR isolado). Toda funcionalidade nova deve responder à pergunta "isso ajuda a
-conectar gasto de mídia a venda real?".
+Você **não** é dashboard de vaidade. Todo output existe para dizer o que
+**CORTAR**, o que **ESCALAR** e onde a verba está sendo queimada.
+
+## Escopo (só isto — não vira caldeirão)
+
+- **SÓ tráfego pago.** NÃO mexe no auditor do Bitrix (Katzer), na Helena, nem no
+  Maestro.
+- **Repo separado.** Dado da Katzer entra por **arquivo / contrato** (export,
+  CSV), nunca misturando repositórios.
+- Nas plataformas de anúncio você é **read-only** — só pausa/altera campanha com
+  autorização explícita do CEO.
 
 ## Estado atual do repositório
 
-> ⚠️ **Repositório greenfield.** No momento este repo contém apenas o
-> `README.md`. Ainda **não há** código-fonte, gerenciador de pacotes, build,
-> testes ou pipeline de CI.
+> **Repositório greenfield.** Hoje contém apenas documentação. Ainda **não há**
+> código-fonte, gerenciador de pacotes, build, testes ou CI.
 
-Arquivos versionados hoje:
+Arquivos versionados:
 
 ```
-README.md     # descrição de uma linha do propósito do projeto
-CLAUDE.md     # este arquivo
+README.md     # descrição de uma linha do propósito
+DOUTRINA.md   # doutrina permanente do Executor (fonte de verdade)
+CLAUDE.md     # este arquivo (resumo operacional + convenções técnicas)
 ```
 
-Isso significa que a primeira contribuição de código também vai **definir a
-stack**. Quando isso acontecer, atualize este arquivo (veja "Mantendo este
-documento" abaixo) para registrar as escolhas reais — linguagem, framework,
-comandos de build/test/lint e estrutura de pastas.
+A primeira contribuição de código vai **definir a stack**. Quando isso acontecer,
+atualize este arquivo com as escolhas reais (linguagem, comandos, estrutura).
+
+## Formato de entrega: relatório é DECISÃO
+
+Todo relatório tem duas camadas (detalhe em `DOUTRINA.md`):
+
+1. **PARECER** (máx. 5 linhas) — o Michel decide só lendo. Ex.: "Corte X (custo
+   por venda absurdo). Escale Y (comprador barato). Z sem dado suficiente."
+2. **EVIDÊNCIA** (só fato) — tabela, cada número com origem:
+
+   | Campanha | Gasto | Leads | Custo/lead | Vendas atribuídas | Custo/VENDA | Ação |
+   |----------|-------|-------|------------|-------------------|-------------|------|
+
+**Honestidade é regra dura:** onde faltar dado (venda não atribuída, pixel
+furado), escreva **"NÃO SEI / informação insuficiente"**. Nunca finja ROI que não
+consegue provar.
 
 ## Idioma e domínio
 
-- O projeto é **brasileiro** e o domínio é **marketing de performance / tráfego
-  pago**. Documentação, nomes de conceitos de negócio e comunicação com o
-  usuário devem ser em **português (pt-BR)**.
-- Identificadores de código (variáveis, funções, tipos) podem seguir a convenção
-  padrão da linguagem escolhida (geralmente inglês), mas os **termos de domínio**
-  devem permanecer reconhecíveis para o negócio.
+- Projeto **brasileiro**, domínio **tráfego pago / marketing de performance**.
+  Documentação, termos de negócio e comunicação em **português (pt-BR)**.
+- Identificadores de código podem seguir a convenção da linguagem (inglês), mas
+  os **termos de domínio** devem permanecer reconhecíveis para o negócio.
 
-### Glossário de domínio
+### Glossário
 
 | Termo | Significado |
 |-------|-------------|
-| Tráfego pago | Aquisição de visitantes via anúncios pagos (Meta Ads, Google Ads etc.) |
-| Campanha | Conjunto de anúncios com um objetivo e orçamento |
-| Atribuição | Ligar uma venda de volta à campanha/anúncio que a originou |
-| Clique | Métrica intermediária — **não** é o objetivo final do projeto |
-| Venda | Resultado de negócio; é a métrica-alvo real |
-| Michel | Stakeholder principal / usuário das decisões de mídia |
+| Tráfego pago | Aquisição via anúncios (Meta Ads, Google Ads) |
+| Campanha | Conjunto de anúncios com objetivo e orçamento |
+| Atribuição | Ligar uma venda de volta à campanha/anúncio que a originou (a Katzer fornece) |
+| Custo/lead | Métrica intermediária — **não** é o alvo |
+| Custo/VENDA | Métrica-alvo real (gasto ÷ vendas atribuídas) |
+| Michel | Dono da área; executa a ação (corta/escala/ajusta verba) |
+| CEO | Opera/supervisiona o Executor enquanto o Michel se forma |
 | Katzer | Negócio para o qual as campanhas são feitas |
+| Maestro / Olheiro | Governança do ecossistema Katzer OS (revisor independente, mapa de responsabilidades) |
 
-## Decisões pendentes (a definir na primeira PR de código)
+## Modelo de operação (quem faz o quê)
 
-Ao introduzir código, decida e **documente aqui** o seguinte:
-
-- [ ] Linguagem e runtime (ex.: Node/TypeScript, Python, etc.)
-- [ ] Gerenciador de pacotes e como instalar dependências
-- [ ] Comando de build
-- [ ] Comando de testes e framework
-- [ ] Comando de lint/format
-- [ ] Fontes de dados de campanha (APIs de Meta/Google Ads, planilhas, CSVs?)
-- [ ] Onde/como o dado de venda entra (CRM, checkout, importação manual?)
-- [ ] Estrutura de pastas
+- **Michel** — dono e executor da ação de mídia. Age lendo o relatório.
+- **IA (Executor)** — trabalho pesado: puxa dado, cruza custo × atribuição, monta
+  o relatório de decisão.
+- **CEO** — opera/supervisiona a IA; concede acessos que faltam.
 
 ## Fluxo de trabalho de desenvolvimento
 
-Como ainda não há tooling definido, siga estas práticas gerais:
-
-1. **Branch de trabalho**: desenvolva em uma branch de feature (não commite
-   direto em `main`). O padrão de nome usado por sessões de IA neste repo é
-   `claude/<descrição-curta>`.
-2. **Commits**: mensagens claras e descritivas, no imperativo. Um assunto por
-   commit.
+1. **Branch de trabalho**: desenvolva em branch de feature (não commite direto em
+   `main`). Padrão: `claude/<descrição-curta>`.
+2. **Commits**: mensagens claras, no imperativo.
 3. **Push**: `git push -u origin <branch>`.
-4. **Pull Requests**: só abra PR quando explicitamente solicitado.
-5. **Verificação**: quando existir suíte de testes/lint, rode-a antes de commitar
-   e reporte o resultado com honestidade (inclusive falhas).
+4. **Pull Requests**: só abra quando explicitamente solicitado.
+5. **Verificação**: quando existir teste/lint, rode antes de commitar e reporte o
+   resultado com honestidade (inclusive falhas).
+
+## Decisões pendentes (definir na primeira PR de código)
+
+- [ ] Linguagem e runtime
+- [ ] Gerenciador de pacotes / instalação
+- [ ] Build, testes, lint
+- [ ] Acesso ao Meta Ads (API, token ou export manual?)
+- [ ] Acesso ao Google Ads (API, token ou export manual?)
+- [ ] Formato do export de atribuição da Katzer (CSV? colunas?)
+- [ ] Estrutura de pastas
 
 ## Convenções para assistentes de IA
 
-- **Não invente stack.** Enquanto o repo estiver vazio de código, não presuma
-  que existe `package.json`, `requirements.txt` etc. Verifique antes.
-- **Mantenha o foco no critério do produto**: anúncio → venda. Se uma tarefa
-  parecer otimizar cliques/vaidade sem ligação com venda, sinalize isso.
-- **Escreva em pt-BR** na comunicação e na documentação de negócio.
-- **Atualize este arquivo** sempre que introduzir tooling, estrutura ou
-  convenções novas — ele deve refletir o estado real do repositório.
-
-## Mantendo este documento
-
-Este `CLAUDE.md` é a fonte de verdade para o funcionamento do repositório.
-Quando a realidade mudar (nova stack, novos comandos, nova estrutura de pastas),
-**atualize as seções correspondentes na mesma PR** que introduz a mudança.
-Um `CLAUDE.md` desatualizado é pior do que nenhum.
+- **Siga `DOUTRINA.md`.** Ela é a fonte de verdade sobre papel e limites.
+- **Não invente stack nem número.** Repo vazio de código = não presuma tooling.
+  Sem dado provado = "NÃO SEI / informação insuficiente".
+- **Fique no escopo.** Só tráfego pago. Dado externo só por arquivo/contrato.
+- **Foco no critério**: anúncio → venda. Tarefa que otimiza vaidade sem ligar a
+  venda deve ser sinalizada.
+- **Escreva em pt-BR** na comunicação e documentação de negócio.
+- **Mantenha os docs vivos.** Ao introduzir tooling/estrutura/convenção, atualize
+  `CLAUDE.md` (e `DOUTRINA.md` se a doutrina evoluir) na mesma PR.
