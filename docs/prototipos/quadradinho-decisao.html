@@ -1,20 +1,268 @@
-<!doctype html>
 <!--
-  PLACEHOLDER — NÃO É O PROTÓTIPO REAL.
-
-  O protótipo interativo "quadradinho-decisao.html" ainda vive no repo do Auditor.
-  Este arquivo só reserva o lugar. Quando o HTML real chegar (ver
-  ../PROMPT-TRANSFERENCIA-AUDITOR.md), substitua este arquivo inteiro por ele.
-
-  Referência do que este protótipo deve reproduzir: ../SPEC-QUADRADINHO-MICHEL.md
-  (4 telas: placar → decisão do dia → registrado → ajustar).
+  Cópia fiel do repo do Auditor (Katzer) → docs/prototipos/quadradinho-decisao.html.
+  Protótipo interativo das 4 telas descritas em ../SPEC-QUADRADINHO-MICHEL.md.
+  Trazido para o repo de Tráfego conforme a seção 7 da spec.
+  Não editar aqui; se o original no Auditor mudar, recopiar.
 -->
-<meta charset="utf-8">
-<title>Quadradinho do Michel — PLACEHOLDER</title>
-<div style="font-family:system-ui,sans-serif;max-width:640px;margin:80px auto;padding:24px;border:1px dashed #999;border-radius:12px;color:#333">
-  <h1 style="margin-top:0">⏳ Placeholder</h1>
-  <p>O protótipo real <code>quadradinho-decisao.html</code> ainda não foi copiado
-     do repo do Auditor.</p>
-  <p>Especificação: <a href="../SPEC-QUADRADINHO-MICHEL.md">SPEC-QUADRADINHO-MICHEL.md</a><br>
-     Como trazer: <a href="../PROMPT-TRANSFERENCIA-AUDITOR.md">PROMPT-TRANSFERENCIA-AUDITOR.md</a></p>
+<title>Quadradinho de Decisão — Katzer OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --paper:#f4f5f2; --card:#ffffff; --ink:#161a20; --sub:#5c6570;
+    --line:#e4e7e2; --brand:#0e6e5c; --brand-soft:#0e6e5c14;
+    --good:#1f9d57; --good-soft:#1f9d5718; --warn:#b7810f; --warn-soft:#b7810f18;
+    --stop:#c0492f; --stop-soft:#c0492f14; --wa:#e8ede6;
+    --shadow:0 1px 2px rgba(20,24,32,.06),0 12px 34px rgba(20,24,32,.10);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0e1114; --card:#171b20; --ink:#eef1ee; --sub:#9aa4ad;
+      --line:#272d34; --brand:#3fbfa6; --brand-soft:#3fbfa61f;
+      --good:#43c07d; --good-soft:#43c07d1f; --warn:#e0ab3f; --warn-soft:#e0ab3f1f;
+      --stop:#e0765c; --stop-soft:#e0765c1f; --wa:#1d2429;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 40px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f4f5f2; --card:#ffffff; --ink:#161a20; --sub:#5c6570; --line:#e4e7e2;
+    --brand:#0e6e5c; --brand-soft:#0e6e5c14; --good:#1f9d57; --good-soft:#1f9d5718;
+    --warn:#b7810f; --warn-soft:#b7810f18; --stop:#c0492f; --stop-soft:#c0492f14; --wa:#e8ede6;
+    --shadow:0 1px 2px rgba(20,24,32,.06),0 12px 34px rgba(20,24,32,.10);
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1114; --card:#171b20; --ink:#eef1ee; --sub:#9aa4ad; --line:#272d34;
+    --brand:#3fbfa6; --brand-soft:#3fbfa61f; --good:#43c07d; --good-soft:#43c07d1f;
+    --warn:#e0ab3f; --warn-soft:#e0ab3f1f; --stop:#e0765c; --stop-soft:#e0765c1f; --wa:#1d2429;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 40px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 20px 60px}
+  .top{display:flex;flex-direction:column;gap:6px;margin-bottom:26px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:700}
+  h1{font-size:clamp(21px,3.4vw,29px);margin:0;line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
+  .lede{color:var(--sub);max-width:60ch;margin:2px 0 0}
+  .stage{display:grid;grid-template-columns:1fr;gap:24px}
+  @media(min-width:820px){.stage{grid-template-columns:360px 1fr;align-items:start}}
+
+  /* phone */
+  .phone{background:var(--wa);border:1px solid var(--line);border-radius:26px;padding:14px;box-shadow:var(--shadow)}
+  .phone-bar{display:flex;align-items:center;gap:9px;padding:4px 6px 12px;color:var(--sub);font-size:13px}
+  .dot{width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+  .msg{background:var(--card);border-radius:4px 14px 14px 14px;padding:12px 13px;box-shadow:0 1px 1px rgba(0,0,0,.08);font-size:14px}
+  .msg .hd{font-weight:700;margin-bottom:3px}
+  .msg .row{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums;color:var(--sub);font-size:13px}
+  .msg .row b{color:var(--ink);font-weight:600}
+  .open{margin-top:11px;width:100%;border:0;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;font-size:14px;padding:11px;cursor:pointer;font-family:inherit}
+  .time{font-size:11px;color:var(--sub);text-align:right;margin-top:4px}
+
+  /* the quadradinho */
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .sheet-hd{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  .sheet-hd .k{display:flex;align-items:center;gap:8px;font-weight:700}
+  .sheet-hd .k .dot{width:22px;height:22px;font-size:11px}
+  .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);font-weight:700}
+  .body{padding:18px}
+  .sug{background:var(--brand-soft);border:1px solid color-mix(in srgb,var(--brand) 30%,transparent);border-radius:12px;padding:14px 15px;margin-bottom:16px}
+  .sug .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--brand);font-weight:700;margin-bottom:5px}
+  .sug .big{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+  .sug .why{color:var(--sub);font-size:13px;margin-top:5px}
+  .btns{display:grid;gap:10px}
+  .btn{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);
+    border-radius:12px;padding:14px 15px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;font-family:inherit;transition:transform .06s ease,border-color .12s,background .12s}
+  .btn:hover{border-color:color-mix(in srgb,var(--ink) 22%,transparent)}
+  .btn:active{transform:scale(.988)}
+  .btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .btn .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;flex:none}
+  .btn small{display:block;font-weight:400;color:var(--sub);font-size:12.5px;margin-top:1px}
+  .btn.ok .ic{background:var(--good-soft);color:var(--good)}
+  .btn.adj .ic{background:var(--warn-soft);color:var(--warn)}
+  .btn.no .ic{background:var(--stop-soft);color:var(--stop)}
+
+  /* adjust form */
+  .adjust{margin-top:14px;border:1px dashed color-mix(in srgb,var(--warn) 45%,transparent);border-radius:12px;padding:14px;background:var(--warn-soft);display:none}
+  .adjust.show{display:block;animation:pop .18s ease}
+  .fld{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+  .fld label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);font-weight:700}
+  .fld input,.fld select{font-family:inherit;font-size:15px;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink)}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .confirm{width:100%;border:0;border-radius:10px;background:var(--warn);color:#fff;font-weight:700;font-size:14px;padding:11px;cursor:pointer;font-family:inherit;margin-top:2px}
+
+  /* done state */
+  .done{padding:26px 20px;text-align:center;display:none}
+  .done.show{display:block;animation:pop .22s ease}
+  .seal{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;margin:0 auto 12px;font-size:27px}
+  .done h3{margin:0 0 4px;font-size:19px}
+  .done p{margin:0;color:var(--sub);font-size:14px}
+  .relay{margin-top:16px;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:12px 13px;font-size:13px}
+  .relay .r{display:flex;gap:9px;align-items:flex-start;padding:4px 0}
+  .relay .r span:first-child{flex:none}
+  .again{margin-top:14px;background:transparent;border:1px solid var(--line);border-radius:9px;color:var(--sub);font-weight:600;padding:9px 14px;cursor:pointer;font-family:inherit;font-size:13px}
+
+  /* bruno panel */
+  .bruno{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;align-self:start}
+  .bruno-hd{padding:15px 18px;border-bottom:1px solid var(--line)}
+  .bruno-hd .t{font-weight:700;display:flex;align-items:center;gap:8px}
+  .bruno-hd .s{color:var(--sub);font-size:12.5px;margin-top:2px}
+  .log{padding:10px 14px 16px}
+  .empty{color:var(--sub);font-size:13.5px;padding:18px 6px;text-align:center;border:1px dashed var(--line);border-radius:11px;margin:8px 4px}
+  .entry{display:flex;gap:11px;padding:12px 8px;border-bottom:1px solid var(--line);animation:slidein .3s ease}
+  .entry:last-child{border-bottom:0}
+  .entry .mk{width:26px;height:26px;border-radius:8px;flex:none;display:grid;place-items:center;font-size:14px;font-weight:700}
+  .entry .mk.g{background:var(--good-soft);color:var(--good)}
+  .entry .mk.w{background:var(--warn-soft);color:var(--warn)}
+  .entry .mk.r{background:var(--stop-soft);color:var(--stop)}
+  .entry .tx{font-size:13.5px}
+  .entry .tx b{font-weight:700}
+  .entry .tx .meta{color:var(--sub);font-size:12px;margin-top:2px;font-variant-numeric:tabular-nums}
+  .note{font-size:12.5px;color:var(--sub);padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px}
+
+  @keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+  @keyframes slidein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="eyebrow">Katzer OS · Decisão de Campanha</div>
+    <h1>O “quadradinho” do Michel</h1>
+    <p class="lede">Ele abre o link do WhatsApp, <b>toca</b> — não escreve. E cada toque cai
+      automático no seu relatório, à direita. Experimente clicar nos botões.</p>
+  </div>
+
+  <div class="stage">
+    <!-- PHONE -->
+    <div class="phone" aria-label="Prévia no celular do Michel">
+      <div class="phone-bar"><span class="dot">K</span> Katzer OS · Analista de Campanha</div>
+      <div class="msg">
+        <div class="hd">📊 Campanhas — hoje</div>
+        <div class="row"><span>EUA_Americanos</span><b>R$257 · 0 lead 🔴</b></div>
+        <div class="row"><span>BR_SC</span><b>R$66/lead · 11 🟢</b></div>
+        <div class="row"><span>ROGGA GRANT</span><b>R$49/lead · 0 fechou</b></div>
+        <button class="open" id="openBtn">▸ Abrir decisão do dia</button>
+        <div class="time">09:03</div>
+      </div>
+    </div>
+
+    <!-- BRUNO REPORT -->
+    <div class="bruno">
+      <div class="bruno-hd">
+        <div class="t">👁 Seu relatório — Placar do Gestor</div>
+        <div class="s">Chega pronto. Toda decisão do Michel entra aqui sozinha.</div>
+      </div>
+      <div class="log" id="log">
+        <div class="empty" id="empty">Nada ainda hoje. Quando o Michel tocar em um botão, aparece aqui na hora.</div>
+      </div>
+      <div class="note"><span>🔒</span><span>Modo seguro: a IA registra o fato, não julga. Quem lê e conclui é você.</span></div>
+    </div>
+  </div>
 </div>
+
+<!-- the sheet lives inside phone column via JS injection target -->
+<template id="sheetTpl">
+  <div class="sheet" style="margin-top:12px">
+    <div class="sheet-hd">
+      <div class="k"><span class="dot">K</span> Decisão do dia</div>
+      <div class="tag">1 toque</div>
+    </div>
+    <div class="body" id="face">
+      <div class="sug">
+        <div class="lbl">Sugestão da IA</div>
+        <div class="big">Mover R$ 50/dia do EUA_Americanos → BR_SC</div>
+        <div class="why">Motivo: R$ 257 gastos, 0 lead. BR_SC tem o melhor custo por venda.</div>
+      </div>
+      <div class="btns">
+        <button class="btn ok" data-act="ok"><span class="ic">✓</span><span>Aplicar<small>Registra a decisão — você aplica na Meta</small></span></button>
+        <button class="btn adj" data-act="adj"><span class="ic">✎</span><span>Ajustar<small>Você decide o valor, a origem e o destino</small></span></button>
+        <button class="btn no" data-act="no"><span class="ic">✕</span><span>Agora não<small>Registra que decidiu esperar</small></span></button>
+      </div>
+      <div class="adjust" id="adjust">
+        <div class="fld"><label>Valor por dia — você decide</label><input id="v" type="text" inputmode="numeric" placeholder="Digite quanto quiser · ex: R$ 80"></div>
+        <div class="fgrid">
+          <div class="fld"><label>Tirar de</label><select id="de"><option>EUA_Americanos</option><option>ROGGA GRANT</option><option>Portugal</option></select></div>
+          <div class="fld"><label>Pôr em</label><select id="para"><option>BR_SC</option><option>ROGGA GRANT</option><option>VIDEO Punta C.</option></select></div>
+        </div>
+        <button class="confirm" data-act="okadj">Confirmar ajuste</button>
+      </div>
+    </div>
+    <div class="done" id="done">
+      <div class="seal"></div>
+      <h3 id="doneTitle"></h3>
+      <p id="doneSub"></p>
+      <div class="relay" id="relay"></div>
+      <button class="again" id="again">↺ Testar de novo</button>
+    </div>
+  </div>
+</template>
+
+<script>
+  (function(){
+    var openBtn=document.getElementById('openBtn');
+    var phone=document.querySelector('.phone');
+    var tpl=document.getElementById('sheetTpl');
+    var log=document.getElementById('log');
+    var empty=document.getElementById('empty');
+    var sheet=null;
+
+    function nowStamp(){ // fixed demo time, avoids Date noise
+      return '09:0'+(4+ (window.__n=(window.__n||0)));
+    }
+    function addEntry(kind, html, meta){
+      if(empty) empty.style.display='none';
+      var e=document.createElement('div'); e.className='entry';
+      e.innerHTML='<div class="mk '+kind+'">'+(kind==='g'?'✓':kind==='w'?'✎':'⏸')+'</div>'+
+        '<div class="tx">'+html+'<div class="meta">'+meta+'</div></div>';
+      log.appendChild(e);
+    }
+
+    function mount(){
+      sheet=tpl.content.cloneNode(true);
+      phone.appendChild(sheet);
+      sheet=phone.querySelector('.sheet');
+      openBtn.style.display='none';
+      sheet.querySelectorAll('[data-act]').forEach(function(b){
+        b.addEventListener('click',function(){handle(b.getAttribute('data-act'));});
+      });
+      sheet.querySelector('#again').addEventListener('click',reset);
+    }
+    function reset(){
+      if(sheet) sheet.remove();
+      openBtn.style.display='';
+      window.__n=0;
+    }
+    function finish(seal,color,title,sub,relayRows){
+      var face=sheet.querySelector('#face'); face.style.display='none';
+      var done=sheet.querySelector('#done'); done.classList.add('show');
+      var s=sheet.querySelector('.seal'); s.textContent=seal;
+      s.style.background=color+'22'; s.style.color=color;
+      sheet.querySelector('#doneTitle').textContent=title;
+      sheet.querySelector('#doneSub').textContent=sub;
+      sheet.querySelector('#relay').innerHTML=relayRows;
+    }
+    function handle(act){
+      var t=nowStamp();
+      if(act==='adj'){ sheet.querySelector('#adjust').classList.toggle('show'); return; }
+      if(act==='ok'){
+        finish('✓','#1f9d57','Registrado ✅','Sua decisão ficou anotada. Agora é só aplicar na Meta.',
+          '<div class="r"><span>👁</span><span>No seu relatório: <b>Michel aplicou</b> · '+t+'</span></div>'+
+          '<div class="r"><span>📊</span><span>O sistema confere na Meta se a mudança entrou.</span></div>');
+        addEntry('g','<b>Michel aplicou</b> — mover R$50 Americanos→BR_SC','decisão · '+t+' · confere na Meta');
+      } else if(act==='okadj'){
+        var v=sheet.querySelector('#v').value.trim()||'(valor à sua escolha)', de=sheet.querySelector('#de').value, para=sheet.querySelector('#para').value;
+        finish('✎','#b7810f','Registrado ✅','Sua versão ficou anotada. Aplique na Meta.',
+          '<div class="r"><span>👁</span><span>No seu relatório: <b>Michel ajustou</b> — '+v+' '+de+'→'+para+' · '+t+'</span></div>'+
+          '<div class="r"><span>📊</span><span>O sistema confere na Meta se entrou.</span></div>');
+        addEntry('w','<b>Michel ajustou</b> — '+v+' '+de+'→'+para,'decisão · '+t+' · confere na Meta');
+      } else if(act==='no'){
+        finish('⏸','#c0492f','Marcado “agora não”','Registrado que você decidiu esperar. Sem cobrança.',
+          '<div class="r"><span>👁</span><span>No seu relatório: <b>Michel adiou</b> a sugestão · '+t+'</span></div>');
+        addEntry('r','<b>Michel adiou</b> — sugestão Americanos→BR_SC','decisão · '+t+' · reavaliar amanhã');
+      }
+    }
+    openBtn.addEventListener('click',mount);
+  })();
+</script>

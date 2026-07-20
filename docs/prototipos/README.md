@@ -12,11 +12,8 @@ Referência visual das 4 telas descritas em
 | 2 | Registrado | `tela-2-registrado.jpeg` |
 | 1b | Ajustar (campo livre) | `tela-3-ajustar.jpeg` |
 
-## Protótipo interativo (PENDENTE de cópia)
+## Protótipo interativo
 
-O arquivo `quadradinho-decisao.html` — o protótipo clicável de onde saíram as 4
-telas — **ainda vive no repo do Auditor**. Aqui há só um **placeholder**
-(`quadradinho-decisao.html`) marcando o lugar. Quando o HTML real chegar, é só
-substituir o placeholder.
-
-Como trazer: ver [`../PROMPT-TRANSFERENCIA-AUDITOR.md`](../PROMPT-TRANSFERENCIA-AUDITOR.md).
+`quadradinho-decisao.html` — o protótipo clicável de onde saíram as 4 telas.
+**✅ Copiado** do repo do Auditor. Abra no navegador pra testar os toques
+(Aplicar / Ajustar / Agora não) e ver a decisão cair no Placar do Gestor.
