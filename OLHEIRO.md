@@ -32,6 +32,25 @@ Cada item do relatório do Executor passa por isto:
 | 7 | **PARECER com mais de 5 linhas**, ou sem a camada de EVIDÊNCIA | 🟡 AJUSTE |
 | 8 | Tabela sem a coluna **Ação** (cortar/escalar/conferir) | 🟡 AJUSTE |
 | 9 | Conclusão que não bate com os números da própria tabela | 🔴 BLOQUEIO |
+| 10 | **Copiou código do Maestro/Helena** pra dentro do repo de Tráfego (ex.: `whatsapp.js`, `secretariaFollowup.js`, `michel.js`) sem autorização explícita do CEO | 🔴 BLOQUEIO |
+
+### Fronteira Tráfego × Maestro/Helena (decisão registrada)
+
+A spec do Quadradinho (v2) descreve a **entrega via Z-API** — envio no WhatsApp,
+hospedagem da página, porteiro/whitelist, régua do Michel. **Isso é do Maestro /
+Helena, não do Executor.** Decisão em vigor:
+
+- O escopo do Executor é o **CONTEÚDO**: placar + sugestão (custo por venda) +
+  registro da decisão.
+- Os arquivos `maestro/src/whatsapp.js`, `secretariaFollowup.js` e `michel.js`
+  ficam no repo de Tráfego **só como referência de integração** (documentados na
+  [`docs/SPEC-QUADRADINHO-MICHEL.md`](./docs/SPEC-QUADRADINHO-MICHEL.md), "Nota de
+  escopo"), **nunca copiados como código** sem o CEO autorizar por escrito.
+- Secrets do Z-API (`ZAPI_*`, `WHITELIST_EQUIPE`) vivem no ambiente do Maestro —
+  **não** entram neste repo.
+
+O Olheiro monitora essa fronteira: se um commit trouxer código de entrega/Maestro
+pra cá sem autorização, é 🔴 BLOQUEIO e **sobe pro humano**.
 
 ## SEMÁFORO (o que cada severidade dispara)
 
