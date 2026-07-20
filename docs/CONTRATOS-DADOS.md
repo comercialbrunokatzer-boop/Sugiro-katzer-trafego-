@@ -8,18 +8,28 @@
 
 ---
 
-## ENTRADA 1 — Meta Ads (quem entrega: Carol)
+## ENTRADA 1 — Meta Ads (quem entrega: Carol) — "ficha completa da campanha"
 
-Por **campanha** e por **período** (diário), o Executor precisa de:
+Por **campanha** e por **período**, o Executor precisa de:
 
 | Campo | Pra quê | Obrigatório? |
 |-------|---------|--------------|
 | `id_campanha` | chave que casa com a atribuição | ✅ |
 | `nome_campanha` | mostrar no placar | ✅ |
-| `gasto` (R$) | numerador do custo | ✅ |
-| `leads` | custo/lead (métrica intermediária) | ✅ |
-| `data` (dia) | montar o placar do dia | ✅ |
-| `status_campanha` (ativa/pausada) | contexto | ⬜ desejável |
+| `gasto_total` (R$) | numerador do custo | ✅ |
+| `leads` | custo/lead + ver se é volume ou comprador | ✅ |
+| `data_inicio` / `data_fim` | **quanto tempo rodou** (dias) | ✅ |
+| `status_campanha` (ativa/pausada) | dá pra escalar? já parou? | ✅ |
+| `gasto_por_dia` | tamanho da torneira (pra escalar/cortar) | ⬜ desejável |
+
+> **Por que leads e "tempo que rodou" são obrigatórios:** sem leads, não dá pra
+> saber se a campanha traz comprador ou só volume de curioso (duas campanhas com o
+> mesmo custo/venda podem ser uma máquina e uma furada). Sem saber se ainda está
+> ativa, não dá pra mandar "escalar" uma campanha que já parou.
+>
+> **Já temos, parcial (via Michel):** `gasto_total` de 4 das 6 campanhas
+> (confirmado = gasto total). **Falta:** `leads`, `data_inicio/fim`, `status`, e o
+> `gasto_total` das 2 campanhas PUNTA CANA (VIDEO 01 e OESTE).
 
 **Via de acesso** (a Carol decide com o CEO):
 - **Token da Meta (API)** — preferido: além do placar, permite o **"confere na
