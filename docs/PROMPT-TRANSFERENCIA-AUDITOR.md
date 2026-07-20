@@ -14,10 +14,10 @@ separado de TRÁFEGO PAGO. Não altere nada no Auditor — só me entregue o con
 Faça, na ordem:
 
 1. Localize e me devolva o CONTEÚDO BRUTO, COMPLETO e sem cortes de:
-   a) docs/prototipos/quadradinho-decisao.html
-   b) docs/FUNCAO-MICHEL-IA.md
-   Entregue cada um em um bloco de código separado, com o caminho original no
-   topo. Não resuma, não reescreva, não "melhore" — cópia fiel.
+   a) docs/prototipos/quadradinho-decisao.html   <-- AINDA FALTA ESTE
+   (docs/FUNCAO-MICHEL-IA.md já foi transferido — não precisa reenviar.)
+   Entregue em um bloco de código, com o caminho original no topo. Não resuma,
+   não reescreva, não "melhore" — cópia fiel.
 
 2. Se algum dos caminhos não existir exatamente assim, procure pelo nome
    (quadradinho-decisao / FUNCAO-MICHEL-IA) e me diga o caminho real antes de

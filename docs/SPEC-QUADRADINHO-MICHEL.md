@@ -108,8 +108,8 @@ doc de Entrega da IA de Tráfego).
   (as 4 telas deste spec saíram dele). **⚠️ Pendente de cópia** — hoje há um
   placeholder no lugar; o HTML real vive no repo do Auditor. Como trazer:
   [`PROMPT-TRANSFERENCIA-AUDITOR.md`](./PROMPT-TRANSFERENCIA-AUDITOR.md).
-- Papel do Michel: `docs/FUNCAO-MICHEL-IA.md`. **⚠️ Pendente de cópia** (placeholder
-  no lugar).
+- Papel do Michel: [`FUNCAO-MICHEL-IA.md`](./FUNCAO-MICHEL-IA.md). **✅ Copiado** do
+  Auditor.
 - Régua que mede o próprio Michel (cobrou? em quanto tempo?):
   `maestro/src/michel.js → reguaDoMichel()`. Vive no repo do Auditor; **não** é
   copiado pra cá (fora do escopo Tráfego).

@@ -1,23 +1,71 @@
-# Função do Michel × IA — PENDENTE de cópia
+<!--
+  Cópia fiel do repo do Auditor (Katzer) → docs/FUNCAO-MICHEL-IA.md.
+  Trazido para o repo de Tráfego conforme a seção 7 da SPEC-QUADRADINHO-MICHEL.md.
+  Não editar o conteúdo aqui; se o original no Auditor mudar, recopiar.
+-->
 
-> **⚠️ PLACEHOLDER.** O conteúdo real deste documento vive no repo do Auditor
-> (`docs/FUNCAO-MICHEL-IA.md`). Este arquivo só reserva o lugar. Quando o
-> original chegar (ver [`PROMPT-TRANSFERENCIA-AUDITOR.md`](./PROMPT-TRANSFERENCIA-AUDITOR.md)),
-> substitua este texto inteiro por ele — **não invente o conteúdo**.
+# FUNÇÃO DO MICHEL COM A IA (Katzer OS)
 
-## Por que este documento existe
+| | |
+|---|---|
+| **Status** | OFICIAL (define o papel operacional do Michel no sistema) |
+| **Data** | 2026-07-19 |
+| **Aprovado por** | CEO |
+| **Princípio** | A IA trabalha PARA o Michel. Ela faz o trabalho braçal; ele decide e age. |
 
-A [`SPEC-QUADRADINHO-MICHEL.md`](./SPEC-QUADRADINHO-MICHEL.md) (seção 7) aponta
-este arquivo como o que define **o papel do Michel** em relação à IA de tráfego —
-o que ele decide, o que a IA sugere, e onde fica a fronteira (a IA sugere/registra,
-o Michel executa na mão).
+> Regra de ouro do papel: a IA **nunca acusa** (modo seguro). Ela entrega fato + sugestão;
+> a mão que pausa/escala anúncio e fala com corretor é humana.
 
-## O que se espera que ele cubra (a confirmar com o original)
+---
 
-- Papel do Michel: dono da ação de mídia; **toca, não escreve**.
-- O que a IA entrega vs. o que o Michel decide.
-- Como o Michel é medido (a "régua do Michel" — cobrou? em quanto tempo? — que na
-  spec fica em `maestro/src/michel.js → reguaDoMichel()`, **fora** do escopo
-  Tráfego, então **não** é copiada pra cá).
+## 1. QUAL É A FUNÇÃO DO MICHEL
+O Michel é o **maestro da operação diária**. Com a IA, ele deixa de *montar* relatório e passa a
+*comandar* com base nele. Duas responsabilidades:
 
-_Enquanto o original não chega, trate este arquivo como vazio de verdade._
+1. **Monitorar as campanhas** todo dia pelo placar que chega pronto (ver onde vaza dinheiro, onde
+   está o resultado) e **aplicar ele mesmo na Meta** (pausar/escalar — decisão e execução dele;
+   a Carol é dona do Instagram/acesso, **não aprova nem executa** campanha). A decisão é registrada
+   com **1 toque no quadradinho** — ele não escreve, e o registro cai sozinho no relatório do Bruno.
+2. **Marcar a qualidade do lead** no Bitrix (curioso / número errado / comprador). São 2 toques que
+   **ensinam a IA** a descobrir campanha ruim em dias — ele é o "cérebro" que o sistema aprende.
+
+---
+
+## 2. O BENEFÍCIO PRA ELE (por que isso é bom pro Michel)
+- **Acaba o trabalho braçal:** nunca mais montar planilha/relatório na mão. Chega pronto.
+- **Sabe onde agir em 30 segundos:** o placar aponta o vazamento e o acerto — sem adivinhação.
+- **Os números dele melhoram:** a IA acha o dinheiro jogado fora (ex.: R$ 257 gastos, 0 lead) antes
+  de queimar um mês de verba. Ele corrige cedo e entrega mais resultado.
+- **Protege ele:** modo seguro — a IA não expõe ninguém; dá **fatos** pra ele agir com segurança.
+- **Ele fica mais forte:** as marcações dele deixam o sistema mais inteligente. Vira peça-chave, não
+  fiscalizado.
+
+---
+
+## 3. O QUE ELE FAZ POR DIA (passo a passo)
+**De manhã (2 minutos):**
+1. Abre o placar que chegou no WhatsApp.
+2. Lê os 🔴 (onde vaza) e o 🟢 (onde está o dinheiro).
+3. Olha a **Sugestão do Dia** (ex.: "mover verba de X pra Y") e **decide**: aplica ou não na Meta.
+
+**Ao longo do dia (quando falar/qualificar um lead):**
+4. No card do lead no Bitrix, marca a qualidade em 2 toques: *curioso / número errado / comprador*.
+
+Só isso. Nada de criar, preencher ou manter planilha — o placar se refaz sozinho todo dia.
+
+---
+
+## 4. O QUE A IA FAZ (pra ele confiar no que chega)
+- Lê sozinha a Meta (gasto, custo/lead) + o Bitrix (quem fechou) e monta o placar.
+- Separa sempre: erro de **mídia** (anúncio caro) ≠ erro de **qualidade** (lead ruim) ≠ erro de
+  **conversão** (lead bom mal atendido). Não mistura.
+- Toda frase tem número atrás (Lei 01). Sem "achismo".
+- Só sugere; **não pausa anúncio sozinha**.
+
+---
+
+## 5. O QUE PRECISO DA PARTE DO MICHEL (só isto)
+1. **Número de WhatsApp** onde ele recebe o placar todo dia.
+2. **OK no fluxo dos 2 toques** de qualidade do lead no Bitrix.
+
+> O Michel **não coleta nada da Meta** — isso é com a Carol. A parte dele é receber e marcar.
