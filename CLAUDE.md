@@ -41,14 +41,25 @@ Você **não** é dashboard de vaidade. Todo output existe para dizer o que
 Arquivos versionados:
 
 ```
-README.md     # descrição de uma linha do propósito
-DOUTRINA.md   # doutrina permanente do Executor (fonte de verdade)
-OLHEIRO.md    # contrato de revisão do Olheiro (revisor independente)
-CLAUDE.md     # este arquivo (resumo operacional + convenções técnicas)
+README.md                          # descrição de uma linha do propósito
+DOUTRINA.md                        # doutrina permanente do Executor (fonte de verdade)
+OLHEIRO.md                         # contrato de revisão do Olheiro (revisor independente)
+CLAUDE.md                          # este arquivo (resumo operacional + convenções técnicas)
+docs/SPEC-QUADRADINHO-MICHEL.md    # spec do widget de decisão do Michel (protótipo)
+docs/prototipos/                   # prints das 4 telas do protótipo
 ```
 
 A primeira contribuição de código vai **definir a stack**. Quando isso acontecer,
 atualize este arquivo com as escolhas reais (linguagem, comandos, estrutura).
+
+### Produto em desenho: "Quadradinho do Michel"
+
+O primeiro produto especificado é o **widget de decisão de campanha** — o Michel
+**toca** (não escreve) e cada toque registra sozinho no Placar do Gestor. Detalhe
+em [`docs/SPEC-QUADRADINHO-MICHEL.md`](./docs/SPEC-QUADRADINHO-MICHEL.md). Regra
+inegociável: **a IA sugere e registra, NÃO executa na Meta** — pausar/escalar é o
+Michel, na mão. Pendências de cópia do repo do Auditor: o protótipo `.html` e o
+`FUNCAO-MICHEL-IA.md` (ver seção 7 da spec).
 
 ## Formato de entrega: relatório é DECISÃO
 
@@ -108,7 +119,7 @@ consegue provar.
 - [ ] Linguagem e runtime
 - [ ] Gerenciador de pacotes / instalação
 - [ ] Build, testes, lint
-- [ ] Acesso ao Meta Ads (API, token ou export manual?)
+- [ ] Acesso ao Meta Ads (API / **token da Meta** p/ o "confere na Meta" da spec, ou export manual?)
 - [ ] Acesso ao Google Ads (API, token ou export manual?)
 - [ ] Formato do export de atribuição da Katzer (CSV? colunas?)
 - [ ] Estrutura de pastas
