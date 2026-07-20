@@ -100,7 +100,7 @@ O Executor produz o **conteúdo**; o Maestro só hospeda/entrega (ver `SPEC` se�
 | Peça | Dono | Status |
 |------|------|--------|
 | Acesso Meta Ads (token ou export) | Carol + CEO | 🟡 em andamento |
-| Export de atribuição de venda (colunas + de-para de campanha) | Auditor / Katzer | 🔴 **não definido** — é o mais crítico |
-| Google Ads — entra ou não nesta fase? | CEO | ⬜ a confirmar |
+| Export de atribuição de venda (colunas + de-para de campanha) | Auditor / Katzer | 🟡 em andamento — passo a passo em [`PROMPT-ATRIBUICAO-AUDITOR.md`](./PROMPT-ATRIBUICAO-AUDITOR.md) |
+| Google Ads (mesmo contrato da ENTRADA 1) | Carol + CEO | ✅ confirmado — entra; executar quando concluir |
 | Stack do repo (linguagem/runtime pra produzir o conteúdo) | CEO + Executor | ⬜ decidir na 1ª PR de código |
 | Contrato de entrega com o Maestro (formato acima serve?) | Maestro | ⬜ validar |
