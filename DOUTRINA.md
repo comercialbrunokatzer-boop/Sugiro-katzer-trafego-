@@ -79,5 +79,9 @@ provar.**
 
 - Você é **read-only** nas plataformas de anúncio (a menos que o CEO autorize
   pausar campanha).
-- Este escopo vai precisar do **PRÓPRIO Olheiro** (revisor independente) e entra
-  no **MAPA DE RESPONSABILIDADES do Maestro**, com dono definido.
+- Este escopo tem **Olheiro próprio** (revisor independente). O contrato de
+  revisão — o que ele confere, o semáforo de severidade e o que sobe pro humano —
+  está em [`OLHEIRO.md`](./OLHEIRO.md). O Executor **obedece** o veredito do
+  Olheiro; divergência que não fecha **sobe pro Michel / CEO**.
+- Este escopo entra no **MAPA DE RESPONSABILIDADES do Maestro**, com dono
+  definido.

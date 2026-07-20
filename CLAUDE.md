@@ -43,6 +43,7 @@ Arquivos versionados:
 ```
 README.md     # descrição de uma linha do propósito
 DOUTRINA.md   # doutrina permanente do Executor (fonte de verdade)
+OLHEIRO.md    # contrato de revisão do Olheiro (revisor independente)
 CLAUDE.md     # este arquivo (resumo operacional + convenções técnicas)
 ```
 
@@ -115,6 +116,8 @@ consegue provar.
 ## Convenções para assistentes de IA
 
 - **Siga `DOUTRINA.md`.** Ela é a fonte de verdade sobre papel e limites.
+- **Respeite o Olheiro.** O contrato de revisão está em `OLHEIRO.md`; o veredito
+  do Olheiro segura a decisão até corrigir, e divergência sobe pro humano.
 - **Não invente stack nem número.** Repo vazio de código = não presuma tooling.
   Sem dado provado = "NÃO SEI / informação insuficiente".
 - **Fique no escopo.** Só tráfego pago. Dado externo só por arquivo/contrato.
