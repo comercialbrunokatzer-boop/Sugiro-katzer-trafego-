@@ -3,6 +3,21 @@
 Atalho pra montar o primeiro **custo/VENDA** sem esperar o export do Bitrix. O
 Michel já sabe quem comprou — é só listar. **Simples, sem planilha bonita.**
 
+## Mensagem pronta pra mandar pro Michel (copia e cola no WhatsApp)
+
+> Michel, preciso de uma listinha rápida das **vendas que fecharam**. Pode ser
+> aqui no WhatsApp mesmo, sem capricho. Pra **cada cliente que COMPROU**, me manda:
+>
+> 1. Nome ou telefone do cliente
+> 2. De qual **campanha** ele veio (ex.: BR_SC, EUA_Americanos, ROGGA GRANT). Se
+>    não souber, escreve **"não sei"** — não precisa chutar.
+> 3. Em que **mês** fechou
+> 4. **Valor** da venda (se souber; se não, deixa em branco)
+>
+> Só quem **comprou de verdade** — curioso e número errado não precisa entrar.
+
+---
+
 ## O que preciso: só as VENDAS (quem comprou)
 
 Pra **cada cliente que FECHOU** (comprou de verdade), uma linha:
