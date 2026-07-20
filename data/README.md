@@ -23,11 +23,11 @@ repositório**.
 - `obs` — pendências/flags a confirmar.
 
 ### Pendências a confirmar (não resolver por chute)
-1. **V3** veio com data 30/12/2026 (futuro); a tag da campanha diz 30/11/25 →
-   `mes_venda = A_CONFIRMAR` até o Michel confirmar.
+1. ✅ **V3** — resolvido: era **30/11/2025** (Michel confirmou; erro de digitação
+   no export, tinha ido pra 30/12/2026).
 2. **PUNTA CANA** apareceu em 3 formas (`PUNTA CANA VIDEO 01`, `PUNTA CANA`,
    `PUNTA CANA OESTE`). Confirmar com a Carol se, na Meta, são campanhas
-   separadas ou a mesma.
+   separadas ou a mesma. **← ainda aberto**
 
 ### O que falta pra virar custo/VENDA
 O **gasto + leads por campanha** (Meta / Carol), período **ago/2025 a abr/2026**.
