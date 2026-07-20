@@ -105,9 +105,11 @@ doc de Entrega da IA de Tráfego).
 ## 7. Onde já existe (ponto de partida pro dev)
 
 - Protótipo interativo já montado: `docs/prototipos/quadradinho-decisao.html`
-  (as 4 telas deste spec saíram dele). **⚠️ Pendente de cópia** — hoje só temos os
-  prints; o HTML vive no repo do Auditor.
-- Papel do Michel: `docs/FUNCAO-MICHEL-IA.md`. **⚠️ Pendente de cópia.**
+  (as 4 telas deste spec saíram dele). **⚠️ Pendente de cópia** — hoje há um
+  placeholder no lugar; o HTML real vive no repo do Auditor. Como trazer:
+  [`PROMPT-TRANSFERENCIA-AUDITOR.md`](./PROMPT-TRANSFERENCIA-AUDITOR.md).
+- Papel do Michel: `docs/FUNCAO-MICHEL-IA.md`. **⚠️ Pendente de cópia** (placeholder
+  no lugar).
 - Régua que mede o próprio Michel (cobrou? em quanto tempo?):
   `maestro/src/michel.js → reguaDoMichel()`. Vive no repo do Auditor; **não** é
   copiado pra cá (fora do escopo Tráfego).
