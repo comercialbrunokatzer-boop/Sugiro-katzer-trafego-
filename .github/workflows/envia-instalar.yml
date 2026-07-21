@@ -20,7 +20,8 @@ jobs:
           KEY=$(printf '%s' "$CEO" | tr -cd '0-9'); echo "::add-mask::$KEY"
           curl -sS -m 30 "$BASE/.netlify/functions/envia-instalar?key=$KEY" \
             | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/i.json; echo
-          OK=$(jq -r '.enviado' /tmp/i.json 2>/dev/null)
-          echo "## 📲 Como instalar → CEO" >> "$GITHUB_STEP_SUMMARY"
-          echo "- enviado: **$OK**" >> "$GITHUB_STEP_SUMMARY"
-          [ "$OK" = "true" ] && echo "✅ Link no WhatsApp do CEO." || echo "::warning::não confirmou."
+          M=$(jq -r '.michel.enviado' /tmp/i.json 2>/dev/null)
+          G=$(jq -r '.gestor.enviado' /tmp/i.json 2>/dev/null)
+          echo "## 📲 Instalação → CEO" >> "$GITHUB_STEP_SUMMARY"
+          echo "- link Michel: **$M** · link Gestor (📊): **$G**" >> "$GITHUB_STEP_SUMMARY"
+          { [ "$M" = "true" ] && [ "$G" = "true" ]; } && echo "✅ Duas mensagens no WhatsApp do CEO." || echo "::warning::não confirmou as duas."
