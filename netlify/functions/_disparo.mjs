@@ -1,7 +1,24 @@
 // Lógica de disparo do relatório (compartilhada entre o cron e o endpoint de teste).
-import { pontualidade } from './_rotina.mjs';
+import { pontualidade, agoraBRT } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, enviaEmail } from './_infra.mjs';
 import { resumoWhats, emailHTML } from './_relatorio.mjs';
+
+/** Manda o card da Rotina pro WhatsApp do Michel (usado pelo cron das 07:45 e pelo teste). */
+export async function disparaCard(now = agoraBRT()) {
+  if (now.dow === 0) return { skip: 'domingo (folga)' };
+  const michel = process.env.WHATSAPP_MICHEL;
+  const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
+  const msg = [
+    '☀️ *Bom dia, Michel!*',
+    '',
+    'Abre a Rotina Produtiva de hoje e vai tocando *Feito* em cada tarefa:',
+    `${url}/painel-michel`,
+    '',
+    'No topo, escolhe o modo do dia: 🏠 *Casa* (1ª tarefa 08:00) ou 🏢 *Katzer* (08:45).',
+  ].join('\n');
+  const w = await enviaWhats(michel, msg);
+  return { enviado: w.enviado, status: w.status || w.motivo, data: now.data, hora: now.hm };
+}
 
 /**
  * Dispara o relatório do dia pro CEO (WhatsApp sempre; e-mail se houver Resend).
