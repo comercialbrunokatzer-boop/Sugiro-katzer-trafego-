@@ -32,6 +32,11 @@
   to = "/.netlify/functions/relatorio-teste"
   status = 200
   force = true
+[[redirects]]
+  from = "/api/card-teste"
+  to = "/.netlify/functions/card-teste"
+  status = 200
+  force = true
 
 # Atalhos amigáveis.
 [[redirects]]
@@ -49,4 +54,8 @@
 [[redirects]]
   from = "/email-preview"
   to = "/email-preview.html"
+  status = 200
+[[redirects]]
+  from = "/como-instalar"
+  to = "/como-instalar.html"
   status = 200

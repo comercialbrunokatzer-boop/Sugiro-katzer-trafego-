@@ -1,0 +1,26 @@
+name: 📲 Envia o "como instalar" pro CEO
+
+# Manda pro WhatsApp do CEO o link do passo a passo (pronto pra repassar ao Michel).
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  envia:
+    runs-on: ubuntu-latest
+    env:
+      BASE: "https://rotina-produtiva-michel.netlify.app"
+      CEO: ${{ secrets.WHATSAPP_CEO }}
+    steps:
+      - name: Manda o link de instalação pro CEO
+        run: |
+          set -uo pipefail
+          KEY=$(printf '%s' "$CEO" | tr -cd '0-9'); echo "::add-mask::$KEY"
+          curl -sS -m 30 "$BASE/.netlify/functions/envia-instalar?key=$KEY" \
+            | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/i.json; echo
+          OK=$(jq -r '.enviado' /tmp/i.json 2>/dev/null)
+          echo "## 📲 Como instalar → CEO" >> "$GITHUB_STEP_SUMMARY"
+          echo "- enviado: **$OK**" >> "$GITHUB_STEP_SUMMARY"
+          [ "$OK" = "true" ] && echo "✅ Link no WhatsApp do CEO." || echo "::warning::não confirmou."
