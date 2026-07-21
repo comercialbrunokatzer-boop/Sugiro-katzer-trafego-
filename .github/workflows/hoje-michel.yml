@@ -11,8 +11,8 @@ on:
         options: [katzer, casa]
         default: katzer
       inicio:
-        description: 'Início do dia (HH:MM) — vazio = padrão do modo'
-        default: "09:00"
+        description: 'Início do dia: "agora" (zera na hora do disparo) ou HH:MM'
+        default: "agora"
 
 permissions:
   contents: read
@@ -36,6 +36,11 @@ jobs:
             -d "{\"acao\":\"modo\",\"modo\":\"$MODO\"}" | tee /tmp/m.json; echo
           echo "- modo: $(jq -r '.modo' /tmp/m.json)" >> "$GITHUB_STEP_SUMMARY"
 
+          # "agora" (ou vazio) = zera o relógio na hora EXATA do disparo (BRT = UTC-3).
+          if [ "$INICIO" = "agora" ] || [ -z "$INICIO" ]; then
+            INICIO=$(date -u -d '-3 hours' +%H:%M)
+            echo "início resolvido pra AGORA (BRT): $INICIO"
+          fi
           echo "2) início=$INICIO"
           curl -sS -m 30 -X POST "$BASE/api/registrar" -H 'Content-Type: application/json' \
             -d "{\"acao\":\"inicio\",\"hm\":\"$INICIO\"}" | tee /tmp/i.json; echo
