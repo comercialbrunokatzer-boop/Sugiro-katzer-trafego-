@@ -2,14 +2,14 @@ name: 🤖 Deploy Tráfego no Netlify
 
 # Robô que roda na infra do GitHub (sem firewall) e opera o Netlify pelo CEO.
 # Precisa de 1 segredo no repo: NETLIFY_AUTH_TOKEN (token pessoal do Netlify).
-# Cria o site "katzer-trafego" se não existir, e faz o deploy do public/ + functions.
+# Cria o site "rotina-produtiva-michel" se não existir, e faz o deploy do public/ + functions.
 
 on:
   workflow_dispatch:
     inputs:
       site_name:
         description: "Nome do site no Netlify (reusa; cria se não achar)"
-        default: "katzer-trafego"
+        default: "rotina-produtiva-michel"
         required: true
   push:
     branches: [ main ]
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      SITE_NAME: ${{ github.event.inputs.site_name || 'katzer-trafego' }}
+      SITE_NAME: ${{ github.event.inputs.site_name || 'rotina-produtiva-michel' }}
     steps:
       - name: Baixa o código
         uses: actions/checkout@v4
