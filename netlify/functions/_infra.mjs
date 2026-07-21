@@ -4,17 +4,24 @@ import { estadoVazio } from './_rotina.mjs';
 
 const STORE = 'rotina-michel';
 
+// Site deployado por CLI (não por Git) não recebe o contexto automático do Blobs,
+// então usamos o MODO MANUAL: siteID + token nas env vars (BLOBS_SITE_ID / BLOBS_TOKEN).
+function abreStore() {
+  const siteID = process.env.BLOBS_SITE_ID;
+  const token = process.env.BLOBS_TOKEN;
+  if (siteID && token) return getStore({ name: STORE, siteID, token });
+  return getStore(STORE); // fallback: modo automático (se algum dia rodar por Git)
+}
+
 /** Lê o estado do dia (cria vazio se não existir). */
 export async function leEstado(data, modoPadrao = 'casa') {
-  const store = getStore(STORE);
-  const atual = await store.get(data, { type: 'json' });
+  const atual = await abreStore().get(data, { type: 'json' });
   return atual || estadoVazio(data, modoPadrao);
 }
 
 /** Grava o estado do dia. */
 export async function salvaEstado(estado) {
-  const store = getStore(STORE);
-  await store.setJSON(estado.data, estado);
+  await abreStore().setJSON(estado.data, estado);
   return estado;
 }
 

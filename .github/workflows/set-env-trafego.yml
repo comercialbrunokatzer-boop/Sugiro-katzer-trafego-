@@ -59,4 +59,7 @@ jobs:
           set_if WHATSAPP_CEO "$WHATSAPP_CEO"
           set_if WHATSAPP_MICHEL "$WHATSAPP_MICHEL"
           set_if WHATSAPP_CAROL "$WHATSAPP_CAROL"
-          echo "Env vars gravadas. Rode o deploy pra publicar com elas."
+          # Netlify Blobs em modo manual (site deployado por CLI): siteID + token.
+          set_if BLOBS_SITE_ID "$NETLIFY_SITE_ID"
+          set_if BLOBS_TOKEN "$NETLIFY_AUTH_TOKEN"
+          echo "Env vars gravadas."
