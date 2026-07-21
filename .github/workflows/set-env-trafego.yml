@@ -29,6 +29,7 @@ jobs:
       WHATSAPP_CEO: ${{ secrets.WHATSAPP_CEO }}
       WHATSAPP_MICHEL: ${{ secrets.WHATSAPP_MICHEL }}
       WHATSAPP_CAROL: ${{ secrets.WHATSAPP_CAROL }}
+      EMAIL_CEO: ${{ secrets.EMAIL_CEO }}
     steps:
       - name: Confere token
         run: '[ -n "$NETLIFY_AUTH_TOKEN" ] || { echo "::error::Falta NETLIFY_AUTH_TOKEN"; exit 1; }'
@@ -59,6 +60,7 @@ jobs:
           set_if WHATSAPP_CEO "$WHATSAPP_CEO"
           set_if WHATSAPP_MICHEL "$WHATSAPP_MICHEL"
           set_if WHATSAPP_CAROL "$WHATSAPP_CAROL"
+          set_if EMAIL_CEO "$EMAIL_CEO"
           # Netlify Blobs em modo manual (site deployado por CLI): siteID + token.
           set_if BLOBS_SITE_ID "$NETLIFY_SITE_ID"
           set_if BLOBS_TOKEN "$NETLIFY_AUTH_TOKEN"

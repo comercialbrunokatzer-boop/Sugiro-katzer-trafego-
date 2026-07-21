@@ -27,6 +27,11 @@
   to = "/.netlify/functions/estado"
   status = 200
   force = true
+[[redirects]]
+  from = "/api/relatorio-teste"
+  to = "/.netlify/functions/relatorio-teste"
+  status = 200
+  force = true
 
 # Atalhos amigáveis.
 [[redirects]]

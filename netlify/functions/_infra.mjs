@@ -44,6 +44,23 @@ export async function enviaWhats(telefone, mensagem) {
   }
 }
 
+/** Envia e-mail via Resend (se RESEND_API_KEY existir). Não quebra se faltar. */
+export async function enviaEmail(para, assunto, html) {
+  const key = process.env.RESEND_API_KEY;
+  const de = process.env.EMAIL_FROM || 'Rotina Katzer <onboarding@resend.dev>';
+  if (!key || !para) return { enviado: false, motivo: 'resend/email ausente' };
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ from: de, to: [para], subject: assunto, html }),
+    });
+    return { enviado: r.ok, status: r.status };
+  } catch (e) {
+    return { enviado: false, erro: String((e && e.message) || e) };
+  }
+}
+
 export function json(statusCode, body) {
   return {
     statusCode,
