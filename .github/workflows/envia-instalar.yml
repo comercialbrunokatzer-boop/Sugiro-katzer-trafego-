@@ -1,8 +1,16 @@
-name: 📲 Envia o "como instalar" pro CEO
+name: 📲 Envia os links de instalação (Placar) — Michel + CEO
 
-# Manda pro WhatsApp do CEO o link do passo a passo (pronto pra repassar ao Michel).
+# Manda no WhatsApp os links pra instalar o PLACAR como app (celular e PC):
+#  - Michel recebe SÓ o app dele (placar-michel).
+#  - CEO recebe os DOIS (o do Michel pra monitorar + o Gestor com senha).
+# Roda pela aba Actions → "Run workflow".
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      para:
+        description: "Quem recebe (vírgula): ceo, michel"
+        default: "ceo,michel"
+        required: true
 
 permissions:
   contents: read
@@ -12,16 +20,66 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BASE: "https://rotina-produtiva-michel.netlify.app"
-      CEO: ${{ secrets.WHATSAPP_CEO }}
+      ZAPI_INSTANCE: ${{ secrets.ZAPI_INSTANCE }}
+      ZAPI_TOKEN: ${{ secrets.ZAPI_TOKEN }}
+      ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
+      WA_CEO: ${{ secrets.WHATSAPP_CEO }}
+      WA_MICHEL: ${{ secrets.WHATSAPP_MICHEL }}
+      PARA: ${{ github.event.inputs.para }}
     steps:
-      - name: Manda o link de instalação pro CEO
+      - name: Mascara segredos
+        run: |
+          for v in "$ZAPI_INSTANCE" "$ZAPI_TOKEN" "$ZAPI_CLIENT_TOKEN" "$WA_CEO" "$WA_MICHEL"; do
+            [ -n "$v" ] && echo "::add-mask::$v" || true
+          done
+
+      - name: Monta as mensagens e envia (Z-API)
         run: |
           set -uo pipefail
-          KEY=$(printf '%s' "$CEO" | tr -cd '0-9'); echo "::add-mask::$KEY"
-          curl -sS -m 30 "$BASE/.netlify/functions/envia-instalar?key=$KEY" \
-            | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/i.json; echo
-          M=$(jq -r '.michel.enviado' /tmp/i.json 2>/dev/null)
-          G=$(jq -r '.gestor.enviado' /tmp/i.json 2>/dev/null)
-          echo "## 📲 Instalação → CEO" >> "$GITHUB_STEP_SUMMARY"
-          echo "- link Michel: **$M** · link Gestor (📊): **$G**" >> "$GITHUB_STEP_SUMMARY"
-          { [ "$M" = "true" ] && [ "$G" = "true" ]; } && echo "✅ Duas mensagens no WhatsApp do CEO." || echo "::warning::não confirmou as duas."
+          MSG_MICHEL="📊 *Placar de Campanhas — seu app*
+
+Michel, esse é o teu placar de campanhas (mesmo modelo da rotina, adaptado pro tráfego). Deixa como app no celular e no PC:
+
+👉 ${BASE}/placar-michel
+
+*Celular:* abre o link → iPhone: *Compartilhar ⬆️* → *Adicionar à Tela de Início*. Android: menu *⋮* → *Adicionar à tela inicial*.
+*PC (Chrome/Edge):* ícone *⊕ Instalar* na barra de endereço.
+
+Todo dia ele mostra 🟢 onde a verba rende e 🔴 onde vaza. Você decide com 1 toque: *Escalar / Ajustar / Cortar* (no Cortar ele pergunta \"tem certeza?\"). Quem aplica na Meta é você — a IA só sugere e registra."
+
+          MSG_CEO="📊 *Placar de Campanhas — seus 2 apps*
+
+*1) Monitorar o Michel* (o app dele, pra você acompanhar o que ele decide):
+👉 ${BASE}/placar-michel
+
+*2) Seu Painel de Gestor* (só seu, com senha):
+👉 ${BASE}/placar-gestor
+🔑 senha: *Davi2026@*
+
+*Instalar (os dois):* abre cada link → iPhone: *Compartilhar ⬆️* → *Adicionar à Tela de Início*. Android: *⋮* → *Adicionar à tela inicial*. No PC: ícone *⊕ Instalar*.
+
+No Gestor você confere *ao vivo* cada decisão que o Michel tocar. Não repassa o link do Gestor — é o seu."
+
+          send() { # $1=telefone  $2=mensagem
+            local phone="$1" msg="$2"
+            [ -z "$phone" ] && { echo "· sem número — pulei"; return; }
+            CT=(); [ -n "$ZAPI_CLIENT_TOKEN" ] && CT=(-H "Client-Token: ${ZAPI_CLIENT_TOKEN}")
+            CODE=$(curl -sS -o /tmp/z.json -w "%{http_code}" -X POST \
+              "https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}/send-text" \
+              "${CT[@]}" -H "Content-Type: application/json" \
+              --data "$(jq -nc --arg p "$phone" --arg m "$msg" '{phone:$p, message:$m}')" || true)
+            echo "$CODE" | grep -q '^20' && echo "· enviado ✅ (HTTP $CODE)" || \
+              echo "::warning::falhou (HTTP $CODE) — $(jq -r '.error // .message // "?"' /tmp/z.json 2>/dev/null)"
+          }
+
+          IFS=',' read -ra WHO <<< "$PARA"
+          for w in "${WHO[@]}"; do
+            w="$(echo "$w" | tr -d '[:space:]')"
+            case "$w" in
+              michel) echo "→ Michel"; send "$WA_MICHEL" "$MSG_MICHEL" ;;
+              ceo)    echo "→ CEO";    send "$WA_CEO" "$MSG_CEO" ;;
+              *) echo "· destinatário desconhecido: $w" ;;
+            esac
+          done
+          echo "## 📲 Links de instalação do Placar enviados" >> "$GITHUB_STEP_SUMMARY"
+          echo "- destinatários: $PARA" >> "$GITHUB_STEP_SUMMARY"
