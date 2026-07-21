@@ -25,6 +25,13 @@ jobs:
           echo "## 🔎 Smoke — Rotina do Michel" >> "$GITHUB_STEP_SUMMARY"
           fail=0
 
+          echo "### 0) Páginas estáticas (raiz + painéis)"
+          for P in "/" "/painel-michel" "/painel-gestor"; do
+            CODE=$(curl -sS -m 30 -o /dev/null -w "%{http_code}" "$BASE$P")
+            echo "- GET $P → HTTP $CODE" | tee -a "$GITHUB_STEP_SUMMARY"
+            [ "$CODE" = "200" ] || { echo "::error::$P retornou $CODE"; fail=1; }
+          done
+
           echo "### 1) GET /api/estado"
           E=$(curl -sS -m 30 "$BASE/api/estado")
           echo "$E" | head -c 500; echo

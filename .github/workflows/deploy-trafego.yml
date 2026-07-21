@@ -65,9 +65,10 @@ jobs:
           echo "Site pronto: $SITE_NAME ($ID)"
 
       - name: Deploy (produção)
-        # --build (lê o netlify.toml e injeta o contexto do Netlify Blobs nas functions).
+        # Publica o estático (public/) + as functions. O Netlify Blobs roda em modo
+        # manual (BLOBS_SITE_ID/BLOBS_TOKEN nas env), então NÃO precisa de --build.
         run: |
-          netlify deploy --build --prod --site "${{ steps.site.outputs.id }}"
+          netlify deploy --prod --dir public --functions netlify/functions --site "${{ steps.site.outputs.id }}"
 
       - name: URL final
         run: |
