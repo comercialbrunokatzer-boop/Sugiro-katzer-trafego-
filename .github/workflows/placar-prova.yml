@@ -1,0 +1,52 @@
+name: 🧪 Prova do Placar — leads/CPL reais (Meta + _placar.mjs)
+
+# Puxa a Meta AO VIVO (com o campo actions) e roda o cérebro novo do Placar
+# (_placar.mjs) — prova que os leads que vêm por conversa no WhatsApp agora
+# aparecem, e que o CPL sai completo. NÃO imprime o token.
+on:
+  push:
+    branches: [claude/placar-campanhas]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    env:
+      META_TOKEN: ${{ secrets.META_SYSTEM_TOKEN }}
+      AD_ACCOUNT: act_1150648749960943
+      GRAPH: https://graph.facebook.com/v20.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Mascara o token
+        run: echo "::add-mask::${META_TOKEN}"
+      - name: Puxa a Meta (com actions) e roda o cérebro do Placar
+        run: |
+          set -euo pipefail
+          curl -sS -G "${GRAPH}/${AD_ACCOUNT}/insights" \
+            --data-urlencode "level=campaign" \
+            --data-urlencode "date_preset=last_7d" \
+            --data-urlencode "fields=campaign_name,spend,actions,results" \
+            --data-urlencode "access_token=${META_TOKEN}" -o /tmp/meta.json
+          if jq -e '.error' /tmp/meta.json >/dev/null 2>&1; then
+            echo "::error::Meta: $(jq -r '.error.message' /tmp/meta.json)"; exit 2
+          fi
+          node --input-type=module -e '
+            import { montaPlacar } from "./netlify/functions/_placar.mjs";
+            import fs from "fs";
+            const d = JSON.parse(fs.readFileSync("/tmp/meta.json","utf8")).data || [];
+            const p = montaPlacar(d);
+            const cpl = (v)=> v==null ? "—" : ("R$ "+v);
+            let out = "## 🧪 Placar real (últimos 7 dias)\n\n| Campanha | Gasto | Leads | CPL |\n|---|--:|--:|--:|\n";
+            for (const c of p.campanhas) out += `| ${c.nome} | R$ ${c.gasto} | ${c.leads} | ${cpl(c.cpl)} |\n`;
+            out += `\n**Total:** R$ ${p.totalGasto} · ${p.totalLeads} leads · CPL médio ${cpl(p.cplMedio)}\n`;
+            out += `\n🟢 **Escalar:** ${p.decisao.escalar.map(c=>c.nome+" ("+cpl(c.cpl)+")").join(" · ")||"—"}\n`;
+            out += `🔴 **Revisar (gastou, 0 lead):** ${p.decisao.revisar.map(c=>c.nome+" (R$ "+c.gasto+")").join(" · ")||"—"}\n`;
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, out);
+            console.log(out);
+          '
