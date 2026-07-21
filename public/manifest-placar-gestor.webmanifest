@@ -1,0 +1,16 @@
+{
+  "name": "Placar Gestor — Katzer",
+  "short_name": "Placar Gestor",
+  "description": "Placar de Campanhas — visão do Gestor: confere ao vivo as decisões do Michel (só o gestor).",
+  "start_url": "/placar-gestor",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1820",
+  "theme_color": "#0d1820",
+  "icons": [
+    { "src": "/icon-gestor.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-gestor.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-gestor.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
