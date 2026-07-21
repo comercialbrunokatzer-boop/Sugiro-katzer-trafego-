@@ -37,8 +37,8 @@ export async function handler(event) {
     const sino = dif > 0 ? `⏰ atrasou ${dif}′` : (dif < 0 ? `💚 adiantou ${-dif}′` : '⏱ no horário');
     const modoIco = estado.modo === 'katzer' ? '🏢' : '🏠';
     const nota = body.nota ? `\n📝 ${body.nota}` : '';
-    await enviaWhats(ceo, `✅ Michel — *${t.nome}* feito ${now.hm} (${sino}) ${modoIco}${nota}`);
-    return json(200, { ok: true, tarefa: t.id, hora: now.hm, difMin: dif });
+    const w = await enviaWhats(ceo, `✅ Michel — *${t.nome}* feito ${now.hm} (${sino}) ${modoIco}${nota}`);
+    return json(200, { ok: true, tarefa: t.id, hora: now.hm, difMin: dif, whats: w });
   }
 
   if (acao === 'desfazer') {

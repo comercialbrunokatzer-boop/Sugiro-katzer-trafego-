@@ -1,0 +1,58 @@
+name: 🔎 Smoke test — botões da Rotina (live)
+
+# Roda o ciclo completo no site vivo: lê estado, marca uma tarefa (envia WhatsApp de teste
+# ao CEO), confere que caiu no painel do gestor, e desfaz. Reporta tudo no step summary.
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "URL base do site"
+        default: "https://rotina-produtiva-michel.netlify.app"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      BASE: ${{ github.event.inputs.base || 'https://rotina-produtiva-michel.netlify.app' }}
+    steps:
+      - name: Ciclo completo
+        run: |
+          set -uo pipefail
+          echo "## 🔎 Smoke — Rotina do Michel" >> "$GITHUB_STEP_SUMMARY"
+          fail=0
+
+          echo "### 1) GET /api/estado"
+          E=$(curl -sS -m 30 "$BASE/api/estado")
+          echo "$E" | head -c 500; echo
+          N=$(echo "$E" | jq '.tarefas | length' 2>/dev/null || echo 0)
+          echo "- tarefas: $N" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$N" = "8" ] || { echo "::error::esperava 8 tarefas"; fail=1; }
+
+          echo "### 2) POST /api/registrar (feito reunioes) — envia WhatsApp ao CEO"
+          R=$(curl -sS -m 30 -X POST "$BASE/api/registrar" -H 'Content-Type: application/json' \
+            -d '{"acao":"feito","tarefa":"reunioes","nota":"smoke test do sistema"}')
+          echo "$R"
+          OKR=$(echo "$R" | jq -r '.ok' 2>/dev/null)
+          WENV=$(echo "$R" | jq -r '.whats.enviado' 2>/dev/null)
+          WST=$(echo "$R" | jq -r '.whats.status // .whats.motivo // "?"' 2>/dev/null)
+          echo "- registrar ok: $OKR · whatsapp enviado: $WENV (status $WST)" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$OKR" = "true" ] || { echo "::error::registrar falhou"; fail=1; }
+
+          echo "### 3) GET /api/estado?ceo=1 (pontualidade)"
+          C=$(curl -sS -m 30 "$BASE/api/estado?ceo=1")
+          PCT=$(echo "$C" | jq -r '.pontualidade.pct' 2>/dev/null)
+          FEITO=$(echo "$C" | jq -r '.tarefas[] | select(.id=="reunioes") | .feito' 2>/dev/null)
+          echo "- reunioes feito: $FEITO · meta do dia: ${PCT}%" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$FEITO" = "true" ] || { echo "::error::não registrou no estado"; fail=1; }
+
+          echo "### 4) POST desfazer (limpeza)"
+          D=$(curl -sS -m 30 -X POST "$BASE/api/registrar" -H 'Content-Type: application/json' \
+            -d '{"acao":"desfazer","tarefa":"reunioes"}')
+          echo "$D"
+          echo "- limpeza: $(echo "$D" | jq -r '.ok')" | tee -a "$GITHUB_STEP_SUMMARY"
+
+          if [ "$fail" = "0" ]; then echo "✅ **Tudo funcionando** — botões gravam, painel do gestor calcula %, WhatsApp dispara." | tee -a "$GITHUB_STEP_SUMMARY"; else echo "⛔ **Falhou** — ver erros acima." | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; fi
