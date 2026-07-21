@@ -33,14 +33,17 @@ repositório**.
 O **gasto + leads por campanha** (Meta / Carol), período **ago/2025 a abr/2026**.
 Só então: `gasto ÷ vendas = custo/VENDA`.
 
-### Reconciliação com a Meta (prints do Gerenciador, 21/07) — findings
+### Reconciliação com a Meta (prints do Gerenciador, 21/07) — CORRIGIDO
 Conta `act_1150648749960943`: **219 campanhas**, **R$ 64.893,84** gastos no total
-(12/07/2025–21/07/2026). Ao conferir os nomes das vendas contra o Gerenciador:
-- **ALICERCE**: gasto R$804,20 confere, mas a campanha é **VIDEO02** (não VIDEO03);
-  31 leads → 2 vendas.
-- **TORRESANI**: o gasto R$5.000,13 da planilha **NÃO reconcilia** — no Gerenciador
-  as campanhas TORRESANI mostram ~R$109 / R$340 / R$230. **Conferir na API.**
-- **PERSONALITE**: planilha R$480,26 vs Gerenciador R$291,71 + R$301,36. Não fecha.
-- **BARRA VIEW**: não localizada nos prints (parciais: ~75 de 219 campanhas).
-> Conclusão: o gasto digitado à mão é **não confiável**. Fechar só com o token/API
-> (casar por **id_campanha**, não por nome). Não montar placar final pelos prints.
+(12/07/2025–21/07/2026). Com o conjunto completo de prints, o gasto digitado pelo
+Michel **RECONCILIOU** (retratação de nota anterior que o chamou de "não
+confiável" — foi engano por prints parciais):
+- **ALICERCE**: R$804,20 · 31 leads → campanha `[ALICERCE][AYA][VIDEO02][22/11/25]`
+  (Michel rotulou VIDEO03; o gasto/leads são da VIDEO02, mesma data). ✓
+- **BARRA VIEW**: R$446,28 · 28 leads → `[BARRA VIEW][SANDRA][VIDEO02][26/11/25]`. ✓
+- **PERSONALITE**: R$480,26 · 18 leads → `[PERSONALITE][BRCON][VIDEO1][25/01/26]`. ✓
+- **TORRESANI**: R$5.000,13 · 269 leads → `[TORRESANI]PUNTACANA][IMAGEM1][12/07/25]`. ✓
+- **PUNTA CANA VIDEO 01** e **PUNTA CANA OESTE**: gasto NÃO localizado nos prints
+  (cobertura ~90 de 219). Seguem NÃO SEI.
+> Placar parcial montado em `placar-parcial.csv`. Fechar 100% (todas as 219 +
+> os 2 PUNTA CANA que faltam) só via token/API, casando por id_campanha.
