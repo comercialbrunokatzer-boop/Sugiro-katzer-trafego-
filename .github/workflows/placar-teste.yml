@@ -1,0 +1,102 @@
+name: 📊 Placar do Michel — TESTE (Meta → WhatsApp)
+
+# Puxa os números REAIS da Meta (últimos 7 dias) e envia um Placar de teste no
+# WhatsApp (via Z-API). É TESTE: a inteligência da sugestão é básica; o objetivo
+# é provar o cano — dado real entrando e mensagem saindo pros destinatários.
+# Rodar pela aba Actions → "Run workflow" (escolhe quem recebe).
+
+on:
+  workflow_dispatch:
+    inputs:
+      para:
+        description: "Quem recebe (separado por vírgula): ceo, carol, michel"
+        default: "ceo,carol"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  placar:
+    runs-on: ubuntu-latest
+    env:
+      META_TOKEN: ${{ secrets.META_SYSTEM_TOKEN }}
+      AD_ACCOUNT: act_1150648749960943
+      GRAPH: https://graph.facebook.com/v20.0
+      ZAPI_INSTANCE: ${{ secrets.ZAPI_INSTANCE }}
+      ZAPI_TOKEN: ${{ secrets.ZAPI_TOKEN }}
+      ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
+      WA_CEO: ${{ secrets.WHATSAPP_CEO }}
+      WA_CAROL: ${{ secrets.WHATSAPP_CAROL }}
+      WA_MICHEL: ${{ secrets.WHATSAPP_MICHEL }}
+      PARA: ${{ github.event.inputs.para }}
+    steps:
+      - name: Mascara segredos nos logs
+        run: |
+          for v in "$META_TOKEN" "$ZAPI_INSTANCE" "$ZAPI_TOKEN" "$ZAPI_CLIENT_TOKEN" "$WA_CEO" "$WA_CAROL" "$WA_MICHEL"; do
+            [ -n "$v" ] && echo "::add-mask::$v" || true
+          done
+
+      - name: Confere as credenciais de envio (Z-API)
+        run: |
+          miss=""
+          [ -z "$META_TOKEN" ] && miss="$miss META_SYSTEM_TOKEN"
+          [ -z "$ZAPI_INSTANCE" ] && miss="$miss ZAPI_INSTANCE"
+          [ -z "$ZAPI_TOKEN" ] && miss="$miss ZAPI_TOKEN"
+          [ -z "$ZAPI_CLIENT_TOKEN" ] && miss="$miss ZAPI_CLIENT_TOKEN"
+          if [ -n "$miss" ]; then
+            echo "::error::Faltam secrets no repo:${miss}. Crie em Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "Credenciais presentes ✅"
+
+      - name: Puxa a Meta e monta o Placar
+        run: |
+          set -euo pipefail
+          curl -sS -G "${GRAPH}/${AD_ACCOUNT}/insights" \
+            --data-urlencode "level=campaign" \
+            --data-urlencode "date_preset=last_7d" \
+            --data-urlencode "fields=campaign_name,spend,results,cost_per_result" \
+            --data-urlencode "access_token=${META_TOKEN}" \
+            -o /tmp/meta.json
+          if jq -e '.error' /tmp/meta.json >/dev/null 2>&1; then
+            echo "::error::Meta: $(jq -r '.error.message' /tmp/meta.json)"; exit 2
+          fi
+          {
+            echo "📊 *Placar do Michel — TESTE*"
+            echo "_últimos 7 dias · dados reais da Meta_"
+            echo ""
+            jq -r '.data | sort_by(-(.spend|tonumber)) | .[:6][] |
+              "• \(.campaign_name)\n   gasto R$ \(.spend) · resultados \((.results[0].values[0].value) // "s/ dado")"' /tmp/meta.json
+            echo ""
+            TOP=$(jq -r '.data | sort_by(-(.spend|tonumber)) | .[0].campaign_name' /tmp/meta.json)
+            TOPS=$(jq -r '.data | sort_by(-(.spend|tonumber)) | .[0].spend' /tmp/meta.json)
+            echo "🔎 *Sugestão do dia (teste):* olhar de perto a \"${TOP}\" — maior gasto (R$ ${TOPS}) nos últimos 7 dias."
+            echo ""
+            echo "_Placar automático · Katzer OS · IA de Tráfego (TESTE)_"
+          } > /tmp/msg.txt
+          echo "----- prévia -----"; cat /tmp/msg.txt; echo "------------------"
+
+      - name: Envia no WhatsApp (Z-API)
+        run: |
+          set -euo pipefail
+          MSG="$(cat /tmp/msg.txt)"
+          declare -A MAP=( [ceo]="$WA_CEO" [carol]="$WA_CAROL" [michel]="$WA_MICHEL" )
+          IFS=',' read -ra WHO <<< "$PARA"
+          ANY=0
+          for w in "${WHO[@]}"; do
+            w="$(echo "$w" | tr -d '[:space:]')"
+            PHONE="${MAP[$w]:-}"
+            if [ -z "$PHONE" ]; then echo "· $w: sem número cadastrado — pulei"; continue; fi
+            CODE=$(curl -sS -o /tmp/z.json -w "%{http_code}" -X POST \
+              "https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}/send-text" \
+              -H "Client-Token: ${ZAPI_CLIENT_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -nc --arg p "$PHONE" --arg m "$MSG" '{phone:$p, message:$m}')" || true)
+            if echo "$CODE" | grep -q '^20'; then
+              echo "· $w: enviado ✅ (HTTP $CODE)"; ANY=1
+            else
+              echo "· $w: FALHOU (HTTP $CODE) — $(jq -r '.error // .message // "sem detalhe"' /tmp/z.json 2>/dev/null || echo '?')"
+            fi
+          done
+          [ "$ANY" = "1" ] || { echo "::error::Nada enviado — confere os números/credenciais."; exit 3; }
