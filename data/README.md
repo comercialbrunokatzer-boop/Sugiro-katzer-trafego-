@@ -43,7 +43,11 @@ confiável" — foi engano por prints parciais):
 - **BARRA VIEW**: R$446,28 · 28 leads → `[BARRA VIEW][SANDRA][VIDEO02][26/11/25]`. ✓
 - **PERSONALITE**: R$480,26 · 18 leads → `[PERSONALITE][BRCON][VIDEO1][25/01/26]`. ✓
 - **TORRESANI**: R$5.000,13 · 269 leads → `[TORRESANI]PUNTACANA][IMAGEM1][12/07/25]`. ✓
-- **PUNTA CANA VIDEO 01** e **PUNTA CANA OESTE**: gasto NÃO localizado nos prints
-  (cobertura ~90 de 219). Seguem NÃO SEI.
+- **PUNTA CANA VIDEO 01** e **PUNTA CANA OESTE**: após varredura completa (12 telas
+  distintas, topo→base da conta), **esses nomes NÃO existem literalmente** no
+  Gerenciador. O que existe de "punta cana": `[alisson][punta cana][video][04/04/26]`
+  e a família `[TORRESANI]PUNTACANA]`. Conclusão: é **de-para** (Michel rotulou com
+  nome diferente do da Meta) — resolver casando por **id_campanha** (token), não por
+  nome. Seguem NÃO SEI até então.
 > Placar parcial montado em `placar-parcial.csv`. Fechar 100% (todas as 219 +
 > os 2 PUNTA CANA que faltam) só via token/API, casando por id_campanha.
