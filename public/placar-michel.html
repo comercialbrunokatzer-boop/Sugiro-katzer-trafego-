@@ -50,6 +50,13 @@
   .adjrow{margin-top:10px;display:none;gap:8px}.adjrow.show{display:flex}
   .adjrow input{flex:1;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:9px;padding:10px;font-size:.85rem;font-family:inherit}
   .adjrow button{border:0;background:var(--warn);color:#fff;font-weight:800;border-radius:9px;padding:10px 14px;font-family:inherit;cursor:pointer}
+  .confrow{margin-top:10px;display:none;flex-direction:column;gap:8px;background:var(--late-bg);border:1px solid var(--late);border-radius:10px;padding:11px 12px}
+  .confrow.show{display:flex}
+  .confrow .q{font-size:.85rem;font-weight:700;color:var(--late)}
+  .confrow .b{display:flex;gap:8px}
+  .confrow .b button{flex:1;border:0;border-radius:9px;padding:11px;font-weight:800;font-family:inherit;cursor:pointer}
+  .confrow .b .sim{background:var(--late);color:#fff}
+  .confrow .b .nao{background:var(--ground);color:var(--ink);border:1px solid var(--hair)}
   .done{margin-top:9px;font-size:.78rem;color:var(--sub)}.done b{color:var(--ink)}
   .honesty{margin-top:20px;background:var(--warn-bg);border:1px solid var(--hair);border-radius:12px;padding:11px 13px;font-size:.78rem;color:var(--sub)}
   .honesty b{color:var(--ink)}
@@ -123,27 +130,37 @@ function render(st){
       ? `CPL ${brl(s.cpl)} — abaixo da média. Vale mais verba.`
       : `${brl(s.gasto)} · ${intBR(s.leads)} lead — queimando. Cortar ou trocar criativo.`;
     const el=document.createElement('div');el.className='sug '+s.tipo;el.dataset.id=s.id;el.dataset.campanha=s.campanha;el.dataset.tipo=s.tipo;
+    const corta=s.tipo==='revisar';
+    const okLabel=corta?'Cortar':'Escalar';const okIc=corta?'✕':'▲';
+    const doneRot=(x)=>x==='aplicar'?(corta?'Cortou':'Escalou'):x==='ajustar'?'Ajustou':'Agora não';
     el.innerHTML=`
       <div class="h"><span class="tp">${s.tipo==='escalar'?'🟢 escalar':'🔴 revisar'}</span>${s.campanha}</div>
       <div class="why">${why}</div>
       <div class="btns">
-        <button class="ok"  data-dec="aplicar"  aria-pressed="${d&&d.decisao==='aplicar'}"><span class="ic">✓</span>Aplicar</button>
+        <button class="ok"  data-dec="aplicar"  aria-pressed="${d&&d.decisao==='aplicar'}"><span class="ic">${okIc}</span>${okLabel}</button>
         <button class="adj" data-dec="ajustar"  aria-pressed="${d&&d.decisao==='ajustar'}"><span class="ic">✎</span>Ajustar</button>
         <button class="no"  data-dec="agora-nao" aria-pressed="${d&&d.decisao==='agora-nao'}"><span class="ic">⏸</span>Agora não</button>
       </div>
       <div class="adjrow"><input placeholder="O que ajustar? ex.: mover R$50/dia p/ BR_SC" value="${d&&d.ajuste?d.ajuste.replace(/"/g,'&quot;'):''}"><button data-confirm>Confirmar</button></div>
-      ${d?`<div class="done">Sua decisão: <b>${d.decisao==='aplicar'?'Aplicar':d.decisao==='ajustar'?'Ajustar':'Agora não'}</b> · ${d.hora}${d.ajuste?` — ${d.ajuste}`:''}</div>`:''}`;
+      <div class="confrow"><div class="q">Cortar a <b>${s.campanha}</b> — tem certeza?</div><div class="b"><button class="sim" data-yescut>Sim, cortar</button><button class="nao" data-nocut>Não</button></div></div>
+      ${d?`<div class="done">Sua decisão: <b>${doneRot(d.decisao)}</b> · ${d.hora}${d.ajuste?` — ${d.ajuste}`:''}</div>`:''}`;
     sb.appendChild(el);
   });
   if(!(st.sugestoes||[]).length)sb.innerHTML='<div class="empty">Sem decisão clara hoje — nenhuma campanha pra escalar ou cortar.</div>';
 }
 document.addEventListener('click',async(e)=>{
   const b=e.target.closest('[data-dec]');const c=e.target.closest('[data-confirm]');
+  const yc=e.target.closest('[data-yescut]');const nc=e.target.closest('[data-nocut]');
   if(b){
-    const card=b.closest('.sug');const id=card.dataset.id;const dec=b.dataset.dec;
-    if(dec==='ajustar'){card.querySelector('.adjrow').classList.toggle('show');card.querySelector('.adjrow input').focus();return;}
+    const card=b.closest('.sug');const dec=b.dataset.dec;
+    card.querySelectorAll('.adjrow,.confrow').forEach(x=>x.classList.remove('show'));
+    if(dec==='ajustar'){const a=card.querySelector('.adjrow');a.classList.add('show');a.querySelector('input').focus();return;}
+    // Corte de campanha = decisão que gasta/para dinheiro: pede "Certeza?" antes.
+    if(dec==='aplicar'&&card.dataset.tipo==='revisar'){card.querySelector('.confrow').classList.add('show');return;}
     await enviar(card,dec,'');
   }
+  if(yc){const card=yc.closest('.sug');card.querySelector('.confrow').classList.remove('show');await enviar(card,'aplicar','');}
+  if(nc){nc.closest('.sug').querySelector('.confrow').classList.remove('show');toast('Ok, não cortei');}
   if(c){
     const card=c.closest('.sug');const val=card.querySelector('.adjrow input').value.trim();
     if(!val){toast('Escreve o que ajustar');return;}
