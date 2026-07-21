@@ -64,8 +64,9 @@ jobs:
           echo "- limpeza: $(echo "$D" | jq -r '.ok')" | tee -a "$GITHUB_STEP_SUMMARY"
 
           echo "### 5) Relatório de teste (envia o resumo ao CEO no WhatsApp)"
-          echo "::add-mask::$CEO"
-          RT=$(curl -sS -m 30 "$BASE/api/relatorio-teste?key=$CEO")
+          KEY=$(printf '%s' "$CEO" | tr -cd '0-9')   # só dígitos (tira \n/espaços da secret)
+          echo "::add-mask::$KEY"
+          RT=$(curl -sS -m 30 "$BASE/api/relatorio-teste?key=$KEY")
           echo "$RT" | sed -E 's/[0-9]{10,}/[num]/g'
           ROK=$(echo "$RT" | jq -r '.ok' 2>/dev/null)
           RPCT=$(echo "$RT" | jq -r '.pct // .skip' 2>/dev/null)
