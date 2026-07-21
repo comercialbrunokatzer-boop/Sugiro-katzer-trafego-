@@ -1,0 +1,34 @@
+name: 🩺 Diag — rotas do site (HTTP codes)
+
+# Sonda os códigos HTTP de cada rota (redirect vs função direta) pra achar 404.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    env:
+      BASE: "https://rotina-produtiva-michel.netlify.app"
+    steps:
+      - name: Sonda rotas
+        run: |
+          set -uo pipefail
+          echo "## 🩺 Diag de rotas" >> "$GITHUB_STEP_SUMMARY"
+          probe () {
+            local path="$1" method="${2:-GET}"
+            local code
+            code=$(curl -sS -m 30 -o /dev/null -w "%{http_code}" -X "$method" "$BASE$path" || echo "ERR")
+            echo "- \`$method $path\` → **$code**" | tee -a "$GITHUB_STEP_SUMMARY"
+          }
+          probe "/api/registrar" POST
+          probe "/.netlify/functions/registrar" POST
+          probe "/api/estado" GET
+          probe "/api/relatorio-teste" GET
+          probe "/.netlify/functions/relatorio-teste" GET
+          probe "/api/card-teste" GET
+          probe "/.netlify/functions/card-teste" GET
+          probe "/health" GET
+          probe "/.netlify/functions/health" GET
