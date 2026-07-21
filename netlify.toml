@@ -59,3 +59,8 @@
   from = "/como-instalar"
   to = "/como-instalar.html"
   status = 200
+[[redirects]]
+  from = "/api/placar"
+  to = "/.netlify/functions/placar"
+  status = 200
+  force = true
