@@ -42,6 +42,21 @@
 5. **E-mail do Placar do Gestor:** definir como enviar e-mail (um serviço de e-mail / credencial) — o
    WhatsApp já temos; o e-mail precisa de um remetente.
 
+## Aplicação 2 do MESMO motor — Rotina do Michel (checklist)
+O quadradinho é um **padrão reaproveitável**, não só de campanha. 2ª aplicação: a **Rotina da
+Manhã do Michel** (`MICHEL_ROTINA_v7`).
+- 8 tarefas viram itens **com horário**: 08:00 Reuniões · 08:10 Agend/Atend · 08:20 Pendências ·
+  08:35 Instagram · 08:55 Campanhas · 09:15 Discadora · 09:35 Garimpo · 12:00 Lista do Auditor.
+- Michel toca **"Feito"** + miniresumo (o "MANDA NO GRUPO — ASSIM" vira campo).
+- Cada toque cai no **painel do CEO ao vivo**, com **horário por tarefa** (timestamp individual).
+- Tarefa passou da hora e não veio → **sinaliza atraso** (vermelho) no painel.
+- **Respeita a rotina:** toque = *avisar o feito*; dúvida/decisão/oportunidade = **LIGAR** (botão
+  chama pra ligar, NÃO gera mensagem).
+- **Entrega pro CEO:** painel ao vivo (link) sempre atualizado; WhatsApp em marcos/atrasos; e-mail =
+  **1 resumo consolidado no fim da manhã** (evita 8 e-mails). *E-mail não se atualiza sozinho — é foto do momento.*
+- **Janela:** lista é **por dia**; reseta a cada manhã. Tarefa pode ser marcada depois (fica "atrasada"
+  mas registra). Regra de fechamento (ex.: trava à meia-noite) é opcional — a definir.
+
 ## Secrets já no repo (prontos)
 `META_SYSTEM_TOKEN` · `ZAPI_INSTANCE` · `ZAPI_TOKEN` · `ZAPI_CLIENT_TOKEN` ·
 `WHATSAPP_MICHEL` · `WHATSAPP_CEO` · `WHATSAPP_CAROL` · `EMAIL_CEO`
