@@ -32,3 +32,6 @@ jobs:
           probe "/.netlify/functions/card-teste" GET
           probe "/health" GET
           probe "/.netlify/functions/health" GET
+          probe "/painel-michel" GET
+          probe "/manifest.webmanifest" GET
+          probe "/icon-katzer.png" GET
