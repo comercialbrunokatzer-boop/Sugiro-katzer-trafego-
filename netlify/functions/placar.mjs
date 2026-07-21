@@ -24,6 +24,7 @@ export async function handler(event) {
   url.searchParams.set('level', 'campaign');
   url.searchParams.set('date_preset', preset);
   url.searchParams.set('fields', 'campaign_name,spend,actions,results');
+  url.searchParams.set('limit', '500'); // pega TODAS as campanhas (evita corte de paginação)
   url.searchParams.set('access_token', token);
 
   try {

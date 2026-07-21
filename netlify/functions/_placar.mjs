@@ -40,7 +40,9 @@ export function montaPlacar(data = []) {
     const leads = extraiLeads(c);
     const cpl = leads > 0 ? round2(gasto / leads) : null;
     return { nome: c.campaign_name || '(sem nome)', gasto, leads, cpl };
-  }).sort((a, b) => b.gasto - a.gasto);
+  })
+    .filter((c) => c.gasto > 0)          // só campanha que GASTOU no período (tira inativa/ruído)
+    .sort((a, b) => b.gasto - a.gasto);
 
   const totalGasto = round2(campanhas.reduce((s, c) => s + c.gasto, 0));
   const totalLeads = campanhas.reduce((s, c) => s + c.leads, 0);

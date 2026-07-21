@@ -32,6 +32,7 @@ jobs:
             --data-urlencode "level=campaign" \
             --data-urlencode "date_preset=last_7d" \
             --data-urlencode "fields=campaign_name,spend,actions,results" \
+            --data-urlencode "limit=500" \
             --data-urlencode "access_token=${META_TOKEN}" -o /tmp/meta.json
           if jq -e '.error' /tmp/meta.json >/dev/null 2>&1; then
             echo "::error::Meta: $(jq -r '.error.message' /tmp/meta.json)"; exit 2

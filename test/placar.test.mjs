@@ -41,6 +41,15 @@ test('decisão do dia: escala CPL baixo, revisa quem gastou >= R$50 e 0 lead', (
   assert.equal(p.decisao.escalar[0].nome, 'FortMyers cidades PORTUGAL'); // melhor CPL primeiro
 });
 
+test('campanha inativa (R$0 no período) é filtrada do placar', () => {
+  const p = montaPlacar([
+    { campaign_name: 'Antiga sem gasto', spend: '0', actions: [] },
+    { campaign_name: 'Ativa', spend: '120', actions: [{ action_type: 'lead', value: '3' }] },
+  ]);
+  assert.equal(p.campanhas.length, 1);
+  assert.equal(p.campanhas[0].nome, 'Ativa');
+});
+
 test('CPL null quando 0 leads (não divide por zero)', () => {
   const p = montaPlacar([{ campaign_name: 'X', spend: '100', actions: [] }]);
   assert.equal(p.campanhas[0].cpl, null);
