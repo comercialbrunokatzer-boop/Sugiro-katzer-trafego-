@@ -1,0 +1,84 @@
+name: 🔐 Liga o e-mail (Resend) no site do Tráfego
+
+# Recebe a RESEND_API_KEY como input (mascarada), grava no site + aponta o destino
+# pro e-mail do CEO, redeploya (assa a env) e TESTA o envio do relatório.
+on:
+  workflow_dispatch:
+    inputs:
+      resend_key:
+        description: "RESEND_API_KEY (re_...)"
+        required: true
+      email_ceo:
+        description: "E-mail que recebe o relatório (= cadastro do Resend)"
+        default: "comercialbruno.katzer@gmail.com"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netlify-trafego
+  cancel-in-progress: false
+
+jobs:
+  ligaemail:
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      SITE_NAME: rotina-produtiva-michel
+      RESEND_KEY: ${{ github.event.inputs.resend_key }}
+      EMAIL_CEO: ${{ github.event.inputs.email_ceo }}
+      CEO_PHONE: ${{ secrets.WHATSAPP_CEO }}
+    steps:
+      - name: Mascara a key
+        run: echo "::add-mask::$RESEND_KEY"
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Netlify CLI + deps
+        run: |
+          npm i -g netlify-cli@17
+          npm install --no-audit --no-fund
+
+      - name: Confere
+        run: |
+          [ -n "$NETLIFY_AUTH_TOKEN" ] || { echo "::error::Falta NETLIFY_AUTH_TOKEN"; exit 1; }
+          case "$RESEND_KEY" in re_*) : ;; *) echo "::error::a key não parece do Resend (deve começar com re_)"; exit 2;; esac
+
+      - name: Resolve site
+        id: site
+        run: |
+          set -euo pipefail
+          ID=$(netlify api listSites | jq -r --arg n "$SITE_NAME" '.[] | select((.name==$n) or ((.ssl_url//"")|contains($n))) | .id' | head -1)
+          [ -n "$ID" ] || { echo "::error::não achei $SITE_NAME"; exit 1; }
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Grava env (Resend + destino)
+        env:
+          NETLIFY_SITE_ID: ${{ steps.site.outputs.id }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$RESEND_KEY"
+          netlify env:set RESEND_API_KEY "$RESEND_KEY" --force >/dev/null && echo "· RESEND_API_KEY ✔"
+          netlify env:set EMAIL_CEO "$EMAIL_CEO" --force >/dev/null && echo "· EMAIL_CEO ✔ ($EMAIL_CEO)"
+          netlify env:set EMAIL_FROM "Rotina Katzer <onboarding@resend.dev>" --force >/dev/null && echo "· EMAIL_FROM ✔"
+
+      - name: Redeploy (assa a env)
+        run: netlify deploy --prod --dir public --functions netlify/functions --site "${{ steps.site.outputs.id }}"
+
+      - name: Testa o envio do relatório (WhatsApp + e-mail)
+        run: |
+          set -uo pipefail
+          KEY=$(printf '%s' "$CEO_PHONE" | tr -cd '0-9'); echo "::add-mask::$KEY"
+          BASE="https://${SITE_NAME}.netlify.app"
+          RT=$(curl -sS -m 40 "$BASE/api/relatorio-teste?key=$KEY")
+          echo "$RT" | sed -E 's/[0-9]{10,}/[num]/g'
+          EEN=$(echo "$RT" | jq -r '.email.enviado' 2>/dev/null)
+          EST=$(echo "$RT" | jq -r '.email.status // .email.motivo // "?"' 2>/dev/null)
+          {
+            echo "## ✉️ E-mail (Resend) — resultado"
+            echo "- e-mail enviado: **$EEN** (status $EST) → $EMAIL_CEO"
+            echo "- WhatsApp: $(echo "$RT" | jq -r '.whats.enviado')"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$EEN" = "true" ]; then echo "✅ E-mail disparado — confere a caixa (e o spam na 1ª vez)."; else echo "::warning::e-mail não confirmou ($EST) — ver corpo."; fi
