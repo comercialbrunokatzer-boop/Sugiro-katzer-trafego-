@@ -67,7 +67,9 @@ export async function handler(event) {
     const TIPOS = ['Bruno', 'Carol', 'Bitrix', 'Discadora', 'Sistema', 'Outro'];
     const quem = TIPOS.includes(body.quem) ? body.quem : null;
     if (!quem) return json(400, { ok: false, erro: `obs exige quem em: ${TIPOS.join(', ')}` });
-    const item = { quem, nome: (body.nome || '').toString().slice(0, 200), inicio: now.hm, duracao: Number(body.duracao) || null };
+    const nome = (body.nome || '').toString().trim();
+    if (nome.length < 100) return json(400, { ok: false, erro: `explique melhor: mínimo 100 caracteres (veio ${nome.length})` });
+    const item = { quem, nome: nome.slice(0, 600), inicio: now.hm, duracao: Number(body.duracao) || null };
     estado.obs.push(item);
     await salvaEstado(estado);
     // Pedido de pessoa = "pediu"; problema técnico = "imprevisto".

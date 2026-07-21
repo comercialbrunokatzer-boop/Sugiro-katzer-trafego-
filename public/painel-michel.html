@@ -42,8 +42,10 @@
   .obsbox{margin-top:20px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:14px 15px}
   .obsbox h3{margin:0 0 3px;font-size:.9rem;color:var(--obs)} .obsbox p{margin:0 0 10px;font-size:.74rem;color:var(--sub)}
   .obsbox .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .obsbox select,.obsbox input{border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:8px;padding:9px;font-size:.85rem;font-family:inherit}
-  .obsbox input.nm{flex:1;min-width:140px}
+  .obsbox select,.obsbox input,.obsbox textarea{border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:8px;padding:9px;font-size:.85rem;font-family:inherit}
+  .obsbox textarea.nm{flex:1 1 100%;min-height:64px;resize:vertical;line-height:1.4}
+  .obsbox .cnt{flex:1 1 100%;font-size:.72rem;color:var(--sub);margin:-2px 0 2px}
+  .obsbox .cnt b{color:var(--late)} .obsbox .cnt.ok b{color:var(--ok)}
   .obsentry{background:var(--panel);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:8px}
   .obsentry .who{font-size:.62rem;font-weight:800;text-transform:uppercase;color:var(--obs);background:var(--obs-bg);padding:.15rem .45rem;border-radius:999px;margin-right:6px}
   footer{margin-top:18px;color:var(--sub);font-size:.72rem;text-align:center}
@@ -84,7 +86,8 @@
         <option value="Sistema">🌐 Internet / Sistema</option>
         <option value="Outro">⚠️ Outro imprevisto</option>
       </select>
-      <input class="nm" id="obsNome" placeholder="O que foi (ex.: Bitrix caiu, ligar cliente X…)">
+      <textarea class="nm" id="obsNome" placeholder="Explique bem o que aconteceu e por quê (mín. 100 caracteres) — ex.: Bitrix caiu às 10h, não abria o negócio do cliente, tive que refazer o cadastro na mão…"></textarea>
+      <div class="cnt" id="obsCnt">Mínimo <b>100</b> caracteres · faltam <b>100</b></div>
       <input id="obsDur" type="number" min="1" placeholder="min" style="width:70px">
       <button class="btn" id="obsBtn">Registrar</button>
     </div>
@@ -139,12 +142,18 @@ document.addEventListener('click',async(e)=>{
   if(u){const r=await api({acao:'desfazer',tarefa:u.dataset.undo});if(r.ok)load();}
 });
 document.querySelectorAll('#modo button').forEach(b=>b.addEventListener('click',async()=>{const r=await api({acao:'modo',modo:b.dataset.modo});if(r.ok)load();}));
+const OBS_MIN=100;
+function obsCntUpd(){const n=$('#obsNome').value.trim().length;const c=$('#obsCnt');const falta=Math.max(0,OBS_MIN-n);
+  c.classList.toggle('ok',n>=OBS_MIN);
+  c.innerHTML=n>=OBS_MIN?`✅ <b>${n}</b> caracteres — pode registrar`:`Mínimo <b>${OBS_MIN}</b> caracteres · faltam <b>${falta}</b>`;}
+$('#obsNome').addEventListener('input',obsCntUpd);
 $('#obsBtn').addEventListener('click',async()=>{
   const quem=$('#obsQuem').value,nome=$('#obsNome').value.trim(),duracao=$('#obsDur').value;
   if(!quem){toast('Escolhe o tipo de imprevisto');return;}
-  if(!nome){toast('Escreve o que foi');return;}
+  if(nome.length<OBS_MIN){toast(`Explica melhor: mín. ${OBS_MIN} caracteres (faltam ${OBS_MIN-nome.length})`);$('#obsNome').focus();return;}
   const r=await api({acao:'obs',quem,nome,duracao});
-  if(r.ok){$('#obsNome').value='';$('#obsDur').value='';toast('🔔 Obs registrada');load();}
+  if(r.ok){$('#obsNome').value='';$('#obsDur').value='';obsCntUpd();toast('🔔 Obs registrada');load();}
+  else{toast(r.erro||'não deu pra registrar');}
 });
 load();setInterval(load,20000);
 
