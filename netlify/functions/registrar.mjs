@@ -32,12 +32,14 @@ export async function handler(event) {
     if (!t) return json(400, { ok: false, erro: 'tarefa desconhecida' });
     estado.tarefas[t.id] = { min: now.min, hora: now.hm, nota: (body.nota || '').toString().slice(0, 400) };
     await salvaEstado(estado);
-    // aviso ao CEO com pontualidade da tarefa
     const dif = now.min - previstoMin(t, estado.modo);
-    const sino = dif > 0 ? `⏰ atrasou ${dif}′` : (dif < 0 ? `💚 adiantou ${-dif}′` : '⏱ no horário');
-    const modoIco = estado.modo === 'katzer' ? '🏢' : '🏠';
-    const nota = body.nota ? `\n📝 ${body.nota}` : '';
-    const w = await enviaWhats(ceo, `✅ Michel — *${t.nome}* feito ${now.hm} (${sino}) ${modoIco}${nota}`);
+    // O painel é AO VIVO -> WhatsApp só na EXCEÇÃO (atraso). No horário/adiantado = só painel.
+    let w = { enviado: false, motivo: 'no horário — só painel ao vivo' };
+    if (dif > 0) {
+      const modoIco = estado.modo === 'katzer' ? '🏢' : '🏠';
+      const nota = body.nota ? `\n📝 ${body.nota}` : '';
+      w = await enviaWhats(ceo, `⏰ Michel — *${t.nome}* atrasou ${dif}′ (feito ${now.hm}) ${modoIco}${nota}`);
+    }
     return json(200, { ok: true, tarefa: t.id, hora: now.hm, difMin: dif, whats: w });
   }
 
