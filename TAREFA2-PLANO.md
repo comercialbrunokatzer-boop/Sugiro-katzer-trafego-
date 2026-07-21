@@ -69,10 +69,24 @@ Michel trabalha 3x/sem em **Piçarras (sede)** e 3x/sem em **Joinville (casa)**.
 ## Horários (definidos pelo CEO)
 - **07:55** — card da Rotina chega no **WhatsApp do Michel** (abre o dia; 1ª tarefa é 08:00).
 - **Ao vivo (event-driven)** — cada "Feito" pinga o CEO no **WhatsApp na hora**, com o horário da tarefa.
-- **13:30** — **e-mail consolidado** pro CEO (linha do tempo completa da manhã + ritmo/pontualidade).
+- **E-mail consolidado** pro CEO (linha do tempo + ritmo/pontualidade): **13:30 nos dias Casa** · **14:30 nos dias Katzer** (Katzer fecha 12:45).
 - **Painel (link):** sempre atualizado, abre a qualquer momento.
 - Placar de **campanhas** (mídia): disparo **08:00** (ajustável).
 - Ritmo/pontualidade do Michel (previsto × feito, e padrão semanal de atraso/adianto) entra no e-mail das 13:30.
+
+## Obs — Interrupções (a ÚNICA exceção pra rotina atrasar)
+Quando o **Bruno ou a Carol** pedem uma demanda em cima da hora, ela come o tempo do Michel. Essa é
+a única exceção legítima pra uma tarefa da rotina atrasar. Michel registra numa **Obs** no fim do card:
+- **Quem pediu** (Bruno / Carol) — campo obrigatório, com atribuição.
+- **Nome da demanda** (ex.: "ligar cliente X", "puxar dado Y").
+- **Início** e **duração** (quanto tempo consumiu).
+- No relatório, esse tempo é **descontado / mostrado ao lado** do atraso das tarefas afetadas (pontualidade justa).
+
+**Trava anti-brecha:** a Obs **exige dizer QUEM pediu** (Bruno ou Carol). Como aponta pro próprio CEO/
+Carol, uma entrada falsa se expõe sozinha (você sabe na hora se pediu ou não). **Regra de cultura:** se
+o Bruno/Carol NÃO pediram, Michel **não pode** abrir Obs nem gastar tempo — a rotina vem primeiro.
+Benefício duplo: protege o Michel (interrupção real não conta contra ele) e mostra ao CEO **quanto
+as próprias demandas dele/da Carol consomem** da manhã.
 
 ## Secrets já no repo (prontos)
 `META_SYSTEM_TOKEN` · `ZAPI_INSTANCE` · `ZAPI_TOKEN` · `ZAPI_CLIENT_TOKEN` ·
