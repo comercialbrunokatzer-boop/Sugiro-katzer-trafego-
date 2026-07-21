@@ -84,14 +84,16 @@ Michel trabalha 3x/sem em **Piçarras (sede)** e 3x/sem em **Joinville (casa)**.
 - Placar de **campanhas** (mídia): disparo **08:00** (ajustável).
 - Ritmo/pontualidade do Michel (previsto × feito, e padrão semanal de atraso/adianto) entra no e-mail.
 
-## % de meta do dia (definido pelo CEO)
-Número único no **rodapé do e-mail**, em negrito. Regra: **100% só quando fez TODAS no horário.**
-- 8 tarefas da manhã, cada uma vale **12,5%**.
-- ✅ Feita **no horário** → pedaço cheio.
-- 🟡 Feita **atrasada** → **conta como feita, mas puxa o dia pra baixo**; mostra "atrasou +X′" ao lado (default recomendado — mais justo; aguarda confirmação se CEO quer que atraso zere o pedaço).
-- 🔴 **Não feita** → zero, fica como pendente.
-- **Modo importa:** no dia 🏢 Katzer o "horário certo" é o +45 (começa 08:45) → não marca atraso por isso (pontualidade justa pro modo).
-- Exemplo de rodapé: **"Meta do dia: 92% · 7 no horário · 1 atrasada (Garimpo +18′) · 🏢 Katzer"**.
+## % de meta do dia (definido pelo CEO — modelo por MINUTO)
+Número único no **rodapé do e-mail**, em negrito. Roda por minuto de pontualidade:
+- **Começa em 100%.**
+- **Cada 1 min de atraso = −1%.**
+- **Recuperável:** adiantar outra tarefa **devolve %** (minutos adiantados compensam os atrasados = saldo líquido).
+- **Teto 100%** (adiantar não passa de 100; mas o adianto aparece **verdinho** como reconhecimento).
+- **Registro total:** mesmo que o líquido volte a 100%, o e-mail mostra **cada atraso E cada adianto**, tarefa por tarefa. Nada some.
+- **Tarefa não feita** = vira **atraso aberto ticando ao vivo** (painel vermelho) que derruba o % em tempo real até fechar.
+- **Modo importa:** no dia 🏢 Katzer o "no horário" é o +45 (começa 08:45) → a contagem de minutos parte do horário do modo (pontualidade justa).
+- Exemplo: Garimpo +18′ (−18% → 82%) · Discadora −10′ adiantou (+10% → 92%). Rodapé: **"Meta do dia: 92% · saldo −8′ · 🔴 Garimpo +18′ · 🟢 Discadora −10′ · 🏢 Katzer"**.
 
 ## Serviço de e-mail (definido)
 - Remetente via **Resend** (grátis no volume; 1 API key que o CEO cria/cola uma vez).
