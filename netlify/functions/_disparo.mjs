@@ -1,32 +1,42 @@
 // Lógica de disparo do relatório (compartilhada entre o cron e o endpoint de teste).
-import { pontualidade, agoraBRT, min2hm } from './_rotina.mjs';
+import { pontualidade, agoraBRT, min2hm, previstoMin, TAREFAS } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, enviaEmail } from './_infra.mjs';
 import { resumoWhats, emailHTML } from './_relatorio.mjs';
+
+/** Agenda do dia já montada (quadradinho pronto): cada tarefa com o horário previsto. */
+function agendaLinhas(estado) {
+  return TAREFAS
+    .map((t) => `🕘 *${min2hm(previstoMin(t, estado.modo, estado.inicioMin))}* · ${t.nome}`)
+    .join('\n');
+}
 
 /** Manda o card da Rotina pro Michel E uma cópia pro CEO acompanhar (07:45 e teste). */
 export async function disparaCard(now = agoraBRT()) {
   if (now.dow === 0) return { skip: 'domingo (folga)' };
   const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
 
-  // 1) Card pro Michel
-  const michelMsg = [
-    '☀️ *Bom dia, Michel!*',
-    '',
-    'Abre a Rotina Produtiva de hoje e vai tocando *Feito* em cada tarefa:',
-    `${url}/painel-michel`,
-    '',
-    'No topo, escolhe o modo do dia: 🏠 *Casa* (1ª tarefa 08:00) ou 🏢 *Katzer* (08:45).',
-  ].join('\n');
-  const wM = await enviaWhats(process.env.WHATSAPP_MICHEL, michelMsg);
-
-  // 2) Cópia pro CEO acompanhar ao vivo (com modo + início do dia)
   const estado = await leEstado(now.data);
   const modoTxt = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Casa';
   const inicioTxt = estado.inicioMin != null ? min2hm(estado.inicioMin) : (estado.modo === 'katzer' ? '08:45' : '08:00');
+  const agenda = agendaLinhas(estado);
+
+  // 1) Card pro Michel — agenda pronta + link pra tocar "Feito".
+  const michelMsg = [
+    `☀️ *Bom dia, Michel!* — ${modoTxt} · início ${inicioTxt}`,
+    '',
+    agenda,
+    '',
+    `Toca *Feito* em cada uma aqui 👉 ${url}/painel-michel`,
+  ].join('\n');
+  const wM = await enviaWhats(process.env.WHATSAPP_MICHEL, michelMsg);
+
+  // 2) Cópia pro CEO — o quadradinho pronto (mesma agenda) + link do ao vivo no rodapé.
   const ceoMsg = [
     `🗓️ *Rotina do Michel — hoje* (${modoTxt} · início ${inicioTxt})`,
-    'Acompanhe ao vivo (o % é seu):',
-    `${url}/painel-gestor`,
+    '',
+    agenda,
+    '',
+    `Ao vivo (o % é seu): ${url}/painel-gestor`,
   ].join('\n');
   const wC = await enviaWhats(process.env.WHATSAPP_CEO, ceoMsg);
 
