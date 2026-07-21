@@ -32,3 +32,15 @@ repositório**.
 ### O que falta pra virar custo/VENDA
 O **gasto + leads por campanha** (Meta / Carol), período **ago/2025 a abr/2026**.
 Só então: `gasto ÷ vendas = custo/VENDA`.
+
+### Reconciliação com a Meta (prints do Gerenciador, 21/07) — findings
+Conta `act_1150648749960943`: **219 campanhas**, **R$ 64.893,84** gastos no total
+(12/07/2025–21/07/2026). Ao conferir os nomes das vendas contra o Gerenciador:
+- **ALICERCE**: gasto R$804,20 confere, mas a campanha é **VIDEO02** (não VIDEO03);
+  31 leads → 2 vendas.
+- **TORRESANI**: o gasto R$5.000,13 da planilha **NÃO reconcilia** — no Gerenciador
+  as campanhas TORRESANI mostram ~R$109 / R$340 / R$230. **Conferir na API.**
+- **PERSONALITE**: planilha R$480,26 vs Gerenciador R$291,71 + R$301,36. Não fecha.
+- **BARRA VIEW**: não localizada nos prints (parciais: ~75 de 219 campanhas).
+> Conclusão: o gasto digitado à mão é **não confiável**. Fechar só com o token/API
+> (casar por **id_campanha**, não por nome). Não montar placar final pelos prints.
