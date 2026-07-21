@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8">
 <title>Rotina Produtiva — Michel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- App na tela (PWA / atalho iOS+Android) -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0d1820">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rotina Katzer">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-katzer.png">
+<link rel="icon" type="image/png" href="/icon-katzer.png">
 <style>
   :root{
     --ground:#eef1f0;--panel:#fff;--ink:#14252f;--sub:#5c6b74;--hair:#dbe2e0;--gold:#a8792a;--sea:#1f6f66;
@@ -44,6 +53,13 @@
 </head>
 <body>
 <div class="wrap">
+  <div id="a2hs" style="display:none;background:linear-gradient(150deg,#1f6f66,#134f49);color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.9rem;line-height:1.4">
+    📲 <b>Deixa isso como app no teu celular:</b>
+    <span id="a2hs-ios">toque em <b>Compartilhar</b> (o quadradinho com a setinha ⬆️) e depois <b>“Adicionar à Tela de Início”</b>.</span>
+    <span id="a2hs-and" style="display:none">toque no <b>⋮</b> (menu) e depois <b>“Adicionar à tela inicial”</b>.</span>
+    <br>Aí é só tocar o ícone <b>Rotina Katzer</b> todo dia — sem link.
+    <button onclick="document.getElementById('a2hs').style.display='none'" style="margin-top:8px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:700;border-radius:8px;padding:6px 12px;font-family:inherit;cursor:pointer">ok, entendi</button>
+  </div>
   <p class="eyebrow">Katzer OS · Rotina Produtiva</p>
   <h1>Bom dia, Michel 👋</h1>
   <p class="date" id="date">carregando…</p>
@@ -123,6 +139,19 @@ $('#obsBtn').addEventListener('click',async()=>{
   if(r.ok){$('#obsNome').value='';$('#obsDur').value='';toast('🔔 Obs registrada');load();}
 });
 load();setInterval(load,20000);
+
+// Aviso "adicionar à tela": só mostra se AINDA não for app; ajusta iOS/Android.
+(function(){
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var box = document.getElementById('a2hs');
+  if (!box) return;
+  if (standalone) { box.style.display='none'; return; }
+  var isAndroid = /Android/i.test(navigator.userAgent);
+  document.getElementById('a2hs-ios').style.display = isAndroid ? 'none' : 'inline';
+  document.getElementById('a2hs-and').style.display = isAndroid ? 'inline' : 'none';
+  if (localStorage.getItem('a2hs-ok') !== '1') box.style.display='block';
+  box.querySelector('button').addEventListener('click', function(){ localStorage.setItem('a2hs-ok','1'); });
+})();
 </script>
 </body>
 </html>
