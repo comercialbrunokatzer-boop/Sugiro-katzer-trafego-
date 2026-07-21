@@ -12,7 +12,7 @@ export async function handler(event) {
   // Lista de tarefas com horário previsto (no modo do dia) + status — comum aos dois painéis.
   const tarefas = TAREFAS.map((t) => {
     const reg = estado.tarefas[t.id];
-    const prev = previstoMin(t, estado.modo);
+    const prev = previstoMin(t, estado.modo, estado.inicioMin);
     const vencida = !reg && now.min > prev;
     return {
       id: t.id, nome: t.nome, previsto: min2hm(prev),

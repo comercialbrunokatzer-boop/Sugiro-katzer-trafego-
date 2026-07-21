@@ -4,7 +4,7 @@
 //   acao='desfazer' { tarefa }                 -> desmarca
 //   acao='modo'   { modo:'casa'|'katzer' }     -> troca o modo do dia
 //   acao='obs'    { quem:'Bruno'|'Carol', nome, duracao? } -> registra interrupção
-import { agoraBRT, previstoMin, min2hm, TAREFAS } from './_rotina.mjs';
+import { agoraBRT, previstoMin, min2hm, hm2min, TAREFAS } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, json } from './_infra.mjs';
 
 const nomeTarefa = (id) => (TAREFAS.find((t) => t.id === id)?.nome) || id;
@@ -27,12 +27,25 @@ export async function handler(event) {
     return json(200, { ok: true, modo });
   }
 
+  // Início do dia SÓ HOJE (ex.: começar 09:00). Desloca a agenda mantendo os intervalos.
+  // body.hm="09:00" (ou body.min). "" / null limpa o override (volta ao padrão do modo).
+  if (acao === 'inicio') {
+    if (body.limpar || body.hm === '' || body.min === null) { delete estado.inicioMin; }
+    else {
+      const min = body.min != null ? Number(body.min) : (body.hm ? hm2min(body.hm) : null);
+      if (min == null || Number.isNaN(min)) return json(400, { ok: false, erro: 'passe hm (ex.: "09:00") ou min' });
+      estado.inicioMin = min;
+    }
+    await salvaEstado(estado);
+    return json(200, { ok: true, inicioMin: estado.inicioMin ?? null, inicio: estado.inicioMin != null ? min2hm(estado.inicioMin) : '(padrão do modo)' });
+  }
+
   if (acao === 'feito') {
     const t = TAREFAS.find((x) => x.id === body.tarefa);
     if (!t) return json(400, { ok: false, erro: 'tarefa desconhecida' });
     estado.tarefas[t.id] = { min: now.min, hora: now.hm, nota: (body.nota || '').toString().slice(0, 400) };
     await salvaEstado(estado);
-    const dif = now.min - previstoMin(t, estado.modo);
+    const dif = now.min - previstoMin(t, estado.modo, estado.inicioMin);
     // O painel é AO VIVO -> WhatsApp só na EXCEÇÃO (atraso). No horário/adiantado = só painel.
     let w = { enviado: false, motivo: 'no horário — só painel ao vivo' };
     if (dif > 0) {

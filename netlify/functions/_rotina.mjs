@@ -28,8 +28,18 @@ export function min2hm(min) {
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
-/** Horário previsto de uma tarefa no modo escolhido (em minutos). */
-export function previstoMin(tarefa, modo) {
+const PRIMEIRA_BASE = hm2min(TAREFAS[0].base); // 08:00 = âncora da 1ª tarefa
+
+/**
+ * Horário previsto de uma tarefa (em minutos).
+ * - inicioMin (opcional): início do dia SÓ HOJE (ex.: 09:00). Desloca tudo mantendo os
+ *   intervalos entre tarefas; ignora o offset de modo.
+ * - senão: base + offset do modo (Katzer +45).
+ */
+export function previstoMin(tarefa, modo, inicioMin = null) {
+  if (inicioMin != null && inicioMin !== '') {
+    return (hm2min(tarefa.base) - PRIMEIRA_BASE) + Number(inicioMin);
+  }
   return hm2min(tarefa.base) + (modo === 'katzer' ? OFFSET_KATZER : 0);
 }
 
@@ -61,7 +71,7 @@ export function estadoVazio(data, modo = 'casa') {
 export function pontualidade(estado, agoraMin) {
   let saldo = 0; // minutos: >0 atrasado, <0 adiantado
   const linhas = TAREFAS.map((t) => {
-    const prev = previstoMin(t, estado.modo);
+    const prev = previstoMin(t, estado.modo, estado.inicioMin);
     const reg = estado.tarefas[t.id];
     if (reg && reg.min != null) {
       const dif = reg.min - prev; // + atrasou, - adiantou

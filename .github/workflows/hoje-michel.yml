@@ -1,0 +1,49 @@
+name: 🚀 Hoje — inicia a Rotina do Michel (modo + início + card)
+
+# One-off do dia: define o modo, o horário de início (ex.: 09:00) e MANDA o card
+# pro WhatsApp do Michel. Roda na hora que você disparar.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "Modo do dia"
+        type: choice
+        options: [katzer, casa]
+        default: katzer
+      inicio:
+        description: 'Início do dia (HH:MM) — vazio = padrão do modo'
+        default: "09:00"
+
+permissions:
+  contents: read
+
+jobs:
+  inicia:
+    runs-on: ubuntu-latest
+    env:
+      BASE: "https://rotina-produtiva-michel.netlify.app"
+      MODO: ${{ github.event.inputs.modo }}
+      INICIO: ${{ github.event.inputs.inicio }}
+      CEO: ${{ secrets.WHATSAPP_CEO }}
+    steps:
+      - name: Aplica modo + início e manda o card
+        run: |
+          set -uo pipefail
+          echo "## 🚀 Início da Rotina do Michel — hoje" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "1) modo=$MODO"
+          curl -sS -m 30 -X POST "$BASE/api/registrar" -H 'Content-Type: application/json' \
+            -d "{\"acao\":\"modo\",\"modo\":\"$MODO\"}" | tee /tmp/m.json; echo
+          echo "- modo: $(jq -r '.modo' /tmp/m.json)" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "2) início=$INICIO"
+          curl -sS -m 30 -X POST "$BASE/api/registrar" -H 'Content-Type: application/json' \
+            -d "{\"acao\":\"inicio\",\"hm\":\"$INICIO\"}" | tee /tmp/i.json; echo
+          echo "- início: $(jq -r '.inicio' /tmp/i.json)" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "3) manda o card pro Michel"
+          KEY=$(printf '%s' "$CEO" | tr -cd '0-9'); echo "::add-mask::$KEY"
+          curl -sS -m 30 "$BASE/api/card-teste?key=$KEY" | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/c.json; echo
+          ENV=$(jq -r '.enviado' /tmp/c.json 2>/dev/null)
+          echo "- card enviado ao Michel: **$ENV**" >> "$GITHUB_STEP_SUMMARY"
+          [ "$ENV" = "true" ] && echo "✅ Michel recebeu o card. Início $INICIO ($MODO)." || echo "::warning::card não confirmou — ver corpo."
