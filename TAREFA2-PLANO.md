@@ -84,6 +84,11 @@ Michel trabalha 3x/sem em **Piçarras (sede)** e 3x/sem em **Joinville (casa)**.
 - Placar de **campanhas** (mídia): disparo **08:00** (ajustável).
 - Ritmo/pontualidade do Michel (previsto × feito, e padrão semanal de atraso/adianto) entra no e-mail.
 
+## Quem vê o quê (privacidade do placar — definido pelo CEO)
+- **Card do Michel:** só **tarefas + horários + atraso ao vivo** (vermelho ticando). Serve pra ele **saber que está sendo monitorado**. **NÃO mostra o %** nem o saldo.
+- **Painel/e-mail do CEO:** o **% de meta, saldo de minutos, padrão semanal** — visão de gestão, **privada do CEO**. Michel não enxerga a nota.
+- Regra: atraso é compartilhado (pressão saudável); **placar/% é só do CEO**.
+
 ## % de meta do dia (definido pelo CEO — modelo por MINUTO)
 Número único no **rodapé do e-mail**, em negrito. Roda por minuto de pontualidade:
 - **Começa em 100%.**
