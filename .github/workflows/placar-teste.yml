@@ -12,6 +12,18 @@ on:
         description: "Quem recebe (separado por vírgula): ceo, carol, michel"
         default: "ceo,carol"
         required: true
+      zapi_instance:
+        description: "Z-API instance ID (opcional — se vazio usa o secret)"
+        required: false
+      zapi_token:
+        description: "Z-API token da instância (opcional)"
+        required: false
+      zapi_client_token:
+        description: "Z-API Client-Token da conta (opcional)"
+        required: false
+      carol_phone:
+        description: "WhatsApp da Carol (opcional — se vazio usa o secret)"
+        required: false
 
 permissions:
   contents: read
@@ -23,11 +35,11 @@ jobs:
       META_TOKEN: ${{ secrets.META_SYSTEM_TOKEN }}
       AD_ACCOUNT: act_1150648749960943
       GRAPH: https://graph.facebook.com/v20.0
-      ZAPI_INSTANCE: ${{ secrets.ZAPI_INSTANCE }}
-      ZAPI_TOKEN: ${{ secrets.ZAPI_TOKEN }}
-      ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
+      ZAPI_INSTANCE: ${{ github.event.inputs.zapi_instance || secrets.ZAPI_INSTANCE }}
+      ZAPI_TOKEN: ${{ github.event.inputs.zapi_token || secrets.ZAPI_TOKEN }}
+      ZAPI_CLIENT_TOKEN: ${{ github.event.inputs.zapi_client_token || secrets.ZAPI_CLIENT_TOKEN }}
       WA_CEO: ${{ secrets.WHATSAPP_CEO }}
-      WA_CAROL: ${{ secrets.WHATSAPP_CAROL }}
+      WA_CAROL: ${{ github.event.inputs.carol_phone || secrets.WHATSAPP_CAROL }}
       WA_MICHEL: ${{ secrets.WHATSAPP_MICHEL }}
       PARA: ${{ github.event.inputs.para }}
     steps:
