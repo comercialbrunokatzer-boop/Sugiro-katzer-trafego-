@@ -76,13 +76,31 @@ Michel trabalha 3x/sem em **Piçarras (sede)** e 3x/sem em **Joinville (casa)**.
   e "✅ feito (atrasou/adiantou X′)" ao fechar. O painel (link) mostra os contadores ao vivo.
 - Tecnicamente: relógio client-side na página + verificação de limiar no backend. Mesmo motor.
 
-## Horários (definidos pelo CEO)
-- **07:55** — card da Rotina chega no **WhatsApp do Michel** (abre o dia; 1ª tarefa é 08:00).
+## Horários (definidos pelo CEO — FECHADO)
+- **07:45** — card da Rotina chega no **WhatsApp do Michel** (abre o dia; 1ª tarefa é 08:00).
 - **Ao vivo (event-driven)** — cada "Feito" pinga o CEO no **WhatsApp na hora**, com o horário da tarefa.
-- **E-mail consolidado** pro CEO (linha do tempo + ritmo/pontualidade): **13:30 nos dias Casa** · **14:30 nos dias Katzer** (Katzer fecha 12:45).
+- **E-mail consolidado no FIM** (registra cada passo, linha do tempo + pontualidade): **13:30 nos dias Casa** · **14:30 nos dias Katzer** (Katzer fecha 12:45).
 - **Painel (link):** sempre atualizado, abre a qualquer momento.
 - Placar de **campanhas** (mídia): disparo **08:00** (ajustável).
-- Ritmo/pontualidade do Michel (previsto × feito, e padrão semanal de atraso/adianto) entra no e-mail das 13:30.
+- Ritmo/pontualidade do Michel (previsto × feito, e padrão semanal de atraso/adianto) entra no e-mail.
+
+## % de meta do dia (definido pelo CEO)
+Número único no **rodapé do e-mail**, em negrito. Regra: **100% só quando fez TODAS no horário.**
+- 8 tarefas da manhã, cada uma vale **12,5%**.
+- ✅ Feita **no horário** → pedaço cheio.
+- 🟡 Feita **atrasada** → **conta como feita, mas puxa o dia pra baixo**; mostra "atrasou +X′" ao lado (default recomendado — mais justo; aguarda confirmação se CEO quer que atraso zere o pedaço).
+- 🔴 **Não feita** → zero, fica como pendente.
+- **Modo importa:** no dia 🏢 Katzer o "horário certo" é o +45 (começa 08:45) → não marca atraso por isso (pontualidade justa pro modo).
+- Exemplo de rodapé: **"Meta do dia: 92% · 7 no horário · 1 atrasada (Garimpo +18′) · 🏢 Katzer"**.
+
+## Serviço de e-mail (definido)
+- Remetente via **Resend** (grátis no volume; 1 API key que o CEO cria/cola uma vez).
+- Fallback imediato sem setup: mandar o "e-mail" como **mensagem no WhatsApp** (mesma Z-API) até a key existir.
+
+## Camada anti-furo (a rotina é DIÁRIA — não pode falhar)
+1. **Disparo primário** no horário via **Netlify Scheduled Function** (roda no site; mais confiável que cron do GitHub).
+2. **Idempotência** (Netlify Blobs): marca "já mandei hoje" → nunca duplica.
+3. **Watchdog** ~30 min depois: confere "saiu o de hoje?". Se não saiu → **reenvia sozinho E pinga o CEO no WhatsApp** ("⚠️ e-mail das 13:30 falhou, forcei agora"). Se a infra cair, o CEO sabe na hora.
 
 ## Obs — Interrupções (a ÚNICA exceção pra rotina atrasar)
 Quando o **Bruno ou a Carol** pedem uma demanda em cima da hora, ela come o tempo do Michel. Essa é
