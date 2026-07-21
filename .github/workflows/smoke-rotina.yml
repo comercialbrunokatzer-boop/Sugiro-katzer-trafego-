@@ -27,7 +27,7 @@ jobs:
           fail=0
 
           echo "### 0) Páginas estáticas (raiz + painéis)"
-          for P in "/" "/painel-michel" "/painel-gestor"; do
+          for P in "/" "/painel-michel" "/painel-gestor" "/guia" "/email-preview"; do
             CODE=$(curl -sS -m 30 -o /dev/null -w "%{http_code}" "$BASE$P")
             echo "- GET $P → HTTP $CODE" | tee -a "$GITHUB_STEP_SUMMARY"
             [ "$CODE" = "200" ] || { echo "::error::$P retornou $CODE"; fail=1; }
