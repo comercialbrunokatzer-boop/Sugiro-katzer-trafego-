@@ -42,8 +42,9 @@ jobs:
           echo "- início: $(jq -r '.inicio' /tmp/i.json)" >> "$GITHUB_STEP_SUMMARY"
 
           echo "3) manda o card pro Michel + cópia pro CEO"
+          # Vai DIRETO na função (o redirect /api/card-teste está com cache velho no deploy).
           KEY=$(printf '%s' "$CEO" | tr -cd '0-9'); echo "::add-mask::$KEY"
-          curl -sS -m 30 "$BASE/api/card-teste?key=$KEY" | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/c.json; echo
+          curl -sS -m 30 "$BASE/.netlify/functions/card-teste?key=$KEY" | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/c.json; echo
           EM=$(jq -r '.michel' /tmp/c.json 2>/dev/null)
           EC=$(jq -r '.ceo' /tmp/c.json 2>/dev/null)
           echo "- card → Michel: **$EM** · cópia → CEO: **$EC**" >> "$GITHUB_STEP_SUMMARY"
