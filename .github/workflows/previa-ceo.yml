@@ -1,0 +1,34 @@
+name: 🔎 Prévia pro CEO — como o card cai amanhã
+
+# Manda SÓ pro WhatsApp do CEO uma prévia do card diário. Não toca no Michel.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "Modo da prévia"
+        type: choice
+        options: [casa, katzer]
+        default: casa
+
+permissions:
+  contents: read
+
+jobs:
+  previa:
+    runs-on: ubuntu-latest
+    env:
+      BASE: "https://rotina-produtiva-michel.netlify.app"
+      MODO: ${{ github.event.inputs.modo }}
+      CEO: ${{ secrets.WHATSAPP_CEO }}
+    steps:
+      - name: Manda a prévia pro CEO
+        run: |
+          set -uo pipefail
+          KEY=$(printf '%s' "$CEO" | tr -cd '0-9'); echo "::add-mask::$KEY"
+          # Vai direto na função (evita depender de redirect).
+          curl -sS -m 30 "$BASE/.netlify/functions/previa-ceo?key=$KEY&modo=$MODO" \
+            | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/p.json; echo
+          OK=$(jq -r '.enviado' /tmp/p.json 2>/dev/null)
+          echo "## 🔎 Prévia pro CEO ($MODO)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- enviado: **$OK**" >> "$GITHUB_STEP_SUMMARY"
+          [ "$OK" = "true" ] && echo "✅ Prévia no WhatsApp do CEO." || echo "::warning::não confirmou envio."
