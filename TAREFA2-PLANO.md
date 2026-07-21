@@ -68,6 +68,14 @@ Michel trabalha 3x/sem em **Piçarras (sede)** e 3x/sem em **Joinville (casa)**.
 - **Título do card e do relatório:** formato padrão **"Terça-feira, 21 de julho de 2026"** (dia da semana → data → mês → ano), automático a cada dia.
 - **Quando dispara:** **segunda a sábado** nos mesmos horários. **Domingo NÃO dispara** (folga do Michel).
 
+## Painel ao vivo — contadores em tempo real
+- **Atraso ticando:** quando uma tarefa vence sem ser feita, ela aparece sozinha no painel e o
+  **contador de atraso roda ao vivo** (min:seg) até o Michel cumprir; aí trava no total.
+- **Adiantamento verde:** se ele fecha antes do previsto (adiantou as anteriores), marca **"+X min"** verdinho.
+- **Aviso na hora (não só e-mail):** WhatsApp pinga no **ponto de virada** — "⏰ atrasou na tarefa X" ao vencer,
+  e "✅ feito (atrasou/adiantou X′)" ao fechar. O painel (link) mostra os contadores ao vivo.
+- Tecnicamente: relógio client-side na página + verificação de limiar no backend. Mesmo motor.
+
 ## Horários (definidos pelo CEO)
 - **07:55** — card da Rotina chega no **WhatsApp do Michel** (abre o dia; 1ª tarefa é 08:00).
 - **Ao vivo (event-driven)** — cada "Feito" pinga o CEO no **WhatsApp na hora**, com o horário da tarefa.
