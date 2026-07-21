@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel do Gestor — Rotina do Michel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#eef1f0;--panel:#fff;--ink:#14252f;--sub:#5c6b74;--hair:#dbe2e0;--gold:#a8792a;--sea:#1f6f66;
+    --ok:#1f9d57;--ok-bg:#e4f2ea;--late:#c0492f;--late-bg:#f7e7e2;--obs:#6b4bb0;--obs-bg:#efeafa;
+    --shadow:0 1px 2px rgba(18,34,44,.06),0 10px 30px rgba(18,34,44,.09);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{--ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;--gold:#d4ac60;--sea:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;--late:#e0765c;--late-bg:#331f1a;--obs:#b49ae8;--obs-bg:#241d38;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.45}
+  .wrap{max-width:640px;margin:0 auto;padding:clamp(16px,4vw,28px)}
+  .eyebrow{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0}
+  h1{font-size:clamp(1.3rem,4vw,1.7rem);font-weight:800;letter-spacing:-.02em;margin:.3rem 0 .2rem}
+  .date{color:var(--sub);font-size:.9rem;margin:0 0 14px}
+  .live{display:inline-flex;align-items:center;gap:.35rem;font-size:.68rem;font-weight:700;color:var(--sea)}
+  .live .dot{width:8px;height:8px;border-radius:50%;background:var(--sea);animation:p 1.4s infinite}@keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
+  .hero{background:var(--panel);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px;display:flex;align-items:center;gap:18px;margin-bottom:6px}
+  .pct{font-family:var(--mono);font-weight:800;font-size:2.6rem;letter-spacing:-.02em;line-height:1}
+  .pct.hi{color:var(--ok)}.pct.mid{color:var(--gold)}.pct.lo{color:var(--late)}
+  .hero .meta{flex:1}.hero .meta .t{font-weight:800}.hero .meta .s{font-size:.82rem;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
+  .modo-badge{font-size:.72rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:var(--ground);color:var(--sub)}
+  .row{background:var(--panel);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);padding:11px 14px;margin-top:9px;display:flex;align-items:center;gap:11px}
+  .row.late{border-left:3px solid var(--late)}.row.ok{border-left:3px solid var(--ok)}.row.wait{opacity:.6}
+  .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:.78rem;flex:none}
+  .ic.ok{background:var(--ok-bg);color:var(--ok)}.ic.late{background:var(--late-bg);color:var(--late)}.ic.wait{background:var(--ground);color:var(--sub)}
+  .row .nm{flex:1;min-width:0}.row .nm b{font-weight:700;font-size:.95rem}.row .nm small{display:block;color:var(--sub);font-size:.74rem;font-variant-numeric:tabular-nums}
+  .tag{font-weight:800;font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}.tag.late{color:var(--late)}.tag.ok{color:var(--ok)}
+  .obsbox{margin-top:18px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:13px 15px}
+  .obsbox h3{margin:0 0 8px;font-size:.88rem;color:var(--obs)}
+  .obsentry{background:var(--panel);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:7px}
+  .obsentry .who{font-size:.62rem;font-weight:800;text-transform:uppercase;color:var(--obs);background:var(--obs-bg);padding:.15rem .45rem;border-radius:999px;margin-right:6px}
+  .note{margin-top:16px;font-size:.78rem;color:var(--sub);text-align:center}
+  footer{margin-top:14px;color:var(--sub);font-size:.72rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Katzer OS · Painel do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
+  <h1>Rotina do Michel</h1>
+  <p class="date" id="date">carregando…</p>
+
+  <div class="hero">
+    <div class="pct" id="pct">—</div>
+    <div class="meta"><div class="t">Meta do dia</div><div class="s" id="saldo">—</div></div>
+    <div class="modo-badge" id="modo">—</div>
+  </div>
+
+  <div id="rows"></div>
+
+  <div class="obsbox" id="obsbox" style="display:none">
+    <h3>🔔 Interrupções (pedidas por você/Carol)</h3>
+    <div id="obsList"></div>
+  </div>
+
+  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.</p>
+  <footer>Katzer OS · atualiza sozinho · contadores rodam ao vivo</footer>
+</div>
+
+<script>
+const $=(s)=>document.querySelector(s);let ST=null,tick=null;
+async function load(){try{const r=await fetch('/api/estado?ceo=1');ST=await r.json();render();}catch(e){}}
+function diaSemana(d){const[y,m,dd]=d.split('-').map(Number);return['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][new Date(Date.UTC(y,m-1,dd)).getUTCDay()];}
+function fmtData(d){const[y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return`${diaSemana(d)}, ${+dd} de ${mes} de ${y}`;}
+function nowMin(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o=Object.fromEntries(p.map(x=>[x.type,x.value]));return(+o.hour%24)*60+(+o.minute);}
+function hm2min(h){const[a,b]=h.split(':').map(Number);return a*60+b;}
+function render(){
+  if(!ST||!ST.ok)return;const P=ST.pontualidade;
+  $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga do Michel 🎉':'');
+  $('#modo').textContent=ST.modo==='katzer'?'🏢 Katzer':'🏠 Casa';
+  const pe=$('#pct');pe.textContent=(P?P.pct:100)+'%';pe.className='pct '+(P&&P.pct>=90?'hi':(P&&P.pct>=70?'mid':'lo'));
+  const sal=P?P.saldoMin:0;$('#saldo').textContent=sal>0?`saldo −${sal}′ (atrasado)`:(sal<0?`saldo +${-sal}′ (adiantado)`:'no ritmo');
+  const box=$('#rows');box.innerHTML='';
+  P.linhas.forEach(l=>{
+    const el=document.createElement('div');
+    const cls=l.feito?(l.difMin>0?'late':'ok'):(l.estado==='pendente'?'late':'wait');
+    el.className='row '+cls;
+    let tag='';
+    if(l.feito)tag=l.difMin>0?`<span class="tag late">atrasou ${l.difMin}′</span>`:(l.difMin<0?`<span class="tag ok">+${-l.difMin}′ 💚</span>`:`<span class="tag ok">no horário</span>`);
+    else if(l.estado==='pendente')tag=`<span class="tag late atraso" data-prev="${l.previsto}">atrasando…</span>`;
+    else tag=`<span class="tag" style="color:var(--sub)">aguardando</span>`;
+    el.innerHTML=`<div class="ic ${cls==='ok'?'ok':(cls==='late'?'late':'wait')}">${l.feito?'✓':(l.estado==='pendente'?'!':'·')}</div>
+      <div class="nm"><b>${l.nome}</b><small>previsto ${l.previsto}${l.feito?' · feito '+l.hora:''}${l.nota?' · 📝 '+l.nota:''}</small></div>${tag}`;
+    box.appendChild(el);
+  });
+  const ob=ST.obs||[];if(ob.length){$('#obsbox').style.display='';const ol=$('#obsList');ol.innerHTML='';ob.forEach(o=>{const e=document.createElement('div');e.className='obsentry';e.innerHTML=`<span class="who">${o.quem}</span><b>${o.nome}</b> — ${o.inicio}${o.duracao?' · '+o.duracao+' min':''}`;ol.appendChild(e);});}else{$('#obsbox').style.display='none';}
+  startTick();
+}
+function startTick(){if(tick)clearInterval(tick);const upd=()=>{document.querySelectorAll('.atraso').forEach(s=>{const d=nowMin()-hm2min(s.dataset.prev);if(d>0)s.textContent='atrasando '+Math.floor(d)+' min';});};upd();tick=setInterval(upd,10000);}
+load();setInterval(load,15000);
+</script>
+</body>
+</html>

@@ -49,6 +49,9 @@ jobs:
       - name: Netlify CLI
         run: npm i -g netlify-cli@17
 
+      - name: Instala deps das funções (@netlify/blobs)
+        run: npm install --no-audit --no-fund
+
       - name: Garante o site (cria se ainda não existir)
         id: site
         run: |

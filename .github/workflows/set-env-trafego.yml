@@ -1,0 +1,62 @@
+name: 🔐 Seta env vars no site do Tráfego (Z-API + telefones)
+
+# Lê os segredos do repo e grava como Environment variables no site Netlify,
+# pra as funções (registrar/estado) conseguirem mandar WhatsApp. Valores mascarados.
+on:
+  workflow_dispatch:
+    inputs:
+      site_name:
+        description: "Nome do site no Netlify"
+        default: "rotina-produtiva-michel"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netlify-trafego
+  cancel-in-progress: false
+
+jobs:
+  setenv:
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      SITE_NAME: ${{ github.event.inputs.site_name || 'rotina-produtiva-michel' }}
+      ZAPI_INSTANCE: ${{ secrets.ZAPI_INSTANCE }}
+      ZAPI_TOKEN: ${{ secrets.ZAPI_TOKEN }}
+      ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
+      WHATSAPP_CEO: ${{ secrets.WHATSAPP_CEO }}
+      WHATSAPP_MICHEL: ${{ secrets.WHATSAPP_MICHEL }}
+      WHATSAPP_CAROL: ${{ secrets.WHATSAPP_CAROL }}
+    steps:
+      - name: Confere token
+        run: '[ -n "$NETLIFY_AUTH_TOKEN" ] || { echo "::error::Falta NETLIFY_AUTH_TOKEN"; exit 1; }'
+
+      - name: Netlify CLI
+        run: npm i -g netlify-cli@17
+
+      - name: Resolve o site
+        id: site
+        run: |
+          set -euo pipefail
+          ID=$(netlify api listSites | jq -r --arg n "$SITE_NAME" '.[] | select((.name==$n) or ((.ssl_url//"")|contains($n))) | .id' | head -1)
+          [ -n "$ID" ] || { echo "::error::não achei o site $SITE_NAME"; exit 1; }
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Grava as env vars (mascaradas)
+        env:
+          NETLIFY_SITE_ID: ${{ steps.site.outputs.id }}
+        run: |
+          set -euo pipefail
+          set_if() {
+            local K="$1" V="$2"
+            if [ -n "$V" ]; then echo "::add-mask::$V"; netlify env:set "$K" "$V" --force >/dev/null && echo "· $K ✔"; else echo "· $K (vazio, pulado)"; fi
+          }
+          set_if ZAPI_INSTANCE "$ZAPI_INSTANCE"
+          set_if ZAPI_TOKEN "$ZAPI_TOKEN"
+          set_if ZAPI_CLIENT_TOKEN "$ZAPI_CLIENT_TOKEN"
+          set_if WHATSAPP_CEO "$WHATSAPP_CEO"
+          set_if WHATSAPP_MICHEL "$WHATSAPP_MICHEL"
+          set_if WHATSAPP_CAROL "$WHATSAPP_CAROL"
+          echo "Env vars gravadas. Rode o deploy pra publicar com elas."

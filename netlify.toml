@@ -2,9 +2,12 @@
 [build]
   publish = "public"
   functions = "netlify/functions"
+  command = "npm install"
 
 [functions]
   node_bundler = "esbuild"
+  # Netlify injeta o @netlify/blobs no runtime; marca como externo pro bundle não duplicar.
+  external_node_modules = ["@netlify/blobs"]
 
 # Health check.
 [[redirects]]
@@ -13,8 +16,24 @@
   status = 200
   force = true
 
-# Atalho amigável pro painel do Michel.
+# API dos botões do Michel.
+[[redirects]]
+  from = "/api/registrar"
+  to = "/.netlify/functions/registrar"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/estado"
+  to = "/.netlify/functions/estado"
+  status = 200
+  force = true
+
+# Atalhos amigáveis.
 [[redirects]]
   from = "/painel-michel"
   to = "/painel-michel.html"
+  status = 200
+[[redirects]]
+  from = "/painel-gestor"
+  to = "/painel-ceo.html"
   status = 200
