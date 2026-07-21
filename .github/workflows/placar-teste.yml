@@ -55,12 +55,12 @@ jobs:
           [ -z "$META_TOKEN" ] && miss="$miss META_SYSTEM_TOKEN"
           [ -z "$ZAPI_INSTANCE" ] && miss="$miss ZAPI_INSTANCE"
           [ -z "$ZAPI_TOKEN" ] && miss="$miss ZAPI_TOKEN"
-          [ -z "$ZAPI_CLIENT_TOKEN" ] && miss="$miss ZAPI_CLIENT_TOKEN"
           if [ -n "$miss" ]; then
             echo "::error::Faltam secrets no repo:${miss}. Crie em Settings → Secrets and variables → Actions."
             exit 1
           fi
-          echo "Credenciais presentes ✅"
+          [ -z "$ZAPI_CLIENT_TOKEN" ] && echo "Aviso: sem ZAPI_CLIENT_TOKEN — vou tentar sem ele (se a Z-API exigir, aí criamos)."
+          echo "Credenciais mínimas presentes ✅"
 
       - name: Puxa a Meta e monta o Placar
         run: |
@@ -100,9 +100,11 @@ jobs:
             w="$(echo "$w" | tr -d '[:space:]')"
             PHONE="${MAP[$w]:-}"
             if [ -z "$PHONE" ]; then echo "· $w: sem número cadastrado — pulei"; continue; fi
+            CT=()
+            [ -n "$ZAPI_CLIENT_TOKEN" ] && CT=(-H "Client-Token: ${ZAPI_CLIENT_TOKEN}")
             CODE=$(curl -sS -o /tmp/z.json -w "%{http_code}" -X POST \
               "https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}/send-text" \
-              -H "Client-Token: ${ZAPI_CLIENT_TOKEN}" \
+              "${CT[@]}" \
               -H "Content-Type: application/json" \
               --data "$(jq -nc --arg p "$PHONE" --arg m "$MSG" '{phone:$p, message:$m}')" || true)
             if echo "$CODE" | grep -q '^20'; then
