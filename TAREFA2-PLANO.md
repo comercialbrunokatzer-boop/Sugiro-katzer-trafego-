@@ -57,6 +57,14 @@ Manhã do Michel** (`MICHEL_ROTINA_v7`).
 - **Janela:** lista é **por dia**; reseta a cada manhã. Tarefa pode ser marcada depois (fica "atrasada"
   mas registra). Regra de fechamento (ex.: trava à meia-noite) é opcional — a definir.
 
+## Horários (definidos pelo CEO)
+- **07:55** — card da Rotina chega no **WhatsApp do Michel** (abre o dia; 1ª tarefa é 08:00).
+- **Ao vivo (event-driven)** — cada "Feito" pinga o CEO no **WhatsApp na hora**, com o horário da tarefa.
+- **13:30** — **e-mail consolidado** pro CEO (linha do tempo completa da manhã + ritmo/pontualidade).
+- **Painel (link):** sempre atualizado, abre a qualquer momento.
+- Placar de **campanhas** (mídia): disparo **08:00** (ajustável).
+- Ritmo/pontualidade do Michel (previsto × feito, e padrão semanal de atraso/adianto) entra no e-mail das 13:30.
+
 ## Secrets já no repo (prontos)
 `META_SYSTEM_TOKEN` · `ZAPI_INSTANCE` · `ZAPI_TOKEN` · `ZAPI_CLIENT_TOKEN` ·
 `WHATSAPP_MICHEL` · `WHATSAPP_CEO` · `WHATSAPP_CAROL` · `EMAIL_CEO`
