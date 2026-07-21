@@ -65,7 +65,8 @@ Michel trabalha 3x/sem em **Piçarras (sede)** e 3x/sem em **Joinville (casa)**.
 - **Pontualidade justa:** o previsto do dia é o do modo escolhido (não marca atraso por ter começado 08:45).
 - **E-mail 13:30** cobre os dois (Katzer fecha 12:45) e anota se o dia foi 🏠 ou 🏢.
 - (Simples: é offset de +45 min, não é rotina nova.)
-- **Título do card e do relatório:** mostra sempre a **data + dia da semana** (ex.: "Hoje · 21/07/2026 · terça-feira"), preenchido automático a cada dia.
+- **Título do card e do relatório:** formato padrão **"Terça-feira, 21 de julho de 2026"** (dia da semana → data → mês → ano), automático a cada dia.
+- **Quando dispara:** **segunda a sábado** nos mesmos horários. **Domingo NÃO dispara** (folga do Michel).
 
 ## Horários (definidos pelo CEO)
 - **07:55** — card da Rotina chega no **WhatsApp do Michel** (abre o dia; 1ª tarefa é 08:00).
