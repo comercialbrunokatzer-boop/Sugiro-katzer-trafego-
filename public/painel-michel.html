@@ -72,11 +72,19 @@
   <div id="tasks"></div>
 
   <div class="obsbox">
-    <h3>🔔 Obs — Interrupção</h3>
-    <p>Só quando o Bruno ou a Carol pedirem algo em cima da hora. A rotina vem primeiro.</p>
+    <h3>🔔 Obs — Imprevisto</h3>
+    <p>Registra o que te tirou da rotina (pedido do Bruno/Carol, Bitrix fora, discadora travada…). Serve pra justificar o tempo. A rotina vem primeiro.</p>
     <div class="row">
-      <select id="obsQuem"><option value="">Quem pediu?</option><option>Bruno</option><option>Carol</option></select>
-      <input class="nm" id="obsNome" placeholder="O que foi pedido (ex.: ligar cliente X)">
+      <select id="obsQuem">
+        <option value="">Qual imprevisto?</option>
+        <option value="Bruno">🙋 Bruno pediu algo</option>
+        <option value="Carol">🙋 Carol pediu algo</option>
+        <option value="Bitrix">🖥️ Bitrix (fora / lento)</option>
+        <option value="Discadora">☎️ Discadora (travou / caiu)</option>
+        <option value="Sistema">🌐 Internet / Sistema</option>
+        <option value="Outro">⚠️ Outro imprevisto</option>
+      </select>
+      <input class="nm" id="obsNome" placeholder="O que foi (ex.: Bitrix caiu, ligar cliente X…)">
       <input id="obsDur" type="number" min="1" placeholder="min" style="width:70px">
       <button class="btn" id="obsBtn">Registrar</button>
     </div>
@@ -133,8 +141,8 @@ document.addEventListener('click',async(e)=>{
 document.querySelectorAll('#modo button').forEach(b=>b.addEventListener('click',async()=>{const r=await api({acao:'modo',modo:b.dataset.modo});if(r.ok)load();}));
 $('#obsBtn').addEventListener('click',async()=>{
   const quem=$('#obsQuem').value,nome=$('#obsNome').value.trim(),duracao=$('#obsDur').value;
-  if(!quem){toast('Diz quem pediu (Bruno/Carol)');return;}
-  if(!nome){toast('Escreve o que foi pedido');return;}
+  if(!quem){toast('Escolhe o tipo de imprevisto');return;}
+  if(!nome){toast('Escreve o que foi');return;}
   const r=await api({acao:'obs',quem,nome,duracao});
   if(r.ok){$('#obsNome').value='';$('#obsDur').value='';toast('🔔 Obs registrada');load();}
 });

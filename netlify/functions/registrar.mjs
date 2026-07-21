@@ -63,12 +63,17 @@ export async function handler(event) {
   }
 
   if (acao === 'obs') {
-    const quem = ['Bruno', 'Carol'].includes(body.quem) ? body.quem : null;
-    if (!quem) return json(400, { ok: false, erro: 'obs exige quem = Bruno ou Carol' });
+    // Tipos de imprevisto que justificam o tempo (pedido de terceiro OU problema técnico).
+    const TIPOS = ['Bruno', 'Carol', 'Bitrix', 'Discadora', 'Sistema', 'Outro'];
+    const quem = TIPOS.includes(body.quem) ? body.quem : null;
+    if (!quem) return json(400, { ok: false, erro: `obs exige quem em: ${TIPOS.join(', ')}` });
     const item = { quem, nome: (body.nome || '').toString().slice(0, 200), inicio: now.hm, duracao: Number(body.duracao) || null };
     estado.obs.push(item);
     await salvaEstado(estado);
-    await enviaWhats(ceo, `🔔 Obs (${quem} pediu): *${item.nome}* — início ${item.inicio}${item.duracao ? ` · ${item.duracao} min` : ''}`);
+    // Pedido de pessoa = "pediu"; problema técnico = "imprevisto".
+    const pediu = ['Bruno', 'Carol'].includes(quem);
+    const cabec = pediu ? `🔔 Obs (${quem} pediu)` : `⚠️ Imprevisto (${quem})`;
+    await enviaWhats(ceo, `${cabec}: *${item.nome}* — início ${item.inicio}${item.duracao ? ` · ${item.duracao} min` : ''}`);
     return json(200, { ok: true, obs: item });
   }
 
