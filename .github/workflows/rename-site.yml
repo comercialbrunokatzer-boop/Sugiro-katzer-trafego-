@@ -1,0 +1,59 @@
+name: 🤖 Renomeia o site do Tráfego (Netlify)
+
+# Renomeia o subdomínio .netlify.app pra um nome limpo. Idempotente.
+# Tenta os candidatos em ordem; o 1º livre vence.
+on:
+  workflow_dispatch:
+    inputs:
+      current_site:
+        description: "Nome/slug atual do site (pra localizar)"
+        default: "thriving-boba-1a25d5"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netlify-trafego
+  cancel-in-progress: false
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      CURRENT_SITE: ${{ github.event.inputs.current_site || 'thriving-boba-1a25d5' }}
+      CANDIDATOS: "rotina-produtiva-michel rotina-produtiva-michel-katzer michel-rotina-produtiva rotina-michel-katzer"
+    steps:
+      - name: Confere token
+        run: '[ -n "$NETLIFY_AUTH_TOKEN" ] || { echo "::error::Falta NETLIFY_AUTH_TOKEN"; exit 1; }'
+
+      - name: Netlify CLI
+        run: npm i -g netlify-cli@17
+
+      - name: Renomeia (tenta os candidatos até um pegar)
+        run: |
+          set -euo pipefail
+          SITES=$(netlify api listSites)
+          SID=$(echo "$SITES" | jq -r --arg n "$CURRENT_SITE" '.[] | select((.name==$n) or ((.name//"")|contains($n)) or ((.ssl_url//"")|contains($n))) | .id' | head -1)
+          if [ -z "$SID" ]; then echo "::error::Não achei o site atual ($CURRENT_SITE)."; exit 1; fi
+          echo "Site id: $SID"
+          for NOME in $CANDIDATOS; do
+            echo "Tentando renomear para '$NOME'…"
+            if netlify api updateSite --data "{\"site_id\":\"$SID\",\"body\":{\"name\":\"$NOME\"}}" >/tmp/out 2>/tmp/err; then
+              NEW=$(jq -r '.name' /tmp/out 2>/dev/null || echo "")
+              if [ "$NEW" = "$NOME" ]; then
+                echo "✅ Renomeado. Novo endereço: https://${NOME}.netlify.app"
+                {
+                  echo "## 🤖 Site renomeado"
+                  echo "**Novo endereço:** https://${NOME}.netlify.app"
+                  echo "- Painel: https://${NOME}.netlify.app/painel-michel"
+                  echo "- Health: https://${NOME}.netlify.app/health"
+                } >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+            fi
+            echo "   '$NOME' indisponível, tentando o próximo…"
+          done
+          echo "::warning::Nenhum candidato ficou livre — o site segue com o nome atual."
+          exit 0
