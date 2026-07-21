@@ -1,0 +1,57 @@
+name: 🔎 Teste de fumaça — token da Meta
+
+# TAREFA 1 do ARRANQUE: prova que o secret META_SYSTEM_TOKEN lê a conta de anúncios
+# da Meta (Ads Insights, últimos 7 dias). NÃO imprime o token. Em falha, mostra só
+# o error.message da Meta. Rodar pela aba Actions → "Run workflow".
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      META_TOKEN: ${{ secrets.META_SYSTEM_TOKEN }}
+      AD_ACCOUNT: act_1150648749960943   # conta do Michel (config, não é senha)
+      GRAPH: https://graph.facebook.com/v20.0
+    steps:
+      - name: Mascara o token nos logs
+        run: echo "::add-mask::${META_TOKEN}"
+
+      - name: Confere o secret
+        run: |
+          if [ -z "${META_TOKEN}" ]; then
+            echo "::error::Falta o secret META_SYSTEM_TOKEN neste repositório (Settings → Secrets and variables → Actions → New repository secret)."
+            exit 1
+          fi
+          echo "Secret META_SYSTEM_TOKEN presente ✅"
+
+      - name: Lê as campanhas dos últimos 7 dias (Meta Ads Insights)
+        run: |
+          set -euo pipefail
+          echo "== GET ${AD_ACCOUNT}/insights · level=campaign · date_preset=last_7d =="
+          HTTP=$(curl -sS -G "${GRAPH}/${AD_ACCOUNT}/insights" \
+            --data-urlencode "level=campaign" \
+            --data-urlencode "date_preset=last_7d" \
+            --data-urlencode "fields=campaign_name,spend,results,cost_per_result" \
+            --data-urlencode "access_token=${META_TOKEN}" \
+            -o /tmp/meta.json -w "%{http_code}" || true)
+          echo "[HTTP ${HTTP}]"
+
+          if jq -e '.error' /tmp/meta.json >/dev/null 2>&1; then
+            MSG=$(jq -r '.error.message' /tmp/meta.json)
+            echo "::error::A Meta recusou: ${MSG}"
+            exit 2
+          fi
+
+          N=$(jq '.data | length' /tmp/meta.json)
+          echo "✅ TOKEN OK — a Meta respondeu. Campanhas retornadas: ${N}"
+          if [ "${N}" -gt 0 ]; then
+            echo "---- campanhas (nome · gasto 7d · resultados) ----"
+            jq -r '.data[] | "• \(.campaign_name) — gasto: R$ \(.spend // "0") · resultados: \(.results[0].values[0].value // "s/ dado")"' /tmp/meta.json
+          else
+            echo "(Nenhuma campanha com gasto nos últimos 7 dias — mas o token LÊ a conta, que é o que o teste precisa provar.)"
+          fi
