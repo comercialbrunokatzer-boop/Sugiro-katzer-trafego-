@@ -35,3 +35,8 @@ jobs:
           probe "/painel-michel" GET
           probe "/manifest.webmanifest" GET
           probe "/icon-katzer.png" GET
+          probe "/painel-gestor" GET
+          probe "/icon-gestor.png" GET
+          echo "### Trava do gestor (sem senha deve dar 401)"
+          probe "/api/estado?ceo=1" GET
+          probe "/api/estado?ceo=1&k=errada" GET

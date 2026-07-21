@@ -49,6 +49,17 @@
 </style>
 </head>
 <body>
+<div id="lock" style="display:none;position:fixed;inset:0;z-index:99;background:#0b1622;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">
+  <div style="letter-spacing:.34em;font-size:13px;color:#d4ac60;text-transform:uppercase;font-family:Georgia,serif">Katzer</div>
+  <div style="font-size:44px;margin:14px 0 4px">🔒</div>
+  <div style="color:#e8edeb;font-size:1.1rem;font-weight:700;margin-bottom:4px">Painel do Gestor</div>
+  <div style="color:#9fb1b3;font-size:.85rem;margin-bottom:18px">Digite sua senha pra ver o desempenho (%).</div>
+  <input id="lockPw" type="password" placeholder="senha" autocomplete="current-password"
+    style="width:min(280px,80vw);border:1px solid #263742;background:#14232d;color:#e8edeb;border-radius:10px;padding:12px 14px;font-size:1rem;text-align:center;font-family:inherit">
+  <div id="lockErr" style="color:#e0765c;font-size:.8rem;height:18px;margin-top:8px"></div>
+  <button id="lockBtn" style="margin-top:6px;border:0;background:linear-gradient(150deg,#1f6f66,#134f49);color:#fff;font-weight:800;border-radius:10px;padding:12px 26px;font-size:1rem;font-family:inherit;cursor:pointer">Entrar</button>
+  <label style="color:#9fb1b3;font-size:.78rem;margin-top:14px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="lockSave" checked> Manter conectado neste aparelho</label>
+</div>
 <div class="wrap">
   <p class="eyebrow">Katzer OS · Painel do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
   <h1>Rotina do Michel</h1>
@@ -73,7 +84,32 @@
 
 <script>
 const $=(s)=>document.querySelector(s);let ST=null,tick=null;
-async function load(){try{const r=await fetch('/api/estado?ceo=1');ST=await r.json();render();}catch(e){}}
+function getKey(){try{return localStorage.getItem('gk')||sessionStorage.getItem('gk')||'';}catch(e){return '';}}
+function showLock(msg){const l=$('#lock');l.style.display='flex';if(msg)$('#lockErr').textContent=msg;$('#lockPw').focus();}
+function hideLock(){$('#lock').style.display='none';}
+async function load(){
+  const key=getKey();
+  if(!key){showLock('');return;}
+  try{
+    const r=await fetch('/api/estado?ceo=1',{headers:{'x-gestor-key':key}});
+    if(r.status===401){try{localStorage.removeItem('gk');sessionStorage.removeItem('gk');}catch(e){}showLock('Senha incorreta. Tente de novo.');return;}
+    ST=await r.json();hideLock();render();
+  }catch(e){}
+}
+async function tentarSenha(){
+  const pw=$('#lockPw').value;if(!pw){$('#lockErr').textContent='Digite a senha.';return;}
+  try{
+    const r=await fetch('/api/estado?ceo=1',{headers:{'x-gestor-key':pw}});
+    if(r.status===401){$('#lockErr').textContent='Senha incorreta.';$('#lockPw').select();return;}
+    const store=$('#lockSave').checked?localStorage:sessionStorage;
+    try{store.setItem('gk',pw);}catch(e){}
+    $('#lockPw').value='';$('#lockErr').textContent='';hideLock();load();
+  }catch(e){$('#lockErr').textContent='Sem conexão, tente de novo.';}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  $('#lockBtn').addEventListener('click',tentarSenha);
+  $('#lockPw').addEventListener('keydown',e=>{if(e.key==='Enter')tentarSenha();});
+});
 function diaSemana(d){const[y,m,dd]=d.split('-').map(Number);return['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][new Date(Date.UTC(y,m-1,dd)).getUTCDay()];}
 function fmtData(d){const[y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return`${diaSemana(d)}, ${+dd} de ${mes} de ${y}`;}
 function nowMin(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o=Object.fromEntries(p.map(x=>[x.type,x.value]));return(+o.hour%24)*60+(+o.minute);}
