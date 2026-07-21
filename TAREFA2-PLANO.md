@@ -57,6 +57,15 @@ Manhã do Michel** (`MICHEL_ROTINA_v7`).
 - **Janela:** lista é **por dia**; reseta a cada manhã. Tarefa pode ser marcada depois (fica "atrasada"
   mas registra). Regra de fechamento (ex.: trava à meia-noite) é opcional — a definir.
 
+## Modo Casa / Katzer (a rotina tem 2 inícios)
+Michel trabalha 3x/sem em **Piçarras (sede)** e 3x/sem em **Joinville (casa)**. Quebra de horário:
+- **🏠 Casa:** começa **08:00** (a agenda que ele já mandou).
+- **🏢 Katzer:** chega 08:30–09:00 → começa **08:45** (tudo **+45 min**; fecha 12:45 em vez de 12:00).
+- **Como funciona:** no topo do card, 1 toque escolhe **Casa** ou **Katzer** → toda a agenda se desloca sozinha.
+- **Pontualidade justa:** o previsto do dia é o do modo escolhido (não marca atraso por ter começado 08:45).
+- **E-mail 13:30** cobre os dois (Katzer fecha 12:45) e anota se o dia foi 🏠 ou 🏢.
+- (Simples: é offset de +45 min, não é rotina nova.)
+
 ## Horários (definidos pelo CEO)
 - **07:55** — card da Rotina chega no **WhatsApp do Michel** (abre o dia; 1ª tarefa é 08:00).
 - **Ao vivo (event-driven)** — cada "Feito" pinga o CEO no **WhatsApp na hora**, com o horário da tarefa.
