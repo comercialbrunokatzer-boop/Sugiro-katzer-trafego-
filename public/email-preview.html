@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Prévia do e-mail — Rotina Produtiva do Michel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --void:#08080a;            /* fundo da página (fora do e-mail) */
+    --paper:#0e0e11;           /* corpo do e-mail (preto Katzer) */
+    --panel:#16151b;           /* cartões internos */
+    --panel-2:#1c1a21;
+    --hair:#2a2732;            /* hairline neutro (viés dourado) */
+    --gold:#c9a24a;            /* dourado Katzer */
+    --gold-bright:#e0be6e;
+    --gold-deep:#8a6c2e;
+    --cream:#ece5d6;           /* texto principal sobre preto */
+    --sub:#9a9283;             /* secundário (cinza de viés quente) */
+    --ok:#74b892;              /* adiantou (semântico, não é o acento) */
+    --late:#d67a52;            /* atrasou */
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:
+      radial-gradient(120% 80% at 50% -10%, #14120c 0%, var(--void) 60%);
+    color:var(--cream);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;padding:clamp(14px,4vw,40px)}
+  .prevtag{max-width:600px;margin:0 auto 12px;color:var(--sub);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+  .prevtag .d{width:6px;height:6px;border-radius:50%;background:var(--gold)}
+
+  /* Envelope do e-mail */
+  .mail{max-width:600px;margin:0 auto;background:var(--paper);border:1px solid var(--hair);border-radius:14px;overflow:hidden;
+        box-shadow:0 1px 0 rgba(224,190,110,.06) inset, 0 30px 70px rgba(0,0,0,.55)}
+
+  /* Cabeçalho de e-mail (De / Assunto) */
+  .head{padding:16px 22px;border-bottom:1px solid var(--hair);display:flex;gap:13px;align-items:center}
+  .seal{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;
+        background:radial-gradient(circle at 32% 28%, #23201a, #0c0b09);border:1px solid var(--gold-deep);
+        color:var(--gold);font-family:var(--serif);font-weight:700;font-size:1.15rem}
+  .frm{min-width:0;flex:1}
+  .frm .de{font-weight:700;font-size:.9rem;color:var(--cream)}
+  .frm .de span{color:var(--sub);font-weight:400}
+  .frm .as{font-size:.78rem;color:var(--sub);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .head .hora{font-size:.72rem;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  /* Marca + data */
+  .brandrow{padding:22px 22px 4px;text-align:center}
+  .brand{font-family:var(--serif);letter-spacing:.34em;font-size:.82rem;color:var(--gold);text-transform:uppercase;font-weight:600;margin-left:.34em}
+  .rule{height:1px;margin:12px auto 0;max-width:120px;background:linear-gradient(90deg,transparent,var(--gold-deep),transparent)}
+  .eyebrow{margin:16px 0 0;text-align:center;color:var(--sub);font-size:.7rem;letter-spacing:.22em;text-transform:uppercase}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.35rem,4.6vw,1.7rem);text-align:center;margin:.35rem 0 0;color:var(--cream);text-wrap:balance;letter-spacing:.01em}
+  .modo{display:flex;justify-content:center;margin-top:12px}
+  .modo b{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--gold);border:1px solid var(--gold-deep);border-radius:999px;padding:.28rem .8rem;background:rgba(201,162,74,.06)}
+
+  /* HERO — o % grande */
+  .hero{margin:20px 22px 6px;padding:22px;border:1px solid var(--hair);border-radius:12px;background:
+      linear-gradient(180deg, rgba(201,162,74,.05), rgba(201,162,74,0) 70%), var(--panel);
+      display:flex;align-items:center;gap:20px}
+  .pct{font-family:var(--serif);font-weight:600;font-size:clamp(3.1rem,13vw,4.2rem);line-height:.9;color:var(--gold-bright);
+       letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .pct small{font-size:.32em;color:var(--gold);vertical-align:.9em;margin-left:.05em}
+  .herometa{flex:1;min-width:0}
+  .herometa .t{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sub)}
+  .herometa .big{font-weight:700;font-size:1.02rem;margin-top:2px;color:var(--cream)}
+  .herometa .s{font-size:.82rem;color:var(--sub);margin-top:5px;font-variant-numeric:tabular-nums}
+  .herometa .s b{color:var(--late)} .herometa .s i{color:var(--ok);font-style:normal}
+
+  .sechead{margin:22px 22px 0;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);
+           display:flex;align-items:center;gap:.6rem}
+  .sechead::after{content:"";flex:1;height:1px;background:var(--hair)}
+
+  /* Linha do tempo — profundidade tarefa a tarefa */
+  .tl{margin:12px 22px 0;border:1px solid var(--hair);border-radius:12px;overflow:hidden;background:var(--panel)}
+  .row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:11px 15px;border-bottom:1px solid var(--hair)}
+  .row:last-child{border-bottom:0}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--gold-deep)}
+  .dot.late{background:var(--late)} .dot.ok{background:var(--ok)}
+  .nm{min-width:0}
+  .nm b{font-weight:600;font-size:.92rem;color:var(--cream)}
+  .nm small{display:block;color:var(--sub);font-size:.74rem;font-variant-numeric:tabular-nums;margin-top:1px}
+  .tag{font-family:var(--mono);font-size:.78rem;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--sub)}
+  .tag.late{color:var(--late)} .tag.ok{color:var(--ok)} .tag.zero{color:var(--gold)}
+  .tag em{font-style:normal;color:var(--sub);font-size:.68rem}
+
+  /* Obs */
+  .obs{margin:16px 22px 0;border:1px solid var(--gold-deep);border-radius:12px;background:rgba(201,162,74,.05);padding:13px 15px}
+  .obs .oh{display:flex;align-items:center;gap:.5rem;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .obs .oi{margin-top:8px;font-size:.86rem;color:var(--cream)}
+  .obs .oi small{display:block;color:var(--sub);font-size:.76rem;margin-top:2px;font-variant-numeric:tabular-nums}
+  .obs .who{font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.05em;color:var(--gold);border:1px solid var(--gold-deep);border-radius:999px;padding:.12rem .5rem;margin-right:.4rem}
+
+  /* Fecho */
+  .close{margin:18px 22px 0;padding:15px;border-top:1px solid var(--hair);font-size:.82rem;color:var(--sub)}
+  .close b{color:var(--cream)}
+  .foot{margin-top:14px;padding:16px 22px 24px;text-align:center;border-top:1px solid var(--hair);color:var(--sub);font-size:.72rem;line-height:1.6}
+  .foot .kg{color:var(--gold);letter-spacing:.28em;font-family:var(--serif)}
+
+  .note{max-width:600px;margin:14px auto 0;color:var(--sub);font-size:.76rem;text-align:center;line-height:1.6}
+</style>
+
+<div class="prevtag"><span class="d"></span>Prévia — como o e-mail chega na sua caixa</div>
+
+<div class="mail">
+
+  <!-- cabeçalho de e-mail -->
+  <div class="head">
+    <div class="seal">K</div>
+    <div class="frm">
+      <div class="de">Rotina Produtiva · Michel <span>&lt;placar@katzer&gt;</span></div>
+      <div class="as">Assunto: Relatório da manhã · Michel — 88% · 🏢 Katzer</div>
+    </div>
+    <div class="hora">14:30</div>
+  </div>
+
+  <!-- marca + título -->
+  <div class="brandrow">
+    <div class="brand">Katzer</div>
+    <div class="rule"></div>
+    <p class="eyebrow">Relatório da Rotina</p>
+    <h1>Terça-feira, 21 de julho de 2026</h1>
+    <div class="modo"><b>🏢 Katzer · começou 08:45 · fechou 12:50</b></div>
+  </div>
+
+  <!-- HERO: o % grande + o porquê -->
+  <div class="hero">
+    <div class="pct">88<small>%</small></div>
+    <div class="herometa">
+      <div class="t">Meta do dia</div>
+      <div class="big">Manhã cumprida, com 1 atraso real</div>
+      <div class="s">Saldo <b>−12′</b> · 5 no horário · <i>1 adiantada</i> · <b>2 atrasadas</b><br>
+        (100% − 12 min líquidos de atraso)</div>
+    </div>
+  </div>
+
+  <!-- LINHA DO TEMPO -->
+  <div class="sechead">Linha do tempo · previsto → feito</div>
+  <div class="tl">
+    <div class="row"><span class="dot ok"></span>
+      <div class="nm"><b>Reuniões</b><small>previsto 08:45 · feito 08:44</small></div>
+      <div class="tag ok">+1′ 💚</div></div>
+
+    <div class="row"><span class="dot"></span>
+      <div class="nm"><b>Agendamentos / Atend.</b><small>previsto 08:55 · feito 08:57</small></div>
+      <div class="tag">−2′</div></div>
+
+    <div class="row"><span class="dot"></span>
+      <div class="nm"><b>Pendências</b><small>previsto 09:05 · feito 09:05</small></div>
+      <div class="tag zero">no horário</div></div>
+
+    <div class="row"><span class="dot ok"></span>
+      <div class="nm"><b>Instagram</b><small>previsto 09:20 · feito 09:18</small></div>
+      <div class="tag ok">+2′ 💚</div></div>
+
+    <div class="row"><span class="dot late"></span>
+      <div class="nm"><b>Campanhas</b><small>previsto 09:40 · feito 09:52</small></div>
+      <div class="tag late">−12′</div></div>
+
+    <div class="row"><span class="dot ok"></span>
+      <div class="nm"><b>Discadora</b><small>previsto 10:00 · feito 09:58</small></div>
+      <div class="tag ok">+2′ 💚</div></div>
+
+    <div class="row"><span class="dot late"></span>
+      <div class="nm"><b>Garimpo</b><small>previsto 10:20 · feito 10:38</small></div>
+      <div class="tag late">−18′ <em>(−20′ Obs)</em></div></div>
+
+    <div class="row"><span class="dot"></span>
+      <div class="nm"><b>Lista do Auditor</b><small>previsto 12:45 · feito 12:50</small></div>
+      <div class="tag">−5′</div></div>
+  </div>
+
+  <!-- OBS -->
+  <div class="obs">
+    <div class="oh">🔔 Obs — interrupção (você pediu)</div>
+    <div class="oi"><span class="who">Bruno</span>Ligar cliente Rodrigues (cobertura)
+      <small>início 10:20 · durou 20 min · descontado do atraso do Garimpo → atraso real ~0′</small></div>
+  </div>
+
+  <!-- FECHO -->
+  <div class="close">
+    <b>Leitura da manhã:</b> ritmo bom. O único atraso que conta é <b>Campanhas (−12′)</b> —
+    o Garimpo atrasou no papel, mas foi a <b>sua</b> demanda das 10:20 que comeu o tempo (por isso não pesa contra ele).
+    Padrão da semana: Campanhas vem atrasando 3 dias seguidos — vale um olhar.
+  </div>
+
+  <div class="foot">
+    <div class="kg">KATZER · OS</div>
+    <div style="margin-top:8px">Enviado 14:30 (dias 🏢 Katzer) · 13:30 nos dias 🏠 Casa · segunda a sábado.<br>
+    O <b style="color:var(--cream)">%</b> e o saldo são do gestor — o Michel só vê o próprio atraso.</div>
+  </div>
+
+</div>
+
+<p class="note">Prévia pra aprovar. WhatsApp segue como está (o pingo na hora). Cor: preto + dourado Katzer.</p>
+
+</body>
+</html>

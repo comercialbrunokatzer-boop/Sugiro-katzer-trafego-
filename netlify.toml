@@ -42,3 +42,11 @@
   from = "/painel-gestor"
   to = "/painel-ceo.html"
   status = 200
+[[redirects]]
+  from = "/guia"
+  to = "/guia.html"
+  status = 200
+[[redirects]]
+  from = "/email-preview"
+  to = "/email-preview.html"
+  status = 200

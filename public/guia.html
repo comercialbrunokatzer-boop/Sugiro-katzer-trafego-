@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Katzer OS — as IAs e o passo a passo de cada uma</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --void:#08080a; --paper:#0f0e12; --panel:#16151b; --panel2:#1c1a22;
+    --hair:#2a2732; --gold:#c9a24a; --gold-br:#e2c072; --gold-deep:#8a6c2e;
+    --cream:#ece5d6; --sub:#9a9283;
+    --live:#74b892; --live-bg:#122a1f; --homolog:#d9a648; --homolog-bg:#2a2210;
+    --build:#7d7a86; --build-bg:#1c1b20;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(130% 70% at 50% -5%, #15120b 0%, var(--void) 55%);
+    color:var(--cream);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:clamp(20px,5vw,48px)}
+  .kicker{font-family:var(--serif);letter-spacing:.34em;text-transform:uppercase;color:var(--gold);font-size:.8rem;text-align:center;margin:0}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.8rem,6vw,2.8rem);text-align:center;margin:.5rem 0 0;letter-spacing:.01em;text-wrap:balance}
+  .lede{color:var(--sub);text-align:center;max-width:52ch;margin:.7rem auto 0;font-size:1rem}
+  .rule{height:1px;max-width:140px;margin:22px auto 0;background:linear-gradient(90deg,transparent,var(--gold-deep),transparent)}
+
+  .cadeia{margin:30px auto 0;max-width:560px;border:1px solid var(--hair);border-radius:14px;background:var(--panel);padding:16px 18px;font-size:.86rem;color:var(--sub)}
+  .cadeia b{color:var(--cream)} .cadeia .step{display:flex;gap:10px;align-items:baseline;padding:4px 0}
+  .cadeia .n{font-family:var(--mono);color:var(--gold);font-size:.78rem;flex:none;width:1.4em}
+
+  .ia{margin-top:22px;border:1px solid var(--hair);border-radius:16px;background:
+      linear-gradient(180deg, rgba(201,162,74,.045), rgba(201,162,74,0) 40%), var(--paper);
+      overflow:hidden}
+  .ia .top{display:flex;gap:14px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--hair)}
+  .ia .ic{width:46px;height:46px;border-radius:12px;flex:none;display:grid;place-items:center;font-size:1.5rem;
+      background:radial-gradient(circle at 30% 26%,#232019,#0d0c0a);border:1px solid var(--gold-deep)}
+  .ia .ht{flex:1;min-width:0}
+  .ia .ht h2{font-family:var(--serif);font-weight:600;font-size:1.28rem;margin:0;color:var(--cream)}
+  .ia .ht p{margin:2px 0 0;color:var(--sub);font-size:.86rem}
+  .pill{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.3rem .6rem;border-radius:999px;white-space:nowrap;border:1px solid}
+  .pill.live{color:var(--live);background:var(--live-bg);border-color:#245c40}
+  .pill.homolog{color:var(--homolog);background:var(--homolog-bg);border-color:#5c4a1a}
+  .pill.build{color:var(--build);background:var(--build-bg);border-color:#33313a}
+
+  .body{padding:16px 20px 20px}
+  .role{font-size:.92rem;color:var(--cream);margin:0 0 14px}
+  .role b{color:var(--gold-br)}
+  .lbl{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:14px 0 8px;display:flex;align-items:center;gap:.5rem}
+  .lbl::after{content:"";flex:1;height:1px;background:var(--hair)}
+  ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;position:relative;padding:7px 0 7px 30px;font-size:.9rem;border-bottom:1px solid rgba(42,39,50,.6)}
+  ol.steps li:last-child{border-bottom:0}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:6px;
+      background:rgba(201,162,74,.1);border:1px solid var(--gold-deep);color:var(--gold);font-family:var(--mono);font-size:.72rem;
+      display:grid;place-items:center;font-weight:600}
+  ul.plain{margin:0;padding-left:1.1rem} ul.plain li{margin:5px 0;font-size:.9rem}
+  a.link{color:var(--gold-br);text-decoration:none;border-bottom:1px solid var(--gold-deep);word-break:break-all}
+  a.link:hover{color:var(--cream)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--panel2);border:1px solid var(--hair);border-radius:5px;padding:.1em .4em;color:var(--gold-br)}
+
+  .todo{margin-top:12px;border-left:3px solid var(--gold);background:rgba(201,162,74,.06);border-radius:0 10px 10px 0;padding:11px 14px;font-size:.88rem}
+  .todo b{color:var(--gold-br)}
+  .todo.none{border-left-color:#245c40;background:var(--live-bg)}.todo.none b{color:var(--live)}
+
+  .foot{margin-top:34px;text-align:center;color:var(--sub);font-size:.78rem;line-height:1.7}
+  .foot .kg{font-family:var(--serif);letter-spacing:.3em;color:var(--gold)}
+</style>
+
+<div class="wrap">
+  <p class="kicker">Katzer OS</p>
+  <h1>As 4 IAs — e o passo a passo de cada uma</h1>
+  <p class="lede">O que cada uma faz, como se usa, o estado real hoje, e o seu próximo clique. Sem enrolação.</p>
+  <div class="rule"></div>
+
+  <div class="cadeia">
+    <div class="step"><span class="n">↑</span><span><b>Conselheiro (GPT) + Bruno</b> — a cabeça: define as regras.</span></div>
+    <div class="step"><span class="n">≡</span><span><b>Maestro</b> — o barramento: conecta as IAs e guarda o mapa.</span></div>
+    <div class="step"><span class="n">◇</span><span><b>Helena · Secretária · Auditor · Tráfego</b> — as IAs que trabalham.</span></div>
+    <div class="step"><span class="n">↓</span><span><b>Michel + 3 corretores</b> — a execução na ponta.</span></div>
+  </div>
+
+  <!-- HELENA -->
+  <div class="ia">
+    <div class="top">
+      <div class="ic">💬</div>
+      <div class="ht"><h2>Helena</h2><p>SDR de WhatsApp — o primeiro contato com o lead</p></div>
+      <span class="pill live">● No ar</span>
+    </div>
+    <div class="body">
+      <p class="role">Recebe o lead, manda a <b>abertura + a mídia do produto</b> (foto aérea, etc.), <b>qualifica</b> na conversa e <b>alerta a equipe</b> (você, Carol, Michel) quando o lead esquenta, pede reunião ou tem dúvida.</p>
+      <div class="lbl">Como funciona no dia a dia</div>
+      <ol class="steps">
+        <li>Lead chega (Meta, formulário, WhatsApp) → Helena manda a 1ª mensagem sozinha.</li>
+        <li>Conversa, tira dúvida, manda mídia, puxa pra reunião.</li>
+        <li>Lead quente / reunião / dúvida → <b>pinga vocês no WhatsApp</b> na hora.</li>
+      </ol>
+      <div class="todo none"><b>Seu clique:</b> nenhum. Já roda sozinha — você só acompanha os alertas.</div>
+    </div>
+  </div>
+
+  <!-- ROTINA DO MICHEL -->
+  <div class="ia">
+    <div class="top">
+      <div class="ic">🗂️</div>
+      <div class="ht"><h2>Rotina Produtiva do Michel</h2><p>IA de Tráfego · parte 1 — a manhã do Michel, medida</p></div>
+      <span class="pill live">● No ar</span>
+    </div>
+    <div class="body">
+      <p class="role">O Michel toca <b>“Feito”</b> em cada tarefa da manhã; cai no <b>seu painel ao vivo</b> com o <b>% do dia</b> (só seu), e você recebe o <b>aviso na hora</b> + um <b>relatório consolidado</b>.</p>
+      <div class="lbl">Michel usa assim</div>
+      <ol class="steps">
+        <li><b>07:45</b> chega no WhatsApp dele o link do dia (automático, seg–sáb).</li>
+        <li>Escolhe o modo no topo: 🏠 <b>Casa</b> (começa 08:00) ou 🏢 <b>Katzer</b> (08:45).</li>
+        <li>A cada tarefa, toca <b>“Feito”</b> (pode escrever um miniresumo).</li>
+        <li>Se você/Carol pedirem algo em cima da hora → ele registra na <b>Obs</b> (quem pediu + tempo).</li>
+      </ol>
+      <div class="lbl">Você usa assim</div>
+      <ul class="plain">
+        <li>Painel do gestor (ao vivo, % + atrasos): <a class="link" href="https://rotina-produtiva-michel.netlify.app/painel-gestor">…/painel-gestor</a></li>
+        <li>Cada “Feito” do Michel <b>te pinga no WhatsApp</b> na hora, com o horário e se atrasou/adiantou.</li>
+        <li><b>Relatório consolidado:</b> WhatsApp + e-mail às <b>13:30</b> (dias Casa) / <b>14:30</b> (Katzer).</li>
+      </ul>
+      <div class="todo"><b>Seu clique (opcional):</b> criar 1 <b>key do Resend</b> pro e-mail bonito sair (hoje o relatório já vai no seu WhatsApp). Sem isso, tudo o resto funciona.</div>
+    </div>
+  </div>
+
+  <!-- SECRETÁRIA / MAESTRO -->
+  <div class="ia">
+    <div class="top">
+      <div class="ic">🖋️</div>
+      <div class="ht"><h2>Secretária IA <span style="color:var(--sub);font-size:.8rem">(Maestro)</span></h2><p>Escreve o card no Bitrix a partir da conversa da Helena</p></div>
+      <span class="pill homolog">◐ Homolog</span>
+    </div>
+    <div class="body">
+      <p class="role">Lê a conversa que a Helena teve, entende o estágio do lead e <b>escreve no Bitrix</b>: move a etapa do funil, preenche os campos (finalidade, prazo, faixa…) e deixa um comentário. <b>Só move sozinha na zona verde</b>; negociação/ganho <b>propõe pra você</b>.</p>
+      <div class="lbl">Onde está hoje (seguro)</div>
+      <ul class="plain">
+        <li>🟢 <b>Prova de escrita</b> (dry-run): mostra o card que <i>gravaria</i>, sem gravar. Verde no PR.</li>
+        <li>🟢 <b>Webhook de escrita do Bitrix</b>: ligado e respondendo (você mandou a URL).</li>
+        <li>🟡 <b>Firebase + Z-API</b> do Maestro: credenciais desatualizadas — eu reidrato (é comigo).</li>
+        <li>🔒 <b>Modo homolog</b>: roda o fluxo real mas <b>não escreve</b> nada no Bitrix ainda.</li>
+      </ul>
+      <div class="lbl">Passo a passo pra ligar de verdade</div>
+      <ol class="steps">
+        <li><b>Executor (eu):</b> deixar Firebase + Z-API verdes no diagnóstico.</li>
+        <li><b>Você:</b> repointar os webhooks (Meta/Z-API/Bitrix) pras URLs novas do Maestro.</li>
+        <li><b>Você:</b> escrever <code>GO CEO</code> no PR #1 → aí eu viro pra <b>produção</b> (começa a escrever no Bitrix).</li>
+        <li><b>Eu:</b> auditar as primeiras escritas; kill-switch pronto (volta pra homolog num toque).</li>
+      </ol>
+      <div class="todo"><b>Seu clique:</b> nada agora — eu te aviso quando Firebase/Z-API ficarem verdes; aí você repointar + dar o <code>GO CEO</code>.</div>
+    </div>
+  </div>
+
+  <!-- AUDITOR -->
+  <div class="ia">
+    <div class="top">
+      <div class="ic">🔎</div>
+      <div class="ht"><h2>Auditor 001</h2><p>Lê o Bitrix (somente-leitura) e produz o relatório que vende</p></div>
+      <span class="pill live">● Somente-leitura</span>
+    </div>
+    <div class="body">
+      <p class="role">Varre o Bitrix e <b>aponta o que está errado no funil</b>: negócio duplicado, lead parado, campo vazio, saneamento. <b>Nunca escreve</b> no Bitrix — só lê e relata. É o raio-x que mostra onde está o dinheiro parado.</p>
+      <div class="lbl">Como usar</div>
+      <ol class="steps">
+        <li>Você pede o relatório (ou ele roda no ciclo definido).</li>
+        <li>Ele lê o Bitrix e devolve os achados: duplicados, funil torto, o que sanear.</li>
+        <li>Você/Michel agem em cima da lista — a Secretária depois mantém arrumado.</li>
+      </ol>
+      <div class="todo none"><b>Seu clique:</b> nenhum pra funcionar — é só pedir o relatório quando quiser o raio-x.</div>
+    </div>
+  </div>
+
+  <!-- placar campanhas (build) -->
+  <div class="ia">
+    <div class="top">
+      <div class="ic">📊</div>
+      <div class="ht"><h2>Placar de Campanhas</h2><p>IA de Tráfego · parte 2 — Meta → decisão do dia (mídia)</p></div>
+      <span class="pill build">◔ Em construção</span>
+    </div>
+    <div class="body">
+      <p class="role">O próximo tijolo: cruza os números da <b>Meta</b> (gasto, leads, custo) com o Bitrix pra dizer <b>onde está o dinheiro</b> — e manda a decisão do dia (aplicar / ajustar / pausar) no mesmo formato de quadradinho.</p>
+      <div class="todo"><b>Depois da Rotina:</b> monto esse por cima do mesmo motor. Pausar de verdade pela Meta pede liberar escrita (<code>ads_management</code>) no token — a definir com você.</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="kg">KATZER · OS</div>
+    <div style="margin-top:8px">4 IAs, uma cadeia. Helena fala · Secretária anota · Auditor confere · Tráfego mede.<br>
+    Tudo nasce seguro (homolog) e só vira produção com o seu OK.</div>
+  </div>
+</div>
+
+</body>
+</html>
