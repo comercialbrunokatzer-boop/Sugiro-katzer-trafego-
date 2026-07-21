@@ -1,14 +1,15 @@
 // Lógica de disparo do relatório (compartilhada entre o cron e o endpoint de teste).
-import { pontualidade, agoraBRT } from './_rotina.mjs';
+import { pontualidade, agoraBRT, min2hm } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, enviaEmail } from './_infra.mjs';
 import { resumoWhats, emailHTML } from './_relatorio.mjs';
 
-/** Manda o card da Rotina pro WhatsApp do Michel (usado pelo cron das 07:45 e pelo teste). */
+/** Manda o card da Rotina pro Michel E uma cópia pro CEO acompanhar (07:45 e teste). */
 export async function disparaCard(now = agoraBRT()) {
   if (now.dow === 0) return { skip: 'domingo (folga)' };
-  const michel = process.env.WHATSAPP_MICHEL;
   const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
-  const msg = [
+
+  // 1) Card pro Michel
+  const michelMsg = [
     '☀️ *Bom dia, Michel!*',
     '',
     'Abre a Rotina Produtiva de hoje e vai tocando *Feito* em cada tarefa:',
@@ -16,8 +17,20 @@ export async function disparaCard(now = agoraBRT()) {
     '',
     'No topo, escolhe o modo do dia: 🏠 *Casa* (1ª tarefa 08:00) ou 🏢 *Katzer* (08:45).',
   ].join('\n');
-  const w = await enviaWhats(michel, msg);
-  return { enviado: w.enviado, status: w.status || w.motivo, data: now.data, hora: now.hm };
+  const wM = await enviaWhats(process.env.WHATSAPP_MICHEL, michelMsg);
+
+  // 2) Cópia pro CEO acompanhar ao vivo (com modo + início do dia)
+  const estado = await leEstado(now.data);
+  const modoTxt = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Casa';
+  const inicioTxt = estado.inicioMin != null ? min2hm(estado.inicioMin) : (estado.modo === 'katzer' ? '08:45' : '08:00');
+  const ceoMsg = [
+    `🗓️ *Rotina do Michel — hoje* (${modoTxt} · início ${inicioTxt})`,
+    'Acompanhe ao vivo (o % é seu):',
+    `${url}/painel-gestor`,
+  ].join('\n');
+  const wC = await enviaWhats(process.env.WHATSAPP_CEO, ceoMsg);
+
+  return { michel: wM.enviado, ceo: wC.enviado, data: now.data, hora: now.hm };
 }
 
 /**

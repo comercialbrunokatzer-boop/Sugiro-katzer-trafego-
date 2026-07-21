@@ -41,9 +41,10 @@ jobs:
             -d "{\"acao\":\"inicio\",\"hm\":\"$INICIO\"}" | tee /tmp/i.json; echo
           echo "- início: $(jq -r '.inicio' /tmp/i.json)" >> "$GITHUB_STEP_SUMMARY"
 
-          echo "3) manda o card pro Michel"
+          echo "3) manda o card pro Michel + cópia pro CEO"
           KEY=$(printf '%s' "$CEO" | tr -cd '0-9'); echo "::add-mask::$KEY"
           curl -sS -m 30 "$BASE/api/card-teste?key=$KEY" | sed -E 's/[0-9]{10,}/[num]/g' | tee /tmp/c.json; echo
-          ENV=$(jq -r '.enviado' /tmp/c.json 2>/dev/null)
-          echo "- card enviado ao Michel: **$ENV**" >> "$GITHUB_STEP_SUMMARY"
-          [ "$ENV" = "true" ] && echo "✅ Michel recebeu o card. Início $INICIO ($MODO)." || echo "::warning::card não confirmou — ver corpo."
+          EM=$(jq -r '.michel' /tmp/c.json 2>/dev/null)
+          EC=$(jq -r '.ceo' /tmp/c.json 2>/dev/null)
+          echo "- card → Michel: **$EM** · cópia → CEO: **$EC**" >> "$GITHUB_STEP_SUMMARY"
+          [ "$EM" = "true" ] && echo "✅ Michel e CEO receberam. Início $INICIO ($MODO)." || echo "::warning::não confirmou — ver corpo."
