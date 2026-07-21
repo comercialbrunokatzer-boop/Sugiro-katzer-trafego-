@@ -1,0 +1,20 @@
+# Site do Tráfego (Katzer OS). Estático (public/) + Netlify Functions.
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Health check.
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/health"
+  status = 200
+  force = true
+
+# Atalho amigável pro painel do Michel.
+[[redirects]]
+  from = "/painel-michel"
+  to = "/painel-michel.html"
+  status = 200

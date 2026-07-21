@@ -1,0 +1,79 @@
+name: 🤖 Deploy Tráfego no Netlify
+
+# Robô que roda na infra do GitHub (sem firewall) e opera o Netlify pelo CEO.
+# Precisa de 1 segredo no repo: NETLIFY_AUTH_TOKEN (token pessoal do Netlify).
+# Cria o site "katzer-trafego" se não existir, e faz o deploy do public/ + functions.
+
+on:
+  workflow_dispatch:
+    inputs:
+      site_name:
+        description: "Nome do site no Netlify (reusa; cria se não achar)"
+        default: "katzer-trafego"
+        required: true
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netlify-trafego
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      SITE_NAME: ${{ github.event.inputs.site_name || 'katzer-trafego' }}
+    steps:
+      - name: Baixa o código
+        uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Confere se o token do Netlify existe
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "::error::Falta o segredo NETLIFY_AUTH_TOKEN neste repo (Settings → Secrets and variables → Actions → New repository secret). Reusa o MESMO token do site do Maestro."
+            exit 1
+          fi
+
+      - name: Netlify CLI
+        run: npm i -g netlify-cli@17
+
+      - name: Garante o site (cria se ainda não existir)
+        id: site
+        run: |
+          set -euo pipefail
+          ID=$(netlify api listSites | jq -r --arg n "$SITE_NAME" '.[] | select(.name==$n) | .id' | head -1)
+          if [ -z "$ID" ]; then
+            echo "Site '$SITE_NAME' não existe — criando…"
+            ID=$(netlify api createSite --data "{\"name\":\"$SITE_NAME\"}" | jq -r '.id')
+          fi
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "Site pronto: $SITE_NAME ($ID)"
+
+      - name: Deploy (produção)
+        run: |
+          netlify deploy --prod --dir public --functions netlify/functions --site "${{ steps.site.outputs.id }}"
+
+      - name: URL final
+        run: |
+          URL=$(netlify api getSite --data "{\"site_id\":\"${{ steps.site.outputs.id }}\"}" | jq -r '.ssl_url // .url')
+          echo "✅ Site no ar: $URL"
+          {
+            echo "## 🤖 Deploy do Tráfego"
+            echo ""
+            echo "**Site:** $SITE_NAME"
+            echo "**URL:** $URL"
+            echo "- Painel do Michel: $URL/painel-michel"
+            echo "- Health: $URL/health"
+          } >> "$GITHUB_STEP_SUMMARY"

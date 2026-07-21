@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Rotina do Michel — painel mestre</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#eef1f0; --panel:#ffffff; --panel-2:#f6f8f7; --ink:#14252f; --sub:#5c6b74; --hair:#dbe2e0;
+    --gold:#a8792a; --sea:#1f6f66;
+    --ok:#1f9d57; --ok-bg:#e4f2ea; --wait:#a56a12; --wait-bg:#f6ecd8; --late:#c0492f; --late-bg:#f7e7e2;
+    --obs:#6b4bb0; --obs-bg:#efeafa; --obs-line:#cdbdf0;
+    --shadow:0 1px 2px rgba(18,34,44,.06),0 10px 30px rgba(18,34,44,.09);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif:"Iowan Old Style",Palatino,Georgia,serif; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --ground:#0d1820; --panel:#14232d; --panel-2:#182934; --ink:#e8edeb; --sub:#9fb1b3; --hair:#263742; --gold:#d4ac60; --sea:#4fb3a6; --ok:#43c07d; --ok-bg:#14342a; --wait:#d3a44e; --wait-bg:#33290f; --late:#e0765c; --late-bg:#331f1a; --obs:#b49ae8; --obs-bg:#241d38; --obs-line:#3d2f63; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}
+  }
+  :root[data-theme="light"]{ --ground:#eef1f0; --panel:#ffffff; --panel-2:#f6f8f7; --ink:#14252f; --sub:#5c6b74; --hair:#dbe2e0; --gold:#a8792a; --sea:#1f6f66; --ok:#1f9d57; --ok-bg:#e4f2ea; --wait:#a56a12; --wait-bg:#f6ecd8; --late:#c0492f; --late-bg:#f7e7e2; --obs:#6b4bb0; --obs-bg:#efeafa; --obs-line:#cdbdf0; --shadow:0 1px 2px rgba(18,34,44,.06),0 10px 30px rgba(18,34,44,.09);}
+  :root[data-theme="dark"]{ --ground:#0d1820; --panel:#14232d; --panel-2:#182934; --ink:#e8edeb; --sub:#9fb1b3; --hair:#263742; --gold:#d4ac60; --sea:#4fb3a6; --ok:#43c07d; --ok-bg:#14342a; --wait:#d3a44e; --wait-bg:#33290f; --late:#e0765c; --late-bg:#331f1a; --obs:#b49ae8; --obs-bg:#241d38; --obs-line:#3d2f63; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:970px;margin:0 auto;padding:clamp(14px,3.5vw,32px)}
+  h1{font-size:clamp(1.35rem,3.6vw,1.9rem);font-weight:800;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .eyebrow{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 .4rem}
+  .datehead{display:flex;align-items:center;gap:.5rem;color:var(--sub);font-weight:600;margin-top:.4rem;font-size:.9rem}
+  .live{display:inline-flex;align-items:center;gap:.35rem;font-size:.68rem;font-weight:800;color:var(--late);text-transform:uppercase;letter-spacing:.06em;margin-left:auto}
+  .live .dot{width:8px;height:8px;border-radius:50%;background:var(--late);animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  @media(prefers-reduced-motion:reduce){.live .dot{animation:none}}
+
+  .cols{display:grid;gap:15px;margin-top:18px;grid-template-columns:1fr}
+  @media(min-width:800px){.cols{grid-template-columns:1.1fr .9fr;align-items:start}}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:15px;box-shadow:var(--shadow);overflow:hidden}
+  .ph{padding:11px 14px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:9px}
+  .ph .k{width:27px;height:27px;border-radius:8px;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:700;font-size:.9rem;background:linear-gradient(150deg,var(--sea),#134f49)}
+  .ph .k.g{background:linear-gradient(150deg,var(--gold),#7d5716)}
+  .ph h3{margin:0;font-size:.92rem;font-weight:800}.ph .s{font-size:.68rem;color:var(--sub)}
+
+  .mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px;border-bottom:1px solid var(--hair)}
+  .mo{border:1.5px solid var(--hair);border-radius:9px;padding:6px;text-align:center;font-size:.76rem;font-weight:700;color:var(--sub)}
+  .mo.on{border-color:var(--sea);background:color-mix(in srgb,var(--sea) 10%,var(--panel));color:var(--sea)}
+  .mo small{display:block;font-weight:600;font-size:.66rem;color:var(--sub)}
+
+  .task{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--hair);font-size:.84rem}
+  .tk{width:21px;height:21px;border-radius:6px;display:grid;place-items:center;font-weight:800;font-size:.7rem;flex:none}
+  .tk.done{background:var(--ok-bg);color:var(--ok)}.tk.wait{background:var(--wait-bg);color:var(--wait)}.tk.late{background:var(--late-bg);color:var(--late)}
+  .nm b{font-weight:700}.nm small{color:var(--sub);font-size:.71rem;font-variant-numeric:tabular-nums}
+  .rgt{font-size:.7rem;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}.rgt.done{color:var(--ok)}.rgt.late{color:var(--late)}.rgt.green{color:var(--ok)}
+  .btn{border:1px solid var(--late);background:var(--late-bg);border-radius:7px;padding:.3rem .5rem;font-size:.72rem;font-weight:800;color:var(--late);font-family:inherit}
+
+  .obs{padding:11px 13px;background:var(--obs-bg);border-top:2px solid var(--obs-line)}
+  .obs .h{font-weight:800;font-size:.8rem;color:var(--obs)}.obs .sb{font-size:.68rem;color:var(--sub);margin:2px 0 7px}
+  .oe{background:var(--panel);border:1px solid var(--obs-line);border-radius:9px;padding:7px 9px;font-size:.79rem;display:flex;gap:8px}
+  .oe .w{font-size:.58rem;font-weight:800;text-transform:uppercase;background:var(--obs-bg);color:var(--obs);padding:.15rem .4rem;border-radius:999px;white-space:nowrap;flex:none;height:fit-content}
+  .oe small{display:block;color:var(--sub);font-size:.7rem;font-variant-numeric:tabular-nums;margin-top:1px}
+
+  .call{display:flex;gap:8px;align-items:center;padding:9px 13px;background:var(--late-bg);border-top:1px solid var(--hair);font-size:.76rem}.call b{color:var(--ink)}
+  .call .c{margin-left:auto;background:var(--late);color:#fff;border:0;border-radius:7px;padding:.38rem .5rem;font-weight:800;font-size:.7rem;font-family:inherit;white-space:nowrap}
+
+  /* bruno */
+  .livecard{margin:11px 13px;border:1px solid var(--late);background:var(--late-bg);border-radius:11px;padding:11px 12px;display:flex;align-items:center;gap:11px}
+  .livecard .ic{font-size:1.3rem}
+  .livecard .info{flex:1;min-width:0}
+  .livecard .t{font-weight:800;font-size:.9rem}.livecard .s{font-size:.72rem;color:var(--sub)}
+  .livecard .big{font-family:var(--mono);font-weight:800;font-size:1.25rem;color:var(--late);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .prog{padding:11px 14px;border-bottom:1px solid var(--hair)}.prog .n{font-size:.78rem;color:var(--sub)}.prog .n b{color:var(--ink)}
+  .bar{height:8px;border-radius:99px;background:var(--hair);overflow:hidden;margin:6px 0 4px}.bar>i{display:block;height:100%;width:62%;background:linear-gradient(90deg,var(--sea),var(--ok))}
+  .fe{display:flex;gap:8px;padding:7px 14px;border-bottom:1px solid var(--hair);font-size:.78rem}
+  .fe .m{width:19px;height:19px;border-radius:5px;flex:none;display:grid;place-items:center;font-size:.64rem;font-weight:800}
+  .fe .m.ok{background:var(--ok-bg);color:var(--ok)}.fe .m.obs{background:var(--obs-bg);color:var(--obs)}.fe .m.grn{background:var(--ok-bg);color:var(--ok)}
+  .fe .mt{color:var(--sub);font-size:.69rem;font-variant-numeric:tabular-nums;margin-top:1px}
+  .mailn{font-size:.71rem;color:var(--sub);padding:9px 14px;border-top:1px solid var(--hair);display:flex;gap:7px}
+
+  .legend{margin-top:14px;display:flex;flex-wrap:wrap;gap:12px;font-size:.74rem;color:var(--sub)}
+  .legend span{display:inline-flex;align-items:center;gap:.35rem}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+  footer{margin-top:14px;color:var(--sub);font-size:.73rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Katzer OS · Rotina do Michel · painel mestre</p>
+  <h1>Tudo junto — o painel do dia</h1>
+  <div class="datehead"><span>📅</span><b>Terça-feira, 21 de julho de 2026</b><span class="live"><span class="dot"></span>ao vivo</span></div>
+
+  <div class="cols">
+    <!-- MICHEL -->
+    <div class="card">
+      <div class="ph"><div class="k">M</div><div><h3>Rotina da Manhã · Michel</h3><div class="s">Terça-feira, 21 de julho de 2026</div></div></div>
+      <div class="mode"><div class="mo">🏠 Casa <small>08:00</small></div><div class="mo on">🏢 Katzer <small>08:45 ✓</small></div></div>
+
+      <div class="task"><div class="tk done">✓</div><div class="nm"><b>Reuniões de ontem</b> <small>· 08:45</small></div><div class="rgt done">08:47</div></div>
+      <div class="task"><div class="tk done">✓</div><div class="nm"><b>Agend/Atend</b> <small>· 08:55</small></div><div class="rgt done">08:58</div></div>
+      <div class="task"><div class="tk done">✓</div><div class="nm"><b>Pendências</b> <small>· 09:05</small></div><div class="rgt done">09:09</div></div>
+      <div class="task"><div class="tk done">✓</div><div class="nm"><b>Instagram</b> <small>· 09:20</small></div><div class="rgt done">09:24</div></div>
+      <div class="task"><div class="tk done">✓</div><div class="nm"><b>Campanhas</b> <small>· 09:40 (adiantou)</small></div><div class="rgt green">09:32 · +8′💚</div></div>
+      <div class="task"><div class="tk done">✓</div><div class="nm"><b>Discadora</b> <small>· 10:00</small></div><div class="rgt done">10:03</div></div>
+      <div class="task"><div class="tk late">!</div><div class="nm"><b>Garimpo</b> <small>· venceu 10:20 · fazer agora</small></div><button class="btn">Feito ▸</button></div>
+      <div class="task"><div class="tk wait">○</div><div class="nm"><b>Lista do Auditor</b> <small>· 12:45</small></div><div class="rgt" style="color:var(--sub)">daqui a pouco</div></div>
+
+      <div class="obs">
+        <div class="h">🔔 Obs — Interrupção</div>
+        <div class="sb">só a pedido do Bruno/Carol · a rotina vem primeiro</div>
+        <div class="oe"><span class="w">Bruno</span><div><b>Ligar cliente Rodrigues</b><small>10:20 · 20 min · *segurou o Garimpo</small></div></div>
+      </div>
+      <div class="call"><span>🔥</span><span><b>Oportunidade / travou?</b> Isso é ligação.</span><button class="c">📞 Ligar Bruno</button></div>
+    </div>
+
+    <!-- BRUNO -->
+    <div class="card">
+      <div class="ph"><div class="k g">B</div><div><h3>Painel do Bruno</h3><div class="s">🏢 Katzer · ao vivo</div></div></div>
+
+      <div class="livecard">
+        <div class="ic">🔴</div>
+        <div class="info"><div class="t">Garimpo atrasado</div><div class="s">venceu 10:20 · ainda não fez</div></div>
+        <div class="big" id="delay">12 min 03s</div>
+      </div>
+
+      <div class="prog">
+        <div class="n"><b>6 de 8</b> feitas · <b style="color:var(--late)">1 atrasada</b> (contando)</div>
+        <div class="bar"><i></i></div>
+        <div class="n">base do dia: <b>08:45 (Katzer)</b></div>
+      </div>
+      <div class="fe"><div class="m grn">↑</div><div><b>Campanhas</b> — adiantou <div class="mt">09:32 · +8′ 💚</div></div></div>
+      <div class="fe"><div class="m obs">🔔</div><div><b>Você pediu:</b> Ligar Rodrigues <div class="mt">10:20 · 20min · desconta do Garimpo</div></div></div>
+      <div class="fe"><div class="m ok">✓</div><div><b>Instagram / Pendências / Agend</b> ok <div class="mt">até 09:24</div></div></div>
+      <div class="mailn"><span>📧</span><span>E-mail consolidado hoje <b>14:30</b> (dia Katzer) · roda <b>Seg–Sáb</b></span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--sea)"></i> Casa/Katzer</span>
+    <span><i style="background:var(--ok)"></i> Feito / adiantou</span>
+    <span><i style="background:var(--late)"></i> Atraso (ticando)</span>
+    <span><i style="background:var(--obs)"></i> Obs (sua demanda)</span>
+    <span>📅 data no título</span>
+  </div>
+  <footer>Katzer OS · painel mestre da rotina do Michel · demo (o contador vermelho está rodando)</footer>
+</div>
+
+<script>
+  (function(){ var el=document.getElementById('delay'); var s=12*60+3;
+    function f(){var m=Math.floor(s/60),x=s%60;el.textContent=m+' min '+String(x).padStart(2,'0')+'s';}
+    f(); setInterval(function(){s++;f();},1000); })();
+</script>
+
+</body>
+</html>

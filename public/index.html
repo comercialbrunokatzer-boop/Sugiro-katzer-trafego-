@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Katzer OS · Tráfego</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#eef1f0; --panel:#ffffff; --ink:#14252f; --sub:#5c6b74; --hair:#dbe2e0;
+    --gold:#a8792a; --sea:#1f6f66;
+    --shadow:0 1px 2px rgba(18,34,44,.06),0 10px 30px rgba(18,34,44,.09);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --ground:#0d1820; --panel:#14232d; --ink:#e8edeb; --sub:#9fb1b3; --hair:#263742; --gold:#d4ac60; --sea:#4fb3a6; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}
+  }
+  :root[data-theme="light"]{ --ground:#eef1f0; --panel:#ffffff; --ink:#14252f; --sub:#5c6b74; --hair:#dbe2e0; --gold:#a8792a; --sea:#1f6f66; }
+  :root[data-theme="dark"]{ --ground:#0d1820; --panel:#14232d; --ink:#e8edeb; --sub:#9fb1b3; --hair:#263742; --gold:#d4ac60; --sea:#4fb3a6; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:640px;margin:0 auto;padding:clamp(20px,5vw,40px)}
+  .eyebrow{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 .5rem}
+  h1{font-size:clamp(1.5rem,5vw,2.1rem);font-weight:800;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .lede{color:var(--sub);margin:.6rem 0 1.6rem}
+  .card{display:flex;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;margin-top:14px;text-decoration:none;color:inherit}
+  .card:hover{border-color:var(--sea)}
+  .ic{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;font-size:1.4rem;flex:none;background:var(--ground)}
+  .t{font-weight:800}.s{font-size:.82rem;color:var(--sub);margin-top:1px}
+  .arw{margin-left:auto;color:var(--sea);font-weight:800}
+  footer{margin-top:24px;color:var(--sub);font-size:.75rem;text-align:center}
+  .status{display:inline-flex;gap:.4rem;align-items:center;font-size:.72rem;color:var(--sub);margin-top:.4rem}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--sea)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="eyebrow">Katzer OS · IA de Tráfego</p>
+    <h1>Central do Tráfego</h1>
+    <p class="lede">Placar das campanhas (mídia) e a rotina do Michel — hospedados aqui. O Michel toca, o CEO vê.</p>
+
+    <a class="card" href="/painel-michel">
+      <div class="ic">🗂️</div>
+      <div><div class="t">Painel-mestre do Michel</div><div class="s">Rotina: data · Casa/Katzer · Obs · atraso ao vivo</div></div>
+      <div class="arw">▸</div>
+    </a>
+
+    <div class="card" style="opacity:.6;cursor:default">
+      <div class="ic">📊</div>
+      <div><div class="t">Placar de campanhas</div><div class="s">Meta → decisão do dia (em construção)</div></div>
+    </div>
+
+    <div class="status"><span class="dot"></span> Ambiente novo · nasce seguro (nada dispara sozinho ainda)</div>
+
+    <footer>Katzer OS · Tráfego · site base</footer>
+  </div>
+</body>
+</html>
