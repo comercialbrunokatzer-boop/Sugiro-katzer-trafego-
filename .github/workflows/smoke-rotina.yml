@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BASE: ${{ github.event.inputs.base || 'https://rotina-produtiva-michel.netlify.app' }}
+      CEO: ${{ secrets.WHATSAPP_CEO }}
     steps:
       - name: Ciclo completo
         run: |
@@ -62,4 +63,13 @@ jobs:
           echo "$D"
           echo "- limpeza: $(echo "$D" | jq -r '.ok')" | tee -a "$GITHUB_STEP_SUMMARY"
 
-          if [ "$fail" = "0" ]; then echo "✅ **Tudo funcionando** — botões gravam, painel do gestor calcula %, WhatsApp dispara." | tee -a "$GITHUB_STEP_SUMMARY"; else echo "⛔ **Falhou** — ver erros acima." | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; fi
+          echo "### 5) Relatório de teste (envia o resumo ao CEO no WhatsApp)"
+          echo "::add-mask::$CEO"
+          RT=$(curl -sS -m 30 "$BASE/api/relatorio-teste?key=$CEO")
+          echo "$RT" | sed -E 's/[0-9]{10,}/[num]/g'
+          ROK=$(echo "$RT" | jq -r '.ok' 2>/dev/null)
+          RPCT=$(echo "$RT" | jq -r '.pct // .skip' 2>/dev/null)
+          RW=$(echo "$RT" | jq -r '.whats.enviado' 2>/dev/null)
+          echo "- relatório: ok=$ROK · pct/skip=$RPCT · whatsapp=$RW" | tee -a "$GITHUB_STEP_SUMMARY"
+
+          if [ "$fail" = "0" ]; then echo "✅ **Tudo funcionando** — botões, painel, WhatsApp e relatório." | tee -a "$GITHUB_STEP_SUMMARY"; else echo "⛔ **Falhou** — ver erros acima." | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; fi
