@@ -17,6 +17,9 @@ import {
   linkWhatsApp,
 } from './_qualidade-trafego.mjs';
 import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_decisao-feed.mjs';
+import { listaDealsFunil, fasesPorCampanha } from './_bitrix-funil.mjs';
+import { metaPauseCampaign, metaActivateCampaign, metaInsightsPeriodo } from './_meta-acoes.mjs';
+import { montaPlacar } from './_placar.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 
@@ -86,7 +89,7 @@ function montaFases(leadsCamp) {
   return { total, fases };
 }
 
-function montaCampanhasApp(placar, cicloMapa, leads) {
+function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = []) {
   const mapaQ = agregaQualidadePorCampanha(leads);
   const rows = (placar.campanhas || []).map((c) => {
     const comCiclo = enrichComCiclo({
@@ -99,10 +102,12 @@ function montaCampanhasApp(placar, cicloMapa, leads) {
     const forms = c.leadConfirmado ? c.leads : (c.leads || 0);
     const qual = badgeCampanha(cpl, detail, { forms, gasto: c.gasto });
     const impressoes = c.impressoes ?? c.impressions ?? null;
-    const ativa = !!(comCiclo.ciclo?.ativa || String(comCiclo.statusVeiculacao || '').toUpperCase() === 'ACTIVE');
+    // STRICT: só effective_status === ACTIVE (não "teve gasto" / não pausada)
+    const ativa = comCiclo.ciclo?.ativa === true;
     const leadsCamp = leadsDaCampanha(leads, c.nome);
     const leadsHot = montaLeadsHot(leadsCamp);
-    const fasesInfo = montaFases(leadsCamp);
+    // Fases do Funil Novo Katzer (Bitrix) — bate com os forms da Meta
+    const fasesInfo = fasesPorCampanha(dealsBitrix, c.nome, leadsCamp);
     return {
       id: c.id || c.nome,
       name: c.nome,
@@ -119,12 +124,15 @@ function montaCampanhasApp(placar, cicloMapa, leads) {
       alertaVisual: qual === 'bad' ? 'ruim' : (qual === 'good' ? 'oportunidade' : ''),
       detail,
       dataPausada: comCiclo.dataPausada,
-      statusVeiculacao: comCiclo.statusVeiculacao || (ativa ? 'ACTIVE' : null),
+      statusVeiculacao: comCiclo.statusVeiculacao || null,
       ativa,
       alertaManter: deveAlertarManter({ cpl, detail, qual }),
       leadsHot,
       fases: fasesInfo.fases,
       leadsTotal: fasesInfo.total,
+      fasesFonte: fasesInfo.fonte,
+      // quantos forms Meta vs quantos achamos no funil
+      formsVsFases: { formsMeta: forms, noFunil: fasesInfo.total },
     };
   });
   return rows.sort((a, b) => (b.gastoNum || 0) - (a.gastoNum || 0));
@@ -176,43 +184,82 @@ function topFeedback(campanhas) {
 
 async function payloadApp({ incluirGestor = false } = {}) {
   const now = agoraBRT();
-  const [{ placar, meta }, ciclo, leadsDoc, feed] = await Promise.all([
+  const [{ placar, meta }, ciclo, leadsDoc, feed, bitrix, histMeta] = await Promise.all([
     lePlacar({ preset: 'last_30d' }),
     leCicloCampanhas().catch(() => ({ mapa: {} })),
     leLeadsHoje().catch(() => ({ leads: [] })),
     leFeedDecisao(),
+    listaDealsFunil({ limit: 200 }).catch(() => ({ ok: false, deals: [] })),
+    metaInsightsPeriodo({ since: '2025-07-12' }).catch(() => ({ ok: false, data: [] })),
   ]);
 
-  const todas = montaCampanhasApp(placar, ciclo.mapa || {}, leadsDoc.leads || []);
-  // Se Meta não trouxe status, assume ativa quando não tem dataPausada
-  const ativas = todas.filter((c) => c.ativa || (!c.dataPausada && c.statusVeiculacao !== 'PAUSED'));
-  // Ranking: menor CPL primeiro (todas com gasto 30d)
-  const ranking = [...todas]
-    .filter((c) => c.cpl != null)
-    .sort((a, b) => (a.cpl ?? 9999) - (b.cpl ?? 9999))
-    .map((c, i) => ({ ...c, pos: i + 1 }));
+  const deals = bitrix.deals || [];
+  const todas = montaCampanhasApp(placar, ciclo.mapa || {}, leadsDoc.leads || [], deals);
+
+  // STRICT: só ACTIVE de verdade (effective_status da Meta)
+  const ativas = todas.filter((c) => c.ativa === true);
+
+  // Histórico desde 12/07/2025 (entrada do Michel)
+  let historicoRows = [];
+  if (histMeta.ok && histMeta.data?.length) {
+    const placarHist = montaPlacar(histMeta.data);
+    historicoRows = montaCampanhasApp(placarHist, ciclo.mapa || {}, leadsDoc.leads || [], deals);
+  } else {
+    historicoRows = todas;
+  }
+  const comCpl = historicoRows.filter((c) => c.cpl != null).sort((a, b) => a.cpl - b.cpl);
+  const top10Melhores = comCpl.slice(0, 10).map((c, i) => ({ ...c, pos: i + 1 }));
+  const top10Piores = [...comCpl].reverse().slice(0, 10).map((c, i) => ({ ...c, pos: i + 1 }));
+
+  // Ranking aba 2 = melhores + piores desde 12/07/2025
+  const ranking = [
+    ...top10Melhores.map((c) => ({ ...c, rankingTipo: 'melhor' })),
+    ...top10Piores.map((c) => ({ ...c, rankingTipo: 'pior' })),
+  ];
 
   const tot = totaisQualidade(leadsDoc.leads || []);
   const hoje = itensHoje(feed, now.data);
+  const leadsHoje = (leadsDoc.leads || []).length;
   const base = {
     ok: true,
     confiavel: meta?.confiavel !== false && meta?.status === 'ok',
     metaStatus: meta,
+    bitrixOk: !!bitrix.ok,
+    bitrixMotivo: bitrix.motivo || null,
     periodo: 'last_30d',
     periodoLabel: 'Janela móvel últimos 30 dias',
+    rankingDesde: '2025-07-12',
+    rankingAte: histMeta.until || now.data,
     prazo: 'Fazer até 10:15',
     fontes: 'PATROCINADO CORRETOR, FACEBOOK ADS, FORMULARIO CRM, CANAL ABERTO',
-    avisoAbas: 'Aba Ativas = só veiculando agora. Ranking = todas com gasto nos últimos 30 dias (ativas + pausadas).',
-    campanhas: ativas, // compat
+    avisoAbas: `Aba 1 = só ACTIVE (${ativas.length}). Aba 2 = Top 10 melhores + Top 10 piores desde 12/07/2025.`,
+    campanhas: ativas,
     ativas,
+    nAtivas: ativas.length,
     ranking,
+    top10Melhores,
+    top10Piores,
     todas,
     qualidadeTotais: tot,
     qualidadeRotulos: QUAL_TRAFEGO_ROTULO,
     iaComo: 'IA lê: ligação + todas abas Bitrix + WhatsApp Helena + etiqueta corretor',
+    leadsHoje,
+    alertaLeadsHoje: leadsHoje > 0
+      ? `🔔 ${leadsHoje} lead(s) de tráfego hoje — confira fases e WhatsApp`
+      : null,
+    feedbackMelhores: [
+      'Leads avançaram no funil (Mapeamento / Agendamento / Follow Up)',
+      'Vídeo + rosto humano / público específico',
+      'Headline com localização',
+    ],
+    feedbackPiores: [
+      'Leads parados em Leads Novos / Tentando Contato',
+      'CPL alto + Fake/Ruim',
+      'Pouco avanço no funil Bitrix',
+    ],
     sugestaoSemanal: {
       texto: '30% da verba nas que mais converteram',
-      destaque: ranking.find((c) => c.qual === 'good') || ranking[0] || null,
+      destaque: top10Melhores[0] || null,
     },
     agora: now.hm,
     data: now.data,
@@ -220,7 +267,7 @@ async function payloadApp({ incluirGestor = false } = {}) {
 
   if (!incluirGestor) return base;
 
-  const tops = topFeedback(todas);
+  const tops = topFeedback(historicoRows);
   return {
     ...base,
     gestor: {
@@ -266,12 +313,35 @@ export async function handler(event) {
     const qual = body.qual || badgeCampanha(cpl, detail, { forms: body.forms || 0, gasto: body.gastoNum || 0 });
     const alerta = acao === 'manter' && deveAlertarManter({ cpl, detail, qual });
 
+    const campanhaId = String(body.campanhaId || body.id || '').replace(/\D/g, '') || null;
+    let metaAcao = { ok: false, skipped: true };
+
     let textoFeed = '';
-    if (acao === 'manter') textoFeed = `Manteve ${nome} às ${now.hm}`;
-    else if (acao === 'parar') textoFeed = `Parou ${nome} às ${now.hm}`;
-    else {
+    if (acao === 'manter') {
+      textoFeed = `Manteve ${nome} às ${now.hm}`;
+      if (campanhaId) {
+        metaAcao = await metaActivateCampaign(campanhaId);
+        if (metaAcao.ok) textoFeed += ' · Meta ACTIVE';
+        else if (metaAcao.motivo) textoFeed += ` · Meta: ${metaAcao.motivo}`;
+      }
+    } else if (acao === 'parar') {
+      textoFeed = `Parou ${nome} às ${now.hm}`;
+      if (campanhaId) {
+        metaAcao = await metaPauseCampaign(campanhaId);
+        if (metaAcao.ok) textoFeed += ' · Meta PAUSED';
+        else {
+          return json(502, {
+            ok: false,
+            erro: `Não pausou na Meta: ${metaAcao.motivo || 'erro'}`,
+            meta: metaAcao,
+          });
+        }
+      } else {
+        return json(400, { ok: false, erro: 'Sem campaignId numérico — não dá pra pausar na Meta' });
+      }
+    } else {
       const val = body.orcamento ?? body.valor ?? body.ajuste;
-      textoFeed = `Alterou ${nome} para R$${val}/dia às ${now.hm}`;
+      textoFeed = `Alterou ${nome} para R$${val}/dia às ${now.hm} (registro; budget Meta em breve)`;
     }
 
     const feed = await registraFeedDecisao({
@@ -279,12 +349,13 @@ export async function handler(event) {
       hora: now.hm,
       acao: acao === 'budget' ? 'orcamento' : acao,
       campanha: nome,
-      campanhaId: body.campanhaId || body.id || null,
+      campanhaId,
       orcamento: body.orcamento ?? body.valor ?? null,
       cpl,
       detail,
       alerta,
       texto: textoFeed,
+      meta: metaAcao,
     });
 
     const ceo = process.env.WHATSAPP_CEO || '';
@@ -302,12 +373,17 @@ export async function handler(event) {
       whats = await enviaWhats(ceo, linhas.join('\n'));
     }
 
+    const toastOk = acao === 'parar' && metaAcao.ok
+      ? `🛑 Pausada na Meta · ${nome}`
+      : (alerta
+        ? `⚠️ Alerta: manteve campanha ruim — Helena avisou o gestor`
+        : `Registrado! ${textoFeed}`);
+
     return json(200, {
       ok: true,
-      toast: alerta
-        ? `⚠️ Alerta: manteve campanha ruim — Helena avisou o gestor`
-        : `Registrado! ${textoFeed} — WhatsApp Helena enviado`,
+      toast: toastOk,
       alerta,
+      meta: metaAcao,
       alertaMichel: alerta
         ? `⚠️ Alerta: ${nome} está com performance ruim e foi mantida`
         : null,

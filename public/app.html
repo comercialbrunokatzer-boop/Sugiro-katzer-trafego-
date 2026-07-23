@@ -9,18 +9,21 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Campanhas">
 <link rel="apple-touch-icon" href="/icon-katzer.png">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif}
-body{background:#fcfcfc;color:#111}
-.header{padding:16px 20px;border-bottom:1px solid #eee;background:#fff;position:sticky;top:0;z-index:10}
-.header h1{font-size:16px;font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'DM Sans',system-ui,sans-serif}
+body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-height:100vh}
+.header{padding:16px 20px;border-bottom:1px solid #eee;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+.header h1{font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.02em}
 .header p{font-size:11px;color:#888;margin-top:2px}
 .tabs{display:flex;gap:6px;padding:12px 16px;background:#fff;border-bottom:1px solid #eee;flex-wrap:wrap}
 .tab{padding:8px 12px;border-radius:20px;border:1px solid #e5e5e5;background:#fff;font-size:12px;cursor:pointer;font-weight:600}
 .tab.active{background:#111;color:#fff;border-color:#111}
 .alert-top{background:#fff7ed;border:1px solid #fed7aa;padding:10px 14px;margin:12px 16px;border-radius:10px;font-size:12px;display:none}
+.alert-leads{background:#ecfdf5;border:1px solid #a7f3d0;padding:10px 14px;margin:12px 16px;border-radius:10px;font-size:12px;display:none;font-weight:600;color:#065f46}
 .info{margin:12px 16px;font-size:11px;color:#666;background:#fff;border:1px solid #eee;padding:8px 12px;border-radius:8px;line-height:1.4}
+.sec-title{margin:16px 16px 4px;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700}
+.sec-sub{margin:0 16px 8px;font-size:11px;color:#888}
 .card{background:#fff;border:1px solid #eee;border-radius:14px;margin:12px 16px;overflow:hidden}
 .card.ruim{border-color:#fecaca;background:#fffafa;box-shadow:0 0 0 1px #fecaca}
 .card.oportunidade{border-color:#bbf7d0;background:#f7fef9;box-shadow:0 0 0 1px #bbf7d0}
@@ -36,11 +39,17 @@ body{background:#fcfcfc;color:#111}
 .quality{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .q{font-size:10px;padding:2px 6px;border-radius:6px;background:#f5f5f5}
 .q.pot{background:#dbeafe}.q.int{background:#dcfce7}.q.cur{background:#fef3c7}.q.fake{background:#fee2e2}.q.ruim{background:#f3f4f6}
-.fase-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:8px;background:#fff;border:1px solid #eee;border-radius:10px}
+.fase-box{margin-top:8px;padding:8px;background:#fafafa;border:1px solid #eee;border-radius:10px}
+.fase-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
 .fase-n{min-width:28px;height:28px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px}
-.fase-pill{font-size:10px;padding:4px 8px;border-radius:999px;background:#f3f3f3;border:1px solid #e5e5e5;font-weight:600}
-.leads-hot{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-.lead-line{font-size:11px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#fafafa;border-radius:8px;border:1px solid #f0f0f0}
+.fase-label{font-size:11px;font-weight:700;color:#333}
+.fase-meta{font-size:10px;color:#888}
+.fase-pills{display:flex;flex-wrap:wrap;gap:6px}
+.fase-pill{font-size:10px;padding:5px 9px;border-radius:8px;background:#fff;border:1px solid #e5e5e5;font-weight:600;cursor:pointer;color:#111}
+.fase-pill.open,.fase-pill:hover{border-color:#111;background:#111;color:#fff}
+.fase-leads{margin-top:8px;display:none;flex-direction:column;gap:6px}
+.fase-leads.show{display:flex}
+.lead-line{font-size:11px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#fff;border-radius:8px;border:1px solid #f0f0f0}
 .lead-line a{color:#0b6e4f;font-weight:700;text-decoration:none}
 .lead-line a.bx{color:#2a5bd7}
 .actions{display:flex;gap:6px;padding:10px 14px;background:#fafafa}
@@ -58,6 +67,9 @@ body{background:#fcfcfc;color:#111}
 .feed-item{font-size:12px;padding:8px 0;border-bottom:1px solid #f0f0f0}
 .small-card{background:#f8f7f6;border-radius:10px;padding:12px;margin:10px 0;font-size:12px}
 .pos{font-size:11px;color:#888;font-weight:700;margin-right:4px}
+.fb-box{margin:12px 16px;padding:12px;background:#fff;border:1px solid #eee;border-radius:12px;font-size:12px;display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.fb-box b{display:block;margin-bottom:4px}
+@media(max-width:560px){.fb-box{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -72,14 +84,24 @@ body{background:#fcfcfc;color:#111}
 </div>
 
 <div id="tab-ativas">
-  <div class="info" id="infoAtivas">Só campanhas <b>ativas</b> agora (veiculando). Gasto/CPL = últimos 30 dias.</div>
+  <div class="info" id="infoAtivas">Só campanhas <b>ACTIVE</b> na Meta (veiculando agora). Gasto/CPL = últimos 30 dias.</div>
+  <div id="alertLeads" class="alert-leads"></div>
   <div id="alertMichel" class="alert-top"></div>
   <div id="listAtivas"></div>
 </div>
 
 <div id="tab-ranking" style="display:none">
-  <div class="info">Todas as campanhas com gasto nos <b>últimos 30 dias</b> (ativas + pausadas), ordenadas por melhor CPL. Não são “só ativas”.</div>
-  <div id="listRanking"></div>
+  <div class="info" id="infoRanking">Desde <b>12/07/2025</b> (entrada do Michel) até hoje · Top 10 melhores + Top 10 piores por CPL · com fases Bitrix e WhatsApp.</div>
+  <div class="fb-box" id="fbRanking">
+    <div><b>Por que as 10 melhores converteram</b><span id="fbMelhores">—</span></div>
+    <div><b>Por que as 10 piores travaram</b><span id="fbPiores">—</span></div>
+  </div>
+  <div class="sec-title">🏆 Top 10 melhores · menor CPL</div>
+  <div class="sec-sub" id="subMelhores">Custo de lead + forms + fase no funil</div>
+  <div id="listMelhores"></div>
+  <div class="sec-title">⚠️ Top 10 piores · maior CPL</div>
+  <div class="sec-sub">Mesma régua — para comparar avanço no funil</div>
+  <div id="listPiores"></div>
 </div>
 
 <div id="tab-gestor" style="display:none">
@@ -110,19 +132,38 @@ body{background:#fcfcfc;color:#111}
   </div>
 </div>
 
-<div class="modal" id="modalStop"><div class="modal-box"><h4>Você tem certeza?</h4><p>Registra a decisão e avisa o gestor no WhatsApp. (Pause na Meta: próximo passo.)</p><div style="display:flex;gap:8px"><button class="btn" onclick="closeModal('modalStop')">Cancelar</button><button class="btn primary" onclick="confirmStop()">Sim, parar</button></div></div></div>
-<div class="modal" id="modalBudget"><div class="modal-box"><h4>Novo orçamento diário</h4><input id="budgetInput" class="input" type="number" placeholder="R$"><div style="display:flex;gap:8px"><button class="btn" onclick="closeModal('modalBudget')">Cancelar</button><button class="btn primary" onclick="confirmBudget()">Confirmar</button></div></div></div>
+<div class="modal" id="modalStop">
+  <div class="modal-box">
+    <h4>Parar campanha na Meta?</h4>
+    <p>Isso <b>pausa de verdade</b> na Meta Ads (status PAUSED), registra no placar do gestor e avisa no WhatsApp.</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="closeModal('modalStop')">Cancelar</button>
+      <button class="btn primary" onclick="confirmStop()">Sim, pausar</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="modalBudget">
+  <div class="modal-box">
+    <h4>Novo orçamento diário</h4>
+    <input id="budgetInput" class="input" type="number" placeholder="R$">
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="closeModal('modalBudget')">Cancelar</button>
+      <button class="btn primary" onclick="confirmBudget()">Confirmar</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
 const api=(p)=>API_BASE+p;
-let DATA=null, ATIVAS=[], RANKING=[], currentCamp=null, GESTOR_KEY='';
+let DATA=null, ATIVAS=[], MELHORES=[], PIORES=[], currentCamp=null, GESTOR_KEY='';
+let lastLeadsHoje=null;
 
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3200);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3800);}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
-function acha(id){return [...ATIVAS,...RANKING].find(c=>String(c.id)===String(id)||c.name===id);}
+function acha(id){return [...ATIVAS,...MELHORES,...PIORES].find(c=>String(c.id)===String(id)||c.name===id);}
 
 function showTab(t){
   ['ativas','ranking','gestor'].forEach(k=>{
@@ -144,27 +185,50 @@ function openStop(id){currentCamp=id;document.getElementById('modalStop').style.
 function openBudget(id){currentCamp=id;document.getElementById('budgetInput').value='';document.getElementById('modalBudget').style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
+function toggleFase(btn, key){
+  const box=document.getElementById(key);
+  if(!box) return;
+  const open=box.classList.toggle('show');
+  btn.classList.toggle('open', open);
+}
+
 function htmlFases(cam){
-  const n=cam.leadsTotal||0;
-  const pills=(cam.fases||[]).map(f=>`<span class="fase-pill">${esc(f.nome)} · ${f.n}</span>`).join('')
-    ||'<span class="fase-pill">Sem leads de hoje nesta campanha</span>';
-  return `<div class="fase-box"><div class="fase-n">${n}</div>${pills}</div>`;
+  const forms=cam.forms??0;
+  const noFunil=cam.leadsTotal||0;
+  const fases=cam.fases||[];
+  if(!fases.length && !forms){
+    return `<div class="fase-box"><div class="fase-head"><div class="fase-n">0</div><span class="fase-label">Forms / fases Bitrix</span></div>
+      <span class="fase-meta">Sem forms nesta campanha</span></div>`;
+  }
+  const pills=fases.map((f,i)=>{
+    const key=`fase-${String(cam.id).replace(/\W/g,'_')}-${i}`;
+    return `<button type="button" class="fase-pill" data-fase="${key}" onclick="toggleFase(this,'${key}')">${esc(f.nome)} · ${f.n}</button>`;
+  }).join('');
+  const panels=fases.map((f,i)=>{
+    const key=`fase-${String(cam.id).replace(/\W/g,'_')}-${i}`;
+    const leads=(f.leads||[]).map(l=>`
+      <div class="lead-line">
+        <b>${esc(l.nome||'Lead')}</b>
+        <span style="color:#888">${esc(f.nome)}</span>
+        ${l.bitrixUrl?`<a class="bx" href="${esc(l.bitrixUrl)}" target="_blank" rel="noopener">Bitrix</a>`:''}
+        ${l.whatsappUrl?`<a href="${esc(l.whatsappUrl)}" target="_blank" rel="noopener">WhatsApp</a>`:'<span style="color:#bbb">sem WA</span>'}
+      </div>`).join('') || `<div class="lead-line"><span style="color:#888">${esc(f.nome)} · ${f.n} no funil</span></div>`;
+    return `<div class="fase-leads" id="${key}">${leads}</div>`;
+  }).join('');
+  return `<div class="fase-box">
+    <div class="fase-head">
+      <div class="fase-n">${forms}</div>
+      <div>
+        <div class="fase-label">Forms Meta → onde estão no funil</div>
+        <div class="fase-meta">${noFunil} no Funil Novo Katzer${cam.fasesFonte?` · ${esc(cam.fasesFonte)}`:''} · toque na fase p/ WhatsApp + Bitrix</div>
+      </div>
+    </div>
+    <div class="fase-pills">${pills||'<span class="fase-meta">Ainda sem match Bitrix nesta campanha</span>'}</div>
+    ${panels}
+  </div>`;
 }
 
-function htmlLeadsHot(cam){
-  const hot=(cam.leadsHot||[]).filter(l=>l.hot);
-  if(!hot.length) return '';
-  return `<div class="leads-hot">${hot.map(l=>`
-    <div class="lead-line">
-      <b>${esc(l.nome)}</b>
-      <span class="q ${l.qualidade==='potencial'?'pot':'int'}">${esc(l.qualidade)}</span>
-      <span style="color:#888">${esc(l.fase||'')}</span>
-      ${l.bitrixUrl?`<a class="bx" href="${esc(l.bitrixUrl)}" target="_blank" rel="noopener">Bitrix</a>`:''}
-      ${l.whatsappUrl?`<a href="${esc(l.whatsappUrl)}" target="_blank" rel="noopener">WhatsApp</a>`:''}
-    </div>`).join('')}</div>`;
-}
-
-function cardHtml(cam,{showPos=false}={}){
+function cardHtml(cam,{showPos=false, showActions=true}={}){
   const cls=cam.alertaVisual==='ruim'?'ruim':(cam.alertaVisual==='oportunidade'?'oportunidade':'');
   const badgeTxt=cam.qual==='bad'?'RUIM · '+cam.custo:(cam.qual==='good'?'OPORTUNIDADE · '+cam.custo:cam.custo+' /lead');
   return `<div class="card ${cls}">
@@ -174,12 +238,12 @@ function cardHtml(cam,{showPos=false}={}){
     </div>
     <div class="row">
       <div class="col"><b>${esc(cam.inicio)}</b><span>Início</span></div>
-      <div class="col"><b>${esc(cam.gasto)}</b><span>Gasto 30d</span></div>
+      <div class="col"><b>${esc(cam.gasto)}</b><span>Gasto</span></div>
       <div class="col"><b>${esc(cam.imp)}</b><span>Impressões</span></div>
       <div class="col"><b>${cam.forms??0}</b><span>Forms</span></div>
       <div class="col"><b>${esc(cam.custo)}</b><span>Custo/Lead</span></div>
     </div>
-    <div class="row"><div class="col"><b>Qualidade IA + fase Bitrix</b>
+    <div class="row"><div class="col"><b>Qualidade IA + fases Bitrix</b>
       <div class="quality">
         <span class="q pot">${cam.detail?.pot||0} Potencial</span>
         <span class="q int">${cam.detail?.int||0} Interessado</span>
@@ -188,22 +252,42 @@ function cardHtml(cam,{showPos=false}={}){
         ${cam.detail?.ruim?`<span class="q ruim">${cam.detail.ruim} Ruim</span>`:''}
       </div>
       ${htmlFases(cam)}
-      ${htmlLeadsHot(cam)}
-      <span style="font-size:10px;color:#999;display:block;margin-top:6px">${esc(DATA?.iaComo||'')}</span>
     </div></div>
-    <div class="actions">
+    ${showActions?`<div class="actions">
       <button class="btn" onclick="doAction('manter','${escAttr(cam.id)}')">Manter</button>
       <button class="btn" onclick="openBudget('${escAttr(cam.id)}')">R$ +/-</button>
       <button class="btn danger" onclick="openStop('${escAttr(cam.id)}')">Parar</button>
-    </div>
+    </div>`:''}
   </div>`;
 }
 
 function renderLists(){
   const a=document.getElementById('listAtivas');
-  a.innerHTML=ATIVAS.length?ATIVAS.map(c=>cardHtml(c)).join(''):'<div class="card"><div class="row">Nenhuma campanha ativa no momento.</div></div>';
-  const r=document.getElementById('listRanking');
-  r.innerHTML=RANKING.length?RANKING.map(c=>cardHtml(c,{showPos:true})).join(''):'<div class="card"><div class="row">Sem ranking ainda.</div></div>';
+  a.innerHTML=ATIVAS.length
+    ? ATIVAS.map(c=>cardHtml(c)).join('')
+    : '<div class="card"><div class="row">Nenhuma campanha ACTIVE no momento.</div></div>';
+  document.getElementById('listMelhores').innerHTML=MELHORES.length
+    ? MELHORES.map(c=>cardHtml(c,{showPos:true})).join('')
+    : '<div class="card"><div class="row">Sem dados desde 12/07/2025 ainda.</div></div>';
+  document.getElementById('listPiores').innerHTML=PIORES.length
+    ? PIORES.map(c=>cardHtml(c,{showPos:true})).join('')
+    : '<div class="card"><div class="row">Sem dados.</div></div>';
+}
+
+function updateLeadsAlert(n){
+  const el=document.getElementById('alertLeads');
+  if(!el) return;
+  if(n>0){
+    el.style.display='block';
+    const novo=lastLeadsHoje!=null && n>lastLeadsHoje;
+    el.textContent=novo
+      ? `🔔 Novo lead! ${n} lead(s) de tráfego hoje — abra as fases e confira no WhatsApp`
+      : `🔔 ${n} lead(s) de tráfego hoje — fases Bitrix + WhatsApp abaixo`;
+    if(novo) toast(`🔔 ${n-lastLeadsHoje} lead(s) novo(s) chegaram`);
+  }else{
+    el.style.display='none';
+  }
+  lastLeadsHoje=n;
 }
 
 async function postAcao(body){
@@ -213,6 +297,8 @@ async function postAcao(body){
   if(res.alertaMichel){const el=document.getElementById('alertMichel');el.style.display='block';el.textContent=res.alertaMichel;}
   if(res.alertaGestor){const el=document.getElementById('alertGestor');if(el){el.style.display='block';el.textContent=res.alertaGestor;}}
   if(GESTOR_KEY) loadGestor();
+  // Recarrega lista (Parar remove da aba Ativas)
+  setTimeout(loadMichel, 800);
   return res;
 }
 async function doAction(act,id){
@@ -233,11 +319,23 @@ async function confirmBudget(){
 }
 
 async function loadMichel(){
-  try{DATA=await fetch(api('/api/decisao-app')).then(r=>r.json());}catch{DATA={ativas:[],ranking:[]};}
+  try{DATA=await fetch(api('/api/decisao-app')).then(r=>r.json());}catch{DATA={ativas:[],top10Melhores:[],top10Piores:[]};}
   ATIVAS=DATA.ativas||DATA.campanhas||[];
-  RANKING=DATA.ranking||[];
+  MELHORES=DATA.top10Melhores||[];
+  PIORES=DATA.top10Piores||[];
   const info=document.getElementById('infoAtivas');
-  if(info) info.innerHTML=`Só campanhas <b>ativas</b> agora. ${esc(DATA.avisoAbas||'')} · Fontes: ${esc(DATA.fontes||'')}`;
+  if(info) info.innerHTML=`Só campanhas <b>ACTIVE</b> na Meta · <b>${ATIVAS.length}</b> agora. ${esc(DATA.avisoAbas||'')}`;
+  const ir=document.getElementById('infoRanking');
+  if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> até <b>${esc(DATA.rankingAte||'hoje')}</b> · Top 10 melhores + Top 10 piores por CPL · fases Bitrix + WhatsApp por lead.`;
+  const fbM=document.getElementById('fbMelhores');
+  const fbP=document.getElementById('fbPiores');
+  if(fbM) fbM.innerHTML='<br>'+(DATA.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>');
+  if(fbP) fbP.innerHTML='<br>'+(DATA.feedbackPiores||[]).map(x=>'• '+esc(x)).join('<br>');
+  updateLeadsAlert(DATA.leadsHoje||0);
+  if(DATA.alertaLeadsHoje && (DATA.leadsHoje||0)>0){
+    const el=document.getElementById('alertLeads');
+    if(el && lastLeadsHoje===null){ el.style.display='block'; el.textContent=DATA.alertaLeadsHoje; }
+  }
   renderLists();
 }
 
@@ -257,7 +355,7 @@ async function loadGestor(){
 }
 
 loadMichel();
-setInterval(loadMichel, 60000);
+setInterval(loadMichel, 45000);
 </script>
 </body>
 </html>
