@@ -157,27 +157,59 @@ export async function handler(event) {
   if (acao === 'feito') {
     const t = TAREFAS.find((x) => x.id === body.tarefa);
     if (!t) return json(400, { ok: false, erro: 'tarefa desconhecida' });
-    const nota = (body.nota || '').toString().slice(0, 400);
-    // V6 FINAL: Garimpo 10:15 — meta 0–5+ · NOME obrigatório
-    if (t.id === 'garimpo' && nota.trim().length < 3) {
-      return json(400, {
-        ok: false,
-        erro: 'Garimpo exige NOME do lead/cliente (mín. 3 caracteres). Meta: 0 a 5+ leads.',
-      });
+    let nota = (body.nota || '').toString().slice(0, 400);
+    let garimpoMeta = null;
+
+    // V6 FINAL: formulário Garimpo — qtd 0–5+ · nome · telefone opcional
+    if (t.id === 'garimpo') {
+      const qtdRaw = body.qtd != null ? String(body.qtd).trim() : '';
+      const qtdOk = ['0', '1', '2', '3', '4', '5', '5+'].includes(qtdRaw);
+      const qtd = qtdOk ? (qtdRaw === '5' ? '5' : qtdRaw) : null;
+      const nome = String(body.nome || '').trim() || (nota.match(/^[^|]+/) || [''])[0].trim();
+      const telefone = String(body.telefone || body.fone || '').trim();
+      if (!qtd) {
+        return json(400, { ok: false, erro: 'Garimpo: selecione a quantidade (0 a 5+).' });
+      }
+      if (qtd !== '0' && nome.length < 3) {
+        return json(400, { ok: false, erro: 'Garimpo: nome completo do cliente é obrigatório (exceto qtd 0).' });
+      }
+      const nomeFinal = nome.length >= 3 ? nome : 'Nenhum lead encontrado';
+      garimpoMeta = { qtd, nome: nomeFinal, telefone: telefone || null, alertaGestor: qtd === '0' || qtd === '5+' };
+      nota = [
+        `Qtd ${qtd}`,
+        `Cliente: ${nomeFinal}`,
+        telefone ? `Tel: ${telefone}` : null,
+      ].filter(Boolean).join(' · ');
     }
-    estado.tarefas[t.id] = { min: now.min, hora: now.hm, nota };
+
+    estado.tarefas[t.id] = {
+      min: now.min,
+      hora: now.hm,
+      nota,
+      ...(garimpoMeta ? { garimpo: garimpoMeta } : {}),
+    };
     await salvaEstado(estado);
     const dif = now.min - previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
     const modoIco = estado.modo === 'katzer' ? '🏢' : '🏠';
-    // V6 fechado: CADA Feito pinga WhatsApp (não só atraso).
     let msg = `✅ Michel — *${t.nome}* · feito ${now.hm} · ${emojiDif(dif)} ${modoIco}`;
-    if (t.id === 'garimpo') {
-      msg += `\n⛏️ Garimpo (meta 0–5+): *${nota.trim()}*`;
+    if (t.id === 'garimpo' && garimpoMeta) {
+      const flag = garimpoMeta.alertaGestor
+        ? (garimpoMeta.qtd === '0' ? '⚠️ QTD 0 — ouro zerado hoje' : '🔥 QTD 5+ — ouro cheio')
+        : '⛏️ Relatório Garimpo';
+      msg = [
+        `${flag}`,
+        `*Garimpo 10:15* · ${now.hm} · ${emojiDif(dif)} ${modoIco}`,
+        `Quantidade: *${garimpoMeta.qtd}*`,
+        `Cliente: *${garimpoMeta.nome}*`,
+        garimpoMeta.telefone ? `Tel: ${garimpoMeta.telefone}` : null,
+        '',
+        'Planilha Katzer · meta diária 0–5+',
+      ].filter(Boolean).join('\n');
     } else if (nota) {
       msg += `\n📝 ${nota}`;
     }
     const w = ceo ? await enviaWhats(ceo, msg) : { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
-    return json(200, { ok: true, tarefa: t.id, hora: now.hm, difMin: dif, whats: w });
+    return json(200, { ok: true, tarefa: t.id, hora: now.hm, difMin: dif, whats: w, garimpo: garimpoMeta });
   }
 
   if (acao === 'desfazer') {

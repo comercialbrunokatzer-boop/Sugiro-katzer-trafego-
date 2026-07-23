@@ -71,6 +71,19 @@
   footer{margin-top:18px;color:var(--sub);font-size:.72rem;text-align:center}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
   .toast.show{opacity:1}
+  .garimpo-box{margin-top:12px;padding:14px;border:1px solid var(--hair);border-radius:14px;background:linear-gradient(160deg,rgba(168,121,42,.08),transparent)}
+  .garimpo-box .gh{color:var(--gold);font-weight:800;font-size:.95rem;letter-spacing:.02em}
+  .garimpo-box .gb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}
+  .garimpo-box .gb span{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border-radius:999px;background:var(--ground);color:var(--sub);border:1px solid var(--hair)}
+  .garimpo-box .inst{border:1px solid rgba(168,121,42,.45);border-radius:10px;padding:10px 12px;font-size:.82rem;line-height:1.4;color:var(--ink);background:rgba(168,121,42,.06);margin-bottom:12px}
+  .garimpo-box .lab{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);margin:10px 0 6px}
+  .garimpo-box .lab .ob{color:var(--late)}.garimpo-box .lab .op{color:var(--sub);font-weight:600;text-transform:none;letter-spacing:0}
+  .garimpo-box .qtd{display:flex;gap:6px;flex-wrap:wrap}
+  .garimpo-box .qtd button{flex:1;min-width:44px;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:11px 6px;font-weight:800;font-family:inherit;cursor:pointer}
+  .garimpo-box .qtd button.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .garimpo-box input{width:100%;border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:10px;padding:11px 12px;font-size:.9rem;font-family:inherit}
+  .garimpo-box .send{margin-top:12px;width:100%;border:0;background:var(--ok);color:#fff;font-weight:800;border-radius:11px;padding:13px;font-size:.95rem;font-family:inherit;cursor:pointer}
+  .garimpo-box .hint{margin-top:8px;font-size:.72rem;color:var(--sub);text-align:center}
   @media (max-width:420px){.strip{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -224,6 +237,36 @@ function render(){
         <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
         <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto} · ${st}${t.feito&&t.hora?' · feito '+t.hora:''}</small></div>
       </div>${htmlCardCampanhas(t)}`;
+    } else if(t.id==='garimpo'){
+      const st=rotuloEstadoTarefa(t);
+      if(t.feito){
+        el.innerHTML=`<div class="top">
+          <div class="tk done">✓</div>
+          <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto} · feito ${t.hora||''}</small></div>
+          <button class="btn ghost" data-undo="garimpo">desfazer</button>
+        </div>
+        ${t.nota?`<div style="font-size:.82rem;color:var(--sub);margin-top:8px;line-height:1.4">📝 ${t.nota}</div>`:''}`;
+      } else {
+        el.innerHTML=`<div class="top">
+          <div class="tk ${late?'late':(run?'run':'')}">${late?'!':(run?'▶':'·')}</div>
+          <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':''} · ${st}</small></div>
+        </div>
+        <div class="garimpo-box" id="garimpoForm">
+          <div class="gh">10:15 GARIMPO KATZER</div>
+          <div class="gb"><span>30 min</span><span>META DIÁRIA</span></div>
+          <div class="inst">Achar curtidas e comentários dos patrocinados da Katzer e colocar na planilha da Katzer. Se <b>0</b> me avisa, se <b>1, 2, 5</b> me avisa também. Preciso saber se achou 0 ou 5. É seu ouro diário.</div>
+          <div class="lab">Quantidade</div>
+          <div class="qtd" id="garimpoQtd">
+            ${['0','1','2','3','4','5+'].map((q,i)=>`<button type="button" data-q="${q}" class="${i===0?'on':''}">${q}</button>`).join('')}
+          </div>
+          <div class="lab">Nome completo do cliente <span class="ob">obrigatório</span></div>
+          <input id="garimpoNome" type="text" autocomplete="name" placeholder="Digite o nome completo do cliente…">
+          <div class="lab">Telefone <span class="op">(opcional)</span></div>
+          <input id="garimpoTel" type="tel" inputmode="tel" placeholder="(47) 9 9999-9999">
+          <button type="button" class="send" id="garimpoSend">➤ ENVIAR RELATÓRIO</button>
+          <div class="hint">Obs: Se selecionar <b>0</b> ou <b>5+</b>, o gestor é notificado automaticamente.</div>
+        </div>`;
+      }
     } else {
       el.innerHTML=`<div class="top">
         <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
@@ -232,9 +275,8 @@ function render(){
           ? `<button class="btn ghost" data-undo="${t.id}">desfazer</button>`
           : `<button class="btn" data-feito="${t.id}">Feito</button>`}
       </div>
-      ${t.id==='garimpo'&&!t.feito?`<div style="margin-top:8px;font-size:.8rem;color:var(--run);font-weight:700">⛏️ Meta Garimpo: 0 a 5+ leads · <u>NOME obrigatório</u></div>`:''}
       ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
-      ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="${t.id==='garimpo'?'Nome do lead/cliente (OBRIGATÓRIO)':'Miniresumo (opcional) — o que rolou'}">`:''}`;
+      ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
     }
     box.appendChild(el);
   });
@@ -253,7 +295,6 @@ document.addEventListener('click',async(e)=>{
     e.preventDefault();
     const href=abrir.getAttribute('href')||'https://dashing-elf-41a723.netlify.app/';
     const camp=(ST.tarefas||[]).find(t=>t.id==='campanhas');
-    // Abrir o painel = "feito" na Rotina. Decisão real só no app Campanhas.
     if(camp&&!camp.feito){
       abrir.style.pointerEvents='none';
       try{await api({acao:'feito',tarefa:'campanhas',nota:'Abriu Painel de Campanhas (app separado)'});}catch(err){}
@@ -261,14 +302,44 @@ document.addEventListener('click',async(e)=>{
     window.location.href=href;
     return;
   }
+  const qBtn=e.target.closest('#garimpoQtd [data-q]');
+  if(qBtn){
+    document.querySelectorAll('#garimpoQtd [data-q]').forEach(b=>b.classList.remove('on'));
+    qBtn.classList.add('on');
+    return;
+  }
+  const gSend=e.target.closest('#garimpoSend');
+  if(gSend){
+    const qEl=document.querySelector('#garimpoQtd [data-q].on');
+    const qtd=qEl?qEl.dataset.q:'0';
+    const nome=($('#garimpoNome')?.value||'').trim();
+    const telefone=($('#garimpoTel')?.value||'').trim();
+    if(qtd!=='0' && nome.length<3){
+      toast('⛏️ Digite o nome completo do cliente');
+      $('#garimpoNome')?.focus();
+      return;
+    }
+    if(qtd==='0' && nome.length<3){
+      // 0 leads: nome pode ser "Nenhum" — se vazio, preenche
+    }
+    gSend.disabled=true;
+    const r=await api({
+      acao:'feito',
+      tarefa:'garimpo',
+      qtd,
+      nome: nome || (qtd==='0'?'Nenhum lead encontrado':''),
+      telefone,
+      nota:'' // montado no backend
+    });
+    if(r.ok){toast(qtd==='0'||qtd==='5+'?'⛏️ Relatório enviado · gestor avisado':'⛏️ Relatório Garimpo enviado');load();}
+    else{gSend.disabled=false;toast(r.erro||'Erro no relatório');}
+    return;
+  }
   const f=e.target.closest('[data-feito]');const u=e.target.closest('[data-undo]');
   if(f){
     f.disabled=true;const id=f.dataset.feito;const nt=document.querySelector(`[data-note="${id}"]`);const nota=nt?nt.value.trim():'';
-    if(id==='garimpo' && nota.length<3){
-      f.disabled=false;toast('⛏️ Garimpo: digite o NOME do lead (obrigatório)');if(nt)nt.focus();return;
-    }
     const r=await api({acao:'feito',tarefa:id,nota});
-    if(r.ok){toast(id==='garimpo'?'⛏️ Garimpo + nome registrados':'✅ Registrado');load();}
+    if(r.ok){toast('✅ Registrado');load();}
     else{f.disabled=false;toast(r.erro||'Erro, tenta de novo');}
   }
   if(u){const r=await api({acao:'desfazer',tarefa:u.dataset.undo});if(r.ok)load();}
