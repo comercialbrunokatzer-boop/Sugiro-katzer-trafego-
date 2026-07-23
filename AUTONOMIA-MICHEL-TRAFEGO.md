@@ -3,8 +3,10 @@
 | | |
 |---|---|
 | **Status** | OFICIAL (CEO · 2026-07-23) |
-| **Canal** | Supervisor de Tráfego Katzer · Copiloto do Michel |
+| **Canal** | Supervisor de Tráfego Katzer · Copiloto do Michel (**gestor**) |
+| **Parecer Nível 3** | Bruno Katzer (**sócio** / CEO) |
 | **Princípio** | Michel executa e aprende ao mesmo tempo. IA recomenda; Bruno só no que for relevante. |
+| **Time** | Corretores ativos: Elyas · Leandro · Edsel — `TIME-ATUAL-KATZER.md` |
 
 O cartão diário (`TEMPLATE-CARTAO-COPILOTO.md`) deve indicar o **nível** da recomendação e se precisa de Bruno.
 

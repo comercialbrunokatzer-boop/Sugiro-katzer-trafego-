@@ -13,7 +13,7 @@
 ---
 
 ## 1. QUAL É A FUNÇÃO DO MICHEL
-O Michel é o **maestro da operação diária**. Com a IA, ele deixa de *montar* relatório e passa a
+O Michel é o **gestor** e o **maestro da operação diária**. Com a IA, ele deixa de *montar* relatório e passa a
 *comandar* com base nele. Duas responsabilidades:
 
 1. **Monitorar as campanhas** todo dia pelo placar que chega pronto (ver onde vaza dinheiro, onde
