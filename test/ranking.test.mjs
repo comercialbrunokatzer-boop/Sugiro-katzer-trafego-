@@ -36,10 +36,11 @@ const data = [
 ];
 
 test('cidade/produto = Produto · Cidade (V4.1)', () => {
-  assert.equal(extraiCidadeProduto('FortMyers_BR_SC'), 'Fort Myers · Piçarras');
+  assert.equal(extraiCidadeProduto('FortMyers_BR_SC'), 'Fort Myers · Penha');
   assert.equal(extraiCidadeProduto('[BARRA VIEW][SANDRA]'), 'Barra View · Barra Velha');
   assert.equal(extraiCidadeProduto('[ROGGA][AMANAY]'), 'Amanay · Itapoá');
   assert.equal(extraiCidadeProduto('[ALICERCE][AYA]'), 'Aya · Piçarras');
+  assert.equal(extraiCidadeProduto('FORTMYERS_PENHA_VETTER_BR-SC'), 'Fort Myers · Penha');
 });
 
 test('linhaRanking: CPL form; nunca clique; null sem lead', () => {

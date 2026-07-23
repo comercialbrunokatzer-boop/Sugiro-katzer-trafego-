@@ -11,7 +11,7 @@ test('recomendacoes: texto canônico Bruno + botões', () => {
   const r = montaRecomendacoes({
     operacional7d: {
       logSeguro: [
-        { campanha: 'FortMyers_BR_SC[10/07/26]', leads: 8, gasto: 613.48, cpl: 76.69 },
+        { campanha: 'FortMyers_BR-SC[10/07/26]', leads: 8, gasto: 613.48, cpl: 76.69 },
       ],
     },
     contaMaxima: {
@@ -24,10 +24,10 @@ test('recomendacoes: texto canônico Bruno + botões', () => {
   assert.equal(r.ok, true);
   assert.equal(r.versao, DECISAO_VERSAO);
   const br = r.recomendacoes[0];
-  assert.equal(br.produto, 'FORT MYERS - PIÇARRAS');
+  assert.equal(br.produto, 'FORT MYERS - PENHA');
   assert.match(br.publico, /9 leads a R\$ 77/);
   assert.equal(br.problema, 'Mesma cidade que Alicerce, mas CPL 3x maior');
-  assert.equal(br.recomendacao, 'MANTER BR_SC, mas trocar criativo');
+  assert.equal(br.recomendacao, 'MANTER BR-SC, mas trocar criativo');
   assert.equal(br.acao, 'Gravar com Carol a mesma fórmula do Alicerce (R$ 18) para Fort Myers');
   assert.deepEqual(br.botoes, ['aplicar', 'ajustar', 'agora-nao']);
   const am = r.recomendacoes[1];
@@ -39,13 +39,13 @@ test('recomendacoes: texto canônico Bruno + botões', () => {
 
 test('V4: NÃO sugerir EUA_Americanos a R$7 — principal = Amanay', () => {
   assert.equal(ehPublicoProibidoEscalar('[FortMyers_EUA_Americanos][10/07/26]'), true);
-  assert.equal(ehPublicoProibidoEscalar('FortMyers_BR_SC'), false);
+  assert.equal(ehPublicoProibidoEscalar('FortMyers_BR-SC'), false);
 
   const r = montaRecomendacoes({
     operacional7d: {
       logSeguro: [
         { campanha: '[FortMyers_EUA_Americanos]', leads: 3, cpl: 7, gasto: 21 },
-        { campanha: 'FortMyers_BR_SC', leads: 9, cpl: 77, gasto: 693 },
+        { campanha: 'FortMyers_BR-SC', leads: 9, cpl: 77, gasto: 693 },
       ],
     },
     contaMaxima: {

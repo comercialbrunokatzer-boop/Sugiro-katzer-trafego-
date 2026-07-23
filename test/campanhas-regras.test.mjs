@@ -7,13 +7,13 @@ import { montaPlacar } from '../netlify/functions/_placar.mjs';
 import { montaSugestaoPrincipal } from '../netlify/functions/_placar-estado.mjs';
 
 test('cidade real canônica', () => {
-  assert.equal(cidadeReal('FortMyers_BR_SC'), 'Piçarras');
+  assert.equal(cidadeReal('FortMyers_BR_SC'), 'Penha');
   assert.equal(cidadeReal('[ALICERCE][AYA]'), 'Piçarras');
   assert.equal(cidadeReal('[BARRA VIEW][SANDRA]'), 'Barra Velha');
   assert.equal(cidadeReal('[ROGGA][AMANAY]'), 'Itapoá');
 });
 
-test('público fora do Brasil alerta em Piçarras', () => {
+test('público fora do Brasil alerta (EN/exterior)', () => {
   assert.equal(publicoForaDoBrasil('[FortMyers_EUA_Americanos]').alerta, true);
   assert.equal(publicoForaDoBrasil('FortMyers_MIAMI/ORLANDO').alerta, true);
   assert.equal(publicoForaDoBrasil('FortMyers cidades PORTUGAL').alerta, true);
@@ -35,7 +35,7 @@ test('semáforo BOM: <25 verde · 25–45 amarelo · >45 vermelho · <10 cinza',
   assert.equal(semaforoCampanha({ leads: 12, cpl: 56 }, { modo: 'bom' }).cor, 'vermelho');
 });
 
-test('trava PUBLICO EXTERNO em Piçarras', () => {
+test('trava PUBLICO EXTERNO', () => {
   const t = travaEscalar({ nome: '[FortMyers_EUA_Americanos]', leads: 12, cpl: 20, leadConfirmado: true });
   assert.equal(t.ok, false);
   assert.equal(t.codigo, 'PUBLICO_EXTERNO');
@@ -99,7 +99,7 @@ test('quadradinho: só EUA_Americanos 3 leads → OBSERVAR bloqueado (nunca esca
   assert.equal(s.bloqueadoEscalar, true);
 });
 
-test('não escala com público EUA/Miami/Portugal em Piçarras mesmo com ≥10 leads', () => {
+test('não escala com público EUA/Miami/Portugal mesmo com ≥10 leads', () => {
   assert.equal(podeEscalar({ nome: 'FortMyers_BR_SC', leads: 12, cpl: 25, leadConfirmado: true }), true);
   assert.equal(podeEscalar({ nome: 'FortMyers PORTUGAL', leads: 12, cpl: 16, leadConfirmado: true }), false);
 });

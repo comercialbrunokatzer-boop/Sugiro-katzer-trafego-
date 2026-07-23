@@ -23,6 +23,7 @@ import {
 } from './_recomendacoes.mjs';
 import { json } from './_infra.mjs';
 import { LEADS_MIN_ESCALAR } from './_campanhas-regras.mjs';
+import { montaMixVerba } from './_mix-verba.mjs';
 import { cidadeReal } from './_campanhas-regras.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
@@ -144,11 +145,13 @@ export async function handler(event) {
     sugestoes: metaOut.confiavel ? montaSugestoes(placarQ) : [],
     sugestaoPrincipal,
     recomendacoes: recBundle,
+    mixVerba: montaMixVerba(),
     decisoes: listaDecisoes(decisoes),
     qualidadeAtualizadoEm: qualDoc.atualizadoEm || null,
     meta: metaOut,
     dadosConfiaveis: metaOut.confiavel && (metaOut.status === 'ok' || metaOut.status === 'sem_gasto' || metaOut.status === 'sem_campanha'),
     integracaoOk: metaOut.confiavel || !!meta?.usandoCache,
+    regraIngles: 'Sem estrutura pra atender em inglês → lead EN continua Curioso',
   };
 
   if (params.diag === '1') {

@@ -94,6 +94,11 @@
   .qbar .err{background:var(--late)}
   .qbar .cmp{background:#6bc4ff}
   .qleg{font-size:.68rem;color:var(--sub);line-height:1.35}
+  .mix{background:var(--ground);border:1px solid var(--hair);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:.78rem}
+  .mix .mt{font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .mix .ml{display:flex;justify-content:space-between;gap:8px;padding:3px 0;color:var(--sub)}
+  .mix .ml b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .mix .ms{margin-top:6px;font-size:.68rem;color:var(--sub);line-height:1.35}
 </style>
 </head>
 <body>
@@ -107,6 +112,7 @@
   <!-- QUADRADO 1: Campanhas — hoje -->
   <div class="card" id="cardCamp">
     <h2>📊 Campanhas — hoje</h2>
+    <div class="mix" id="mixVerba"></div>
     <div class="tog" id="togCpl">
       <button type="button" data-modo="bruto">CPL Bruto</button>
       <button type="button" data-modo="bom" class="on">CPL BOM</button>
@@ -220,7 +226,17 @@ function barraQualidade(c){
       ${c.cplBruto!=null&&c.cplBom!=null?` · Bruto ${brl(c.cplBruto)} → BOM ${brl2(c.cplBom)}`:''}</div>`;
 }
 
+function renderMix(){
+  const box=$('#mixVerba');
+  const m=ST.mixVerba;
+  if(!m?.linhas?.length){box.innerHTML='';return;}
+  box.innerHTML=`<div class="mt">Mix 80% — onde já vende</div>`+
+    m.linhas.map(l=>`<div class="ml"><span>${l.slug}</span><b>${l.pct}%</b></div>`).join('')+
+    `<div class="ms">${m.regra||''}${ST.regraIngles?' · '+ST.regraIngles:''}</div>`;
+}
+
 function renderLista(){
+  renderMix();
   const box=$('#lista');box.innerHTML='';
   const meta=ST.meta||{};
   const camps=campsOrdenadas();

@@ -19,45 +19,55 @@ export function rotuloSemBase(leads = 0) {
   return `⚪ SEM BASE - ${n} leads, precisa ${LEADS_MIN_ESCALAR}`;
 }
 
-/** Texto canônico: PUBLICO EXTERNO (Americanos/MIAMI/PORTUGAL em Piçarras). */
+/** Texto canônico: PUBLICO EXTERNO (Americanos/MIAMI/PORTUGAL). */
 export function rotuloPublicoExterno(motivo = null) {
   return motivo
     ? `🚫 PUBLICO EXTERNO — ${motivo}`
-    : '🚫 PUBLICO EXTERNO — Americanos/MIAMI/PORTUGAL em Piçarras';
+    : '🚫 PUBLICO EXTERNO — Americanos/MIAMI/PORTUGAL · sem EN = Curioso';
 }
 
 /**
- * Cidade real (V4.1) — NUNCA devolve produto/construtora/corretor no lugar da cidade.
- * Ex.: Fort Myers → cidade Piçarras (produto = Fort Myers).
+ * Cidade real (V4.1) — NUNCA devolve produto/construtora no lugar da cidade.
+ * Ex.: Fort Myers → Penha.
  */
 export function cidadeReal(nome = '') {
   return cidadeDoMapa(nome);
 }
 
-/** Identidade completa: produto + cidade + construtora + corretor. */
+/** Identidade completa V4.1. */
 export { identidadeCampanha };
 
-/** Público suspeito fora do Brasil para produto Piçarras / Fort Myers. */
+/** Público fora do BR / que exige inglês. */
 export function publicoForaDoBrasil(nome = '') {
   const n = String(nome);
   if (/EUA[_\s-]?Americanos|AMERICANOS/i.test(n)) {
-    return { alerta: true, publico: 'Americanos em EUA', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+    return {
+      alerta: true,
+      publico: 'Americanos em EUA',
+      motivo: 'Sem estrutura EN → lead Curioso · não escalar',
+      exigeIngles: true,
+    };
   }
   if (/MIAMI|ORLANDO|ORLA/i.test(n)) {
-    return { alerta: true, publico: 'Miami/Orlando', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+    return {
+      alerta: true,
+      publico: 'Miami/Orlando',
+      motivo: 'Sem estrutura EN → lead Curioso · não escalar',
+      exigeIngles: true,
+    };
   }
   if (/PORTUGAL/i.test(n)) {
-    return { alerta: true, publico: 'Portugal', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+    return { alerta: true, publico: 'Portugal', motivo: 'Público fora do Brasil - verificar qualidade', exigeIngles: false };
   }
   if (/ESPANHA|SPAIN/i.test(n)) {
-    return { alerta: true, publico: 'Espanha', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+    return { alerta: true, publico: 'Espanha', motivo: 'Público fora do Brasil - verificar qualidade', exigeIngles: false };
   }
   if (/EUA[_\s-]?Brasileiros|BRASILEIROS/i.test(n)) {
-    return { alerta: false, publico: 'Brasileiros em EUA', motivo: null };
+    return { alerta: false, publico: 'Brasileiros em EUA', motivo: null, exigeIngles: false };
   }
-  if (/BR[_\s-]?SC/i.test(n)) return { alerta: false, publico: 'BR_SC', motivo: null };
-  if (/AMANAY/i.test(n)) return { alerta: false, publico: 'SC+PR', motivo: null };
-  return { alerta: false, publico: null, motivo: null };
+  if (/BR[_\s-]?SC/i.test(n)) return { alerta: false, publico: 'BR-SC', motivo: null, exigeIngles: false };
+  if (/AMANAY/i.test(n)) return { alerta: false, publico: 'SC+PR', motivo: null, exigeIngles: false };
+  return { alerta: false, publico: null, motivo: null, exigeIngles: false };
 }
 
 /**
@@ -97,22 +107,20 @@ export function semaforoCampanha({ leads = 0, cpl = null, leadConfirmado = true 
   return { codigo: 'CARO', emoji: '🔴', label: 'CARO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} > R$ ${amarelo}`, cor: 'vermelho' };
 }
 
-/** Pode escalar? Base mín. + sem PUBLICO EXTERNO em Piçarras. */
+/** Pode escalar? Base mín. + sem PUBLICO EXTERNO (EUA/MIAMI/PORTUGAL). */
 export function podeEscalar(c = {}) {
   const leads = Number(c.leads) || 0;
   if (c.leadConfirmado === false) return false;
   if (leads < LEADS_MIN_ESCALAR) return false;
   if (c.cpl == null && c.cplBom == null && c.cplDecisao == null) return false;
-  const cidade = cidadeReal(c.nome);
   const pub = publicoForaDoBrasil(c.nome);
-  if (cidade === 'Piçarras' && pub.alerta) return false;
+  if (pub.alerta) return false;
   return true;
 }
 
 /** Travas de escalar (prompt final). */
 export function travaEscalar(c = {}) {
   const leads = Number(c.leads) || 0;
-  const cidade = c.cidade || cidadeReal(c.nome);
   const pub = c.alertaPublico != null
     ? { alerta: !!c.alertaPublico, motivo: c.alertaPublico, publico: c.publico }
     : publicoForaDoBrasil(c.nome);
@@ -123,7 +131,7 @@ export function travaEscalar(c = {}) {
   if (leads < LEADS_MIN_ESCALAR) {
     return { ok: false, codigo: 'SEM_BASE', rotulo: rotuloSemBase(leads) };
   }
-  if (cidade === 'Piçarras' && pub.alerta) {
+  if (pub.alerta) {
     return { ok: false, codigo: 'PUBLICO_EXTERNO', rotulo: rotuloPublicoExterno(pub.motivo || pub.publico) };
   }
   return { ok: true, codigo: null, rotulo: null };
@@ -203,6 +211,9 @@ export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
     publicoNome: id.publico,
     dataCampanha: id.data,
     tipoCampanha: id.tipo,
+    atendeIngles: id.atendeIngles,
+    exigeIngles: id.exigeIngles,
+    inglesSemEstrutura: id.inglesSemEstrutura,
     rotuloProdutoCidade: id.rotulo,
     identidade: id,
     publico: id.publico || pub.publico,

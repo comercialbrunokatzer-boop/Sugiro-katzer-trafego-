@@ -79,7 +79,7 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
     const linhasMotivo = [
       rotulo,
       `BLOQUEADO — não escalar (CPL R$ ${observar.cpl != null ? Number(observar.cpl).toFixed(0) : '—'} irrelevante sem base)`,
-      `Cidade: ${cidade === 'Piçarras' ? 'Fort Myers - Piçarras' : cidade}`,
+      `Cidade: ${cidade === 'Piçarras' ? 'Fort Myers - Penha' : cidade}`,
     ];
     if (pub.publico) {
       linhasMotivo.push(
@@ -171,7 +171,7 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       titulo: `Escalar ${destino.nome} (+R$ ${valorDia}/dia)`,
       motivo: [
         `Base: ${destino.leads} leads (≥${LEADS_MIN_ESCALAR})`,
-        `Cidade: ${cidade === 'Piçarras' ? 'Fort Myers - Piçarras' : cidade}`,
+        `Cidade: ${cidade === 'Piçarras' ? 'Fort Myers - Penha' : cidade}`,
         `CPL form. R$ ${destino.cpl != null ? Number(destino.cpl).toFixed(0) : '—'} — ${sem.label}`,
       ].join('\n'),
       recomendacao: 'Escalar com base mínima',

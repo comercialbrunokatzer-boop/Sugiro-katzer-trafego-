@@ -4,8 +4,25 @@
 
 import { QUALIDADE_TIPOS, normalizaQualidade, leadsBons } from './_qualidade.mjs';
 import { cidadeReal } from './_campanhas-regras.mjs';
+import { identidadeCampanha } from './_mapeamento-v41.mjs';
 
 export { QUALIDADE_TIPOS };
+
+/**
+ * Sem estrutura EN: Bom/Comprador em público inglês → Curioso.
+ * @returns {{ qualidade: string, forcouCurioso: boolean, motivo: string|null }}
+ */
+export function qualidadeComRegraIngles(qualidade, campanhaNome = '') {
+  const id = identidadeCampanha(campanhaNome);
+  if (id.inglesSemEstrutura && (qualidade === 'bom' || qualidade === 'comprador')) {
+    return {
+      qualidade: 'curioso',
+      forcouCurioso: true,
+      motivo: 'Sem estrutura EN — lead continua Curioso',
+    };
+  }
+  return { qualidade, forcouCurioso: false, motivo: null };
+}
 
 /** Leads demo canônicos (Bruno) — usados até Bitrix/Meta leadgen ligar. */
 export function leadsDemoHoje() {
@@ -15,9 +32,9 @@ export function leadsDemoHoje() {
       id: 'demo-joao-silva',
       nome: 'João Silva',
       telefone: '11 9xxxx',
-      campanha: 'FortMyers BR_SC',
+      campanha: 'FORTMYERS_PENHA_VETTER_BR-SC',
       campanhaId: null,
-      cidade: 'Piçarras',
+      cidade: 'Penha',
       status: 'Novo',
       recebidoEm: new Date(agora - 12 * 60 * 1000).toISOString(),
       qualidade: null,
@@ -27,7 +44,7 @@ export function leadsDemoHoje() {
       id: 'demo-maria',
       nome: 'Maria',
       telefone: '47 9xxxx',
-      campanha: 'Amanay Itapoá',
+      campanha: 'AMANAY_ITAPOA_ROGGA_BR-SC',
       campanhaId: null,
       cidade: 'Itapoá',
       status: null,
@@ -98,12 +115,14 @@ export function marcaLead(leads = [], { leadId, qualidade, quem = 'Michel' } = {
   const idx = lista.findIndex((l) => l.id === leadId);
   if (idx < 0) throw new Error('lead não encontrado');
 
+  const regra = qualidadeComRegraIngles(qualidade, lista[idx].campanha);
   const ant = lista[idx].qualidade;
   lista[idx] = {
     ...lista[idx],
-    qualidade,
+    qualidade: regra.qualidade,
     marcadoEm: new Date().toISOString(),
     marcadoPor: quem,
+    inglesForcouCurioso: regra.forcouCurioso || null,
   };
 
   const campanha = lista[idx].campanha;
@@ -115,7 +134,10 @@ export function marcaLead(leads = [], { leadId, qualidade, quem = 'Michel' } = {
     leads: lista,
     anterior: ant,
     totaisCampanha: totais,
-    toast: 'Registrado - CPL BOM recalculado',
+    forcouCurioso: regra.forcouCurioso,
+    toast: regra.forcouCurioso
+      ? 'Sem estrutura EN — marcado Curioso · CPL BOM recalculado'
+      : 'Registrado - CPL BOM recalculado',
   };
 }
 
@@ -153,8 +175,9 @@ export function payloadCacador(leads = [], { agora = Date.now() } = {}) {
   return {
     ok: true,
     titulo: 'CAÇAR LEADS DE HOJE - 2 TOQUES (vai pro Bitrix)',
-    aviso: '1 toque marca qualidade · alimenta CPL BOM · Bitrix na sequência',
+    aviso: '1 toque marca qualidade · alimenta CPL BOM · Bitrix na sequência · sem EN = Curioso',
     toastOk: 'Registrado - CPL BOM recalculado',
+    regraIngles: 'Sem estrutura pra atender em inglês → lead EN continua Curioso',
     leads: lista.map((l) => ({
       ...l,
       linha: linhaLead(l, { agora }),
