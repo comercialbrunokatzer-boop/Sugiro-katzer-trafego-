@@ -54,12 +54,20 @@ export async function handler(event) {
 
   if (acao === 'modo') {
     const modo = body.modo === 'katzer' ? 'katzer' : 'casa';
+    const anterior = estado.modo === 'katzer' ? 'katzer' : 'casa';
+    // Anti-spam: NÃO manda WhatsApp se já estava nesse modo (clique repetido / loop).
+    if (anterior === modo) {
+      return json(200, { ok: true, modo, unchanged: true, whats: { enviado: false, motivo: 'modo igual — sem aviso' } });
+    }
     estado.modo = modo;
     await salvaEstado(estado);
+    let w = { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
     if (ceo) {
-      await enviaWhats(ceo, `🏠→🏢 Modo do dia: *${modo === 'katzer' ? 'Katzer' : 'Casa'}* · ${now.hm}`);
+      const de = anterior === 'katzer' ? '🏢 Katzer' : '🏠 Casa';
+      const para = modo === 'katzer' ? '🏢 Katzer' : '🏠 Casa';
+      w = await enviaWhats(ceo, `🗓️ Modo do dia: ${de} → *${para}* · ${now.hm}`);
     }
-    return json(200, { ok: true, modo });
+    return json(200, { ok: true, modo, whats: w });
   }
 
   // Início do dia SÓ HOJE (ex.: começar 09:00). Desloca a agenda mantendo os intervalos.
@@ -87,6 +95,7 @@ export async function handler(event) {
     }
     const t = TAREFAS.find((x) => x.id === body.tarefa);
     if (!t) return json(400, { ok: false, erro: 'tarefa desconhecida' });
+    const prev = estado.overrides[t.id];
     if (body.limpar) {
       delete estado.overrides[t.id];
     } else {
@@ -94,7 +103,17 @@ export async function handler(event) {
       if (!hm || !/^\d{1,2}:\d{2}$/.test(String(hm))) {
         return json(400, { ok: false, erro: 'passe hm (ex.: "10:30")' });
       }
-      estado.overrides[t.id] = hm2min(hm);
+      const novoMin = hm2min(hm);
+      if (prev === novoMin) {
+        return json(200, {
+          ok: true,
+          tarefa: t.id,
+          previsto: min2hm(novoMin),
+          unchanged: true,
+          overrides: estado.overrides,
+        });
+      }
+      estado.overrides[t.id] = novoMin;
     }
     await salvaEstado(estado);
     const novo = estado.overrides[t.id] != null ? min2hm(estado.overrides[t.id]) : t.base;

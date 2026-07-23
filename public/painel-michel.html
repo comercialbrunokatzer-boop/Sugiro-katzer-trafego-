@@ -344,7 +344,14 @@ document.addEventListener('click',async(e)=>{
   }
   if(u){const r=await api({acao:'desfazer',tarefa:u.dataset.undo});if(r.ok)load();}
 });
-document.querySelectorAll('#modo button').forEach(b=>b.addEventListener('click',async()=>{const r=await api({acao:'modo',modo:b.dataset.modo});if(r.ok)load();}));
+document.querySelectorAll('#modo button').forEach(b=>b.addEventListener('click',async()=>{
+  if(!ST||b.dataset.modo===ST.modo) return; // já está nesse modo — não posta de novo
+  b.disabled=true;
+  const r=await api({acao:'modo',modo:b.dataset.modo});
+  b.disabled=false;
+  if(r.ok){if(r.unchanged)return;toast(r.modo==='katzer'?'🏢 Modo Katzer':'🏠 Modo Casa');load();}
+  else toast(r.erro||'Não trocou o modo');
+}));
 const OBS_MIN=100;
 function obsCntUpd(){const n=$('#obsNome').value.trim().length;const c=$('#obsCnt');const falta=Math.max(0,OBS_MIN-n);
   c.classList.toggle('ok',n>=OBS_MIN);
