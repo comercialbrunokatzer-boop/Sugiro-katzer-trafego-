@@ -142,7 +142,7 @@ async function telefonesPorContato(contactIds = []) {
 }
 
 /** Fallback: Helena já tem BITRIX_WEBHOOK_READ — App Decisão puxa o funil por lá. */
-async function listaDealsViaHelena({ limit = 250 } = {}) {
+async function listaDealsViaHelena({ limit = 500 } = {}) {
   const base = (process.env.HELENA_FUNIL_URL || 'https://regal-chaja-662035.netlify.app').replace(/\/+$/, '');
   // WHATSAPP_CEO vem do GitHub secret (valor real). BRUNO_PHONE copiado via API
   // Netlify pode vir mascarado — só usar se tiver ≥10 dígitos.
@@ -165,6 +165,8 @@ async function listaDealsViaHelena({ limit = 250 } = {}) {
     const deals = (j.deals || []).map((d) => ({
       id: d.id,
       title: d.title || '',
+      titleForm: d.titleForm || d.title || '',
+      nomeContato: d.nomeContato || null,
       stageId: d.stageId,
       fase: normalizaNomeFase(d.fase || d.stageId),
       contactId: d.contactId,
@@ -265,9 +267,19 @@ function tokensCampanha(nome) {
     .filter((t) => !/^\d{1,2}$/.test(t)); // dia avulso
 }
 
+/** Tokens entre colchetes do nome Meta: [ALICERCE][AYA][PUNTACANA] */
+function tokensColchetes(nome) {
+  return [...String(nome || '').toUpperCase().matchAll(/\[([^\]]+)\]/g)]
+    .map((m) => m[1].trim())
+    .filter((t) => t.length >= 3)
+    .filter((t) => !/^\d{1,2}[\/\-]\d/.test(t)); // datas
+}
+
 export function dealBateCampanha(deal, nomeCampanha) {
   const hay = [
     deal.title,
+    deal.titleForm,
+    deal.nomeContato,
     deal.comments,
     deal.sourceDescription,
     deal.utmCampaign,
@@ -277,14 +289,20 @@ export function dealBateCampanha(deal, nomeCampanha) {
   if (!hay || !nome) return false;
   // match direto pedaço do nome da campanha
   if (nome.length >= 12 && hay.includes(nome.slice(0, 20))) return true;
-  // Form Bitrix costuma trazer "LEAD PATROC. … BR SC" / "FORT M. …"
+  // Colchetes do nome Meta costumam ser o produto real no Bitrix
+  for (const t of tokensColchetes(nomeCampanha)) {
+    if (t.length >= 5 && hay.includes(t)) return true;
+    // PUNTACANA no Meta ↔ "PUNTA CANA" no form Bitrix
+    if (t.includes('PUNTA') && /PUNTA/.test(hay)) return true;
+  }
   // Form Bitrix da praça SC: "FORT MYERS CIDADES SC" / "FORT MYERS SC+PR"
   // Obs: \b falha em FortMyers_BR_SC porque _ é word-char.
   const isBrSc = /(?:^|[^A-Z0-9])BR[_-\s]?SC(?:[^A-Z0-9]|$)/.test(nome) || /_BR_SC/.test(nome);
   if (isBrSc && (/\bCIDADES\s+SC\b/.test(hay) || /\bSC\s*\+\s*PR\b/.test(hay) || /\bFORT\s*MYERS\s+SC\b/.test(hay) || /\bFORT\s*MYERS\s+CIDADES\b/.test(hay))) return true;
   if (/\bPORTUGAL\b/.test(nome) && /\bPORTUGAL\b/.test(hay)) return true;
   if (/\bGRANT\b/.test(nome) && /\bGRANT\b/.test(hay)) return true;
-  if (/\bPUNTA\b/.test(nome) && /\bPUNTA\b/.test(hay)) return true;
+  if (/PUNTA/.test(nome) && /PUNTA/.test(hay)) return true;
+  if (/\bALICERCE\b/.test(nome) && /\bALICERCE\b/.test(hay)) return true;
   if (/\bPUBLICOS\b/.test(nome) && /\bNOVACONFIG\b/.test(hay)) return true;
   if (/\bEUA\b/.test(nome) && /\bBRASILEIR/.test(nome) && /\bEUA\b/.test(hay) && /\bBRASILEIR/.test(hay)) return true;
   const toks = tokensCampanha(nomeCampanha);
@@ -313,11 +331,12 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = []) {
     bucket.n += 1;
     bucket.leads.push({
       id: d.id,
-      nome: d.title,
+      nome: d.nomeContato || d.title,
       fase,
       bitrixUrl: d.bitrixUrl,
       whatsappUrl: d.whatsappUrl || null,
       telefone: d.telefone || null,
+      form: d.titleForm || null,
     });
   }
 
