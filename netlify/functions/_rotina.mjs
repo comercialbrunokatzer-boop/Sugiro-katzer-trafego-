@@ -33,11 +33,16 @@ const PRIMEIRA_BASE = hm2min(TAREFAS[0].base); // 08:00 = âncora da 1ª tarefa
 
 /**
  * Horário previsto de uma tarefa (em minutos).
+ * - overrides[id] (opcional): horário absoluto SÓ HOJE (ex.: gestor editou Garimpo).
  * - inicioMin (opcional): início do dia SÓ HOJE (ex.: 09:00). Desloca tudo mantendo os
  *   intervalos entre tarefas; ignora o offset de modo.
  * - senão: base + offset do modo (Katzer +45).
  */
-export function previstoMin(tarefa, modo, inicioMin = null) {
+export function previstoMin(tarefa, modo, inicioMin = null, overrides = null) {
+  if (overrides && overrides[tarefa.id] != null && overrides[tarefa.id] !== '') {
+    const o = overrides[tarefa.id];
+    return typeof o === 'number' ? o : hm2min(String(o));
+  }
   if (inicioMin != null && inicioMin !== '') {
     return (hm2min(tarefa.base) - PRIMEIRA_BASE) + Number(inicioMin);
   }
@@ -76,7 +81,7 @@ export function estadoVazio(data, modo = 'casa') {
 export function pontualidade(estado, agoraMin, { domingo = false, fimDiaMin = 13 * 60 } = {}) {
   let saldo = 0; // minutos: >0 atrasado, <0 adiantado
   const linhas = TAREFAS.map((t) => {
-    const prev = previstoMin(t, estado.modo, estado.inicioMin);
+    const prev = previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
     const reg = estado.tarefas[t.id];
     if (domingo) {
       return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: false, hora: null, difMin: 0, estado: 'bloqueado', nota: '' };

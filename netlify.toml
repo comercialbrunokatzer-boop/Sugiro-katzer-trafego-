@@ -37,6 +37,12 @@
   status = 200
   force = true
 [[redirects]]
+  from = "/api/relatorio-16h"
+  to = "/.netlify/functions/relatorio-16h"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/card-teste"
   to = "/.netlify/functions/card-teste"
   status = 200

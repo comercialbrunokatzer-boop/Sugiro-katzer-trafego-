@@ -1,7 +1,8 @@
 // GET  /api/cacador  → leads de hoje + botões 2 toques
 // POST /api/cacador  → { leadId, qualidade: bom|curioso|errado|comprador }
 // Toast canônico: "Registrado - CPL BOM recalculado"
-import { json } from './_infra.mjs';
+// V6: cada BOM / Comprador pinga WhatsApp do Bruno (Evolution → Z-API).
+import { json, enviaWhats } from './_infra.mjs';
 import { leLeadsHoje, marcaLeadESincroniza } from './_cacador-io.mjs';
 import { payloadCacador, QUALIDADE_TIPOS } from './_cacador.mjs';
 
@@ -36,11 +37,24 @@ export async function handler(event) {
         quem: body.quem || 'Michel',
       });
       const payload = payloadCacador(result.leads);
+      let whats = { enviado: false, motivo: 'não BOM' };
+      if (qualidade === 'bom' || qualidade === 'comprador') {
+        const ceo = process.env.WHATSAPP_CEO || '';
+        const lead = result.lead || {};
+        const nome = lead.nome || lead.linha || leadId;
+        const camp = lead.campanha || '';
+        const ico = qualidade === 'comprador' ? '💰' : '🟢';
+        const label = qualidade === 'comprador' ? 'COMPRADOR' : 'BOM';
+        whats = ceo
+          ? await enviaWhats(ceo, `${ico} Caçador — *${label}* · ${nome}${camp ? ` · ${camp}` : ''}`)
+          : { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
+      }
       return json(200, {
         ok: true,
         toast: result.toast,
         lead: result.lead,
         totaisCampanha: result.totaisCampanha,
+        whats,
         ...payload,
       });
     } catch (e) {

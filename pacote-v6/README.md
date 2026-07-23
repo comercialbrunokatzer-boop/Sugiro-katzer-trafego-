@@ -1,19 +1,11 @@
-# Pacote V6.0 — entregar ao executor
+# KATZER V6 — pacote executor
 
-```
-pacote-v6/
-├── PROMPT-FINAL-V6-EXECUTOR.txt     ← ler PRIMEIRO
-├── MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/
-│   └── index.html                   ← raiz Netlify rotina-produtiva-michel (anti-404)
-├── MICHEL-PAINEL-2-E-3/
-│   └── painel.html                  ← Painel 2 Execução + Painel 3 Caçador (pling)
-└── BRUNO-GESTOR/
-    └── gestor.html                  ← /gestor.html ao vivo + relatório tarde
-```
+Ordem Bruno: sobe `MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/index.html` como **index.html na raiz do Netlify**; o resto conforme pastas. Prompt dentro.
 
-Gerar ZIP:
-```bash
-cd pacote-v6 && zip -r ../KATZER-V6-EXECUTOR.zip .
-```
+| Pasta | Arquivo | Destino |
+|---|---|---|
+| MICHEL-ROTINA-INDEX-RAIZ-PUBLICO | index.html | rotina-produtiva-michel (raiz) |
+| MICHEL-PAINEL-2-E-3 | painel.html | dashing-elf / campanhas `/painel.html` |
+| BRUNO-GESTOR | gestor.html | `/gestor.html` |
 
-Ou no repo já alinhado em `public/` + `gh workflow run deploy-trafego.yml`.
+Ver `PROMPT-FINAL-V6-EXECUTOR.txt` (respostas fechadas + Evolution API).

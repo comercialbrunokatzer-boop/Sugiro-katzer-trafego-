@@ -6,7 +6,7 @@ import { resumoWhats, emailHTML } from './_relatorio.mjs';
 
 function agendaLinhas(estado) {
   return TAREFAS
-    .map((t) => `🕘 *${min2hm(previstoMin(t, estado.modo, estado.inicioMin))}* · ${t.nome}`)
+    .map((t) => `🕘 *${min2hm(previstoMin(t, estado.modo, estado.inicioMin, estado.overrides))}* · ${t.nome}`)
     .join('\n');
 }
 
@@ -43,6 +43,7 @@ export async function disparaCard(now = agoraBRT()) {
 
 /**
  * Relatório da tarde pro Bruno (WhatsApp + e-mail) — só ROTINA.
+ * Janelas: 13:00 (Casa) · 14:30 (Katzer) · 16:00 (catch-all Bruno).
  * Campanhas = outro produto (/campanhas).
  */
 export async function disparaRelatorio(now, { teste = false } = {}) {
@@ -50,12 +51,13 @@ export async function disparaRelatorio(now, { teste = false } = {}) {
   const estado = await leEstado(now.data);
   if (estado.relatorioEnviado && !teste) return { skip: `já enviado ${estado.relatorioEnviado}` };
 
+  const janela16 = now.min >= 16 * 60;
   const janelaKatzer = now.min >= 14 * 60 + 30;
   const janelaJlle = now.min >= 13 * 60;
   const ehKatzer = estado.modo === 'katzer';
-  const deve = teste || janelaKatzer || (!ehKatzer && janelaJlle);
+  const deve = teste || janela16 || janelaKatzer || (!ehKatzer && janelaJlle);
   if (!deve) {
-    return { skip: ehKatzer ? 'modo Katzer espera 14:30' : 'modo Jlle espera 13:00' };
+    return { skip: ehKatzer ? 'modo Katzer espera 14:30 (ou 16:00)' : 'modo Jlle espera 13:00 (ou 16:00)' };
   }
 
   const P = pontualidade(estado, now.min);

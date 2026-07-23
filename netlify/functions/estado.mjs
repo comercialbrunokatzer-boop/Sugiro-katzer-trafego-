@@ -117,7 +117,7 @@ export async function handler(event) {
   const fimDiaMin = estado.modo === 'katzer' ? (14 * 60 + 30) : (13 * 60);
 
   const tarefas = TAREFAS.map((t) => {
-    const prev = previstoMin(t, estado.modo, estado.inicioMin);
+    const prev = previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
     const reg = estado.tarefas[t.id];
     const vencida = !domingo && now.min > prev && !(reg && reg.min != null);
     let estadoTarefa = 'aguardando';
@@ -131,6 +131,7 @@ export async function handler(event) {
       feito: !!(reg && reg.min != null), hora: reg ? reg.hora : null, nota: reg ? reg.nota : '',
       atrasoAberto: vencida ? now.min - prev : 0,
       estado: estadoTarefa,
+      override: !!(estado.overrides && estado.overrides[t.id] != null),
     };
   });
 
@@ -140,6 +141,8 @@ export async function handler(event) {
     ok: true, data: now.data, agora: now.hm, modo: estado.modo,
     domingo, tarefas, obs: estado.obs,
     campanhas,
+    overrides: estado.overrides || {},
+    auto: true, // V6: persiste sozinho; gestor só olha (poll)
   };
 
   if (params.ceo) {

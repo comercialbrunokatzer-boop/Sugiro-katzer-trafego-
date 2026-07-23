@@ -90,14 +90,28 @@
   <div class="obsbox" id="trafBox" style="margin-top:14px">
     <h3>📊 Gestor de tráfego</h3>
     <div id="trafFez" style="font-size:.85rem;margin-top:6px">Carregando o que Michel fez / não fez…</div>
-    <button id="btnModGestor" style="margin-top:10px;border:0;background:var(--sea);color:#fff;font-weight:800;border-radius:9px;padding:10px 14px;font-family:inherit;cursor:pointer">Modificar como Gestor</button>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+      <button type="button" id="btnPausar" style="border:0;background:var(--late);color:#fff;font-weight:800;border-radius:9px;padding:10px 12px;font-family:inherit;cursor:pointer">Pausar campanha</button>
+      <button type="button" id="btnEscalar" style="border:0;background:var(--ok);color:#fff;font-weight:800;border-radius:9px;padding:10px 12px;font-family:inherit;cursor:pointer">Escalar campanha</button>
+      <button type="button" id="btnModGestor" style="border:0;background:var(--sea);color:#fff;font-weight:800;border-radius:9px;padding:10px 12px;font-family:inherit;cursor:pointer">Abrir Painel 2</button>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair)">
+      <div style="font-size:.78rem;font-weight:800;color:var(--obs);margin-bottom:6px">⛏️ Editar Garimpo (hoje)</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="garimpoHm" type="time" value="10:15" style="border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:8px;padding:8px 10px;font-family:inherit">
+        <button type="button" id="btnGarimpo" style="border:0;background:var(--obs);color:#fff;font-weight:800;border-radius:9px;padding:9px 12px;font-family:inherit;cursor:pointer">Salvar horário</button>
+      </div>
+      <div id="garimpoMsg" style="font-size:.75rem;color:var(--sub);margin-top:6px"></div>
+    </div>
   </div>
   <div class="obsbox" id="relTarde" style="margin-top:14px">
-    <h3>🕔 Relatório de tarde (auto)</h3>
-    <div id="relTardeBody" style="font-size:.85rem;margin-top:6px;line-height:1.4">Atualiza sozinho — só olhar.</div>
+    <h3>🕔 Relatório de tarde (auto · 16h)</h3>
+    <div id="relTardeBody" style="font-size:.85rem;margin-top:6px;line-height:1.4">Atualiza sozinho — só olhar. Não precisa o Michel mandar.</div>
+    <button type="button" id="btnRel16h" style="margin-top:10px;border:0;background:var(--gold);color:#1a1408;font-weight:800;border-radius:9px;padding:10px 14px;font-family:inherit;cursor:pointer">Enviar relatório 16h no WhatsApp</button>
+    <div id="rel16msg" style="font-size:.75rem;color:var(--sub);margin-top:6px"></div>
   </div>
-  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Em Campanhas na Rotina: só resumo + link. Painel completo em <a href="/campanhas">/campanhas</a>.</p>
-  <footer>Katzer OS · Rotina do Michel · app na tela</footer>
+  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Auto: cada movimento do Michel pinga seu WhatsApp. Persistência automática — você só abre /gestor.html.</p>
+  <footer>Katzer OS · Placar do Gestor · V6</footer>
 </div>
 
 <script>
@@ -192,34 +206,82 @@ function startTick(){if(tick)clearInterval(tick);const upd=()=>{document.querySe
 function fillTrafego(){
   const box=$('#trafFez'); if(!box||!ST) return;
   const ts=ST.tarefas||[];
-  const camp=ts.find(t=>t.id==='campanhas');
   const feitos=ts.filter(t=>t.feito||t.estado==='concluido');
   const pend=ts.filter(t=>!t.feito && (t.estado==='atrasado'||t.estado==='nao_realizado'||t.estado==='em_andamento'));
   const C=ST.campanhas||{};
+  const g=ts.find(t=>t.id==='garimpo');
+  if(g && $('#garimpoHm') && document.activeElement!==$('#garimpoHm')) $('#garimpoHm').value=g.previsto||'10:15';
   box.innerHTML=`<b>Fez:</b> ${feitos.map(t=>t.nome).join(', ')||'—'}<br>
     <b>Não fez / atrasou:</b> ${pend.map(t=>t.nome).join(', ')||'—'}<br>
     <b>Campanhas (só olhar na Rotina):</b> ${C.resumo||C.metrica||'—'}<br>
     <span style="color:var(--sub);font-size:.78rem">${C.statusDecisao||'Decisão no Painel 2'}</span>`;
   const rel=$('#relTardeBody');
   if(rel){
-    const pct=ST.pct!=null?ST.pct:(ST.pontualidade&&ST.pontualidade.pct);
-    rel.innerHTML=`Atualizado ${ST.agora||ST.hm||'—'} · pontualidade <b>${pct!=null?pct+'%':'—'}</b><br>
-      Tarefas ok: ${feitos.length}/${ts.length||8}<br>
-      Obs/imprevistos: ${(ST.obs||[]).length}<br>
-      <i>Relatório de tarde — auto. Só olhar.</i>`;
+    const pct=ST.pontualidade&&ST.pontualidade.pct;
+    const linhas=(ST.pontualidade&&ST.pontualidade.linhas)||[];
+    const atras=linhas.filter(l=>l.feito&&l.difMin>0).map(l=>`${l.nome} −${l.difMin}′`).join(' · ')||'—';
+    rel.innerHTML=`Atualizado <b>${ST.agora||'—'}</b> · pontualidade <b>${pct!=null?pct+'%':'—'}</b><br>
+      Tarefas ok: ${feitos.length}/${ts.length||8} · Obs: ${(ST.obs||[]).length}<br>
+      Atrasos: ${atras}<br>
+      <i>16h: só olhar aqui. Ou manda no WhatsApp com o botão.</i>`;
   }
+}
+async function apiGestor(body){
+  const key=getKey();
+  const r=await fetch('/api/registrar',{method:'POST',headers:{'Content-Type':'application/json','x-gestor-key':key},body:JSON.stringify(body)});
+  return r.json();
 }
 const _render0=typeof render==='function'?render:null;
 if(_render0){
   window.render=function(){ _render0(); fillTrafego(); };
 }
 document.addEventListener('DOMContentLoaded',()=>{
+  const painelUrl=/dashing-elf-41a723|campanhas-katzer/i.test(location.hostname)
+    ? '/painel.html'
+    : 'https://dashing-elf-41a723.netlify.app/painel.html';
   const b=document.getElementById('btnModGestor');
-  if(b) b.onclick=()=>{
-    const url=/dashing-elf-41a723|campanhas-katzer/i.test(location.hostname)
-      ? '/painel.html'
-      : 'https://dashing-elf-41a723.netlify.app/painel.html';
-    if(confirm('Abrir Painel 2 como Gestor (modificar decisão / ver execução)?')) location.href=url;
+  if(b) b.onclick=()=>{ if(confirm('Abrir Painel 2 (execução)?')) location.href=painelUrl; };
+  const pausar=$('#btnPausar');
+  if(pausar) pausar.onclick=async()=>{
+    const camp=prompt('Nome da campanha pra PAUSAR:','');
+    if(camp==null) return;
+    if(!camp.trim()){alert('Digite o nome da campanha');return;}
+    pausar.disabled=true;
+    const r=await apiGestor({acao:'gestor-decisao',decisao:'pausar',campanha:camp.trim(),tipo:'pausar'});
+    pausar.disabled=false;
+    alert(r.ok?'Registrado: PAUSAR · WhatsApp avisado':(r.erro||'Falhou'));
+    load();
+  };
+  const esc=$('#btnEscalar');
+  if(esc) esc.onclick=async()=>{
+    const camp=prompt('Nome da campanha pra ESCALAR:','');
+    if(camp==null) return;
+    if(!camp.trim()){alert('Digite o nome da campanha');return;}
+    esc.disabled=true;
+    const r=await apiGestor({acao:'gestor-decisao',decisao:'escalar',campanha:camp.trim(),tipo:'escalar'});
+    esc.disabled=false;
+    alert(r.ok?'Registrado: ESCALAR · WhatsApp avisado':(r.erro||'Falhou'));
+    load();
+  };
+  const bg=$('#btnGarimpo');
+  if(bg) bg.onclick=async()=>{
+    const hm=$('#garimpoHm').value;
+    if(!hm){alert('Escolha o horário');return;}
+    bg.disabled=true;
+    const r=await apiGestor({acao:'ajuste-horario',tarefa:'garimpo',hm});
+    bg.disabled=false;
+    $('#garimpoMsg').textContent=r.ok?`Garimpo hoje → ${r.previsto}`:(r.erro||'erro');
+    load();
+  };
+  const br=$('#btnRel16h');
+  if(br) br.onclick=async()=>{
+    br.disabled=true;$('#rel16msg').textContent='Enviando…';
+    try{
+      const r=await fetch('/api/relatorio-16h',{method:'POST',headers:{'Content-Type':'application/json','x-gestor-key':getKey()},body:'{}'});
+      const j=await r.json();
+      $('#rel16msg').textContent=j.ok?(j.whats&&j.whats.enviado?'✅ Relatório 16h no WhatsApp':'Prévia ok — confira envio WA'):(j.erro||'Falhou');
+    }catch(e){$('#rel16msg').textContent='Sem conexão';}
+    br.disabled=false;
   };
 });
 

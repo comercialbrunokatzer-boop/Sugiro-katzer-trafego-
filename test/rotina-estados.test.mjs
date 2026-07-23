@@ -23,3 +23,17 @@ test('pontualidade: nao_realizado após fim do dia; bloqueado no domingo', () =>
   const dom = pontualidade(e, hm2min('10:00'), { domingo: true });
   assert.ok(dom.linhas.every((l) => l.estado === 'bloqueado'));
 });
+
+test('V6: override Garimpo 10:30 (gestor editou)', () => {
+  const e = estadoVazio('2026-07-23', 'casa');
+  e.overrides = { garimpo: hm2min('10:30') };
+  const P = pontualidade(e, hm2min('10:00'));
+  const g = P.linhas.find((l) => l.id === 'garimpo');
+  assert.equal(g.previsto, '10:30');
+});
+
+test('V6: Garimpo base 10:15', () => {
+  const e = estadoVazio('2026-07-23', 'casa');
+  const P = pontualidade(e, hm2min('10:00'));
+  assert.equal(P.linhas.find((l) => l.id === 'garimpo').previsto, '10:15');
+});
