@@ -59,6 +59,8 @@ test('montaRanking: ordena por menor CPL; volume CPL<=40; amostra separada', () 
   assert.equal(r.rankingCpl[0].campanha.includes('VIDEO'), true);
   assert.equal(r.rankingCpl[0].cplForm, 12.58);
   assert.equal(r.rankingCpl[0].pos, 1);
+  assert.ok(r.top10Cpl.length <= 10);
+  assert.ok(r.rankingCpl[0].veredito);
   // volume: só CPL <= 40 → VIDEO
   assert.equal(r.rankingVolumeCpl.length, 1);
   assert.equal(r.rankingVolumeCpl[0].leadsForm, 30);

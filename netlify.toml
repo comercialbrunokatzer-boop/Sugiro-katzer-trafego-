@@ -9,6 +9,10 @@
   # Netlify injeta o @netlify/blobs no runtime; marca como externo pro bundle não duplicar.
   external_node_modules = ["@netlify/blobs"]
 
+[functions.ranking-campanhas]
+  # maximum + 7d + 30d pode passar de 10s
+  timeout = 26
+
 # Health check.
 [[redirects]]
   from = "/health"

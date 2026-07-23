@@ -8,7 +8,12 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 /** Extrai cidade/produto aproximado do nome da campanha (heurística Katzer). */
 export function extraiCidadeProduto(nome = '') {
   const n = String(nome);
-  if (/PI[CÇ]ARRAS|PICARRAS/i.test(n)) return 'Piçarras';
+  if (/BARRA\s*VIEW|BARRA\s*VELHA|SANDRA/i.test(n)) return 'Barra Velha / Barra View';
+  if (/ALICERCE|AYA|PI[CÇ]ARRAS|PICARRAS/i.test(n)) return 'Piçarras / Alicerce';
+  if (/EDSEL/i.test(n)) return 'Edsel / Alicerce';
+  if (/TORRESANI|PUNTA\s*CANA|PUNTACANA/i.test(n)) return 'Punta Cana';
+  if (/YARA/i.test(n)) return 'Yara';
+  if (/AMANAY|ROGGA/i.test(n) && !/FORT\s*MYERS|FORTMYERS|EXTERIOR TESTE/i.test(n)) return 'Rogga / Amanay';
   if (/PUNTA\s*C/i.test(n)) return 'Punta Cana / VIDEO';
   if (/BR[_\s-]?SC|SANTA\s*CATARINA/i.test(n)) return 'BR · SC';
   if (/PORTUGAL/i.test(n)) return 'Portugal';
@@ -21,6 +26,22 @@ export function extraiCidadeProduto(nome = '') {
   if (/Lead\s*\|\s*Cadastro|CADASTRO/i.test(n)) return 'Cadastro Katzer';
   if (/WhatsApp|Mensagem|Tr[áa]fego/i.test(n)) return 'Tráfego / Msg';
   return '—';
+}
+
+/** Veredito curto pro ranking (só formulário). */
+export function vereditoLinha(r, { pos, noVolume } = {}) {
+  if (!r || r.cplForm == null) return '—';
+  if (pos === 1) return 'Melhor CPL da conta';
+  if (noVolume && pos === 1) return 'Melhor custo × volume';
+  if (r.cplForm <= 12) return 'Melhor CPL';
+  if (r.leadsForm >= 40 && r.cplForm <= 40) return 'Alto volume';
+  if (r.leadsForm >= 30 && r.cplForm <= 20) return 'Escala comprovada';
+  if (r.leadsForm >= 20 && r.cplForm <= 40) return 'Volume + barato';
+  if (r.cplForm <= 22) return 'Excelente';
+  if (r.cplForm <= 30) return 'Bom';
+  if (r.cplForm <= 40) return 'Bom volume';
+  if (r.cplForm <= 80) return 'Ok';
+  return 'Cara';
 }
 
 /**
@@ -109,6 +130,7 @@ export function montaRanking(data = [], {
       erro: 'Dados da Meta indisponíveis.',
       totais: null,
       rankingCpl: [],
+      top10Cpl: [],
       rankingVolumeCpl: [],
       amostraPequena: [],
       fora: [],
@@ -128,17 +150,28 @@ export function montaRanking(data = [], {
   const rankingBase = comGasto
     .filter((r) => r.leadConfirmado && r.leadsForm >= minLeadsRanking && r.cplForm != null)
     .sort((a, b) => a.cplForm - b.cplForm)
-    .map((r, i) => ({ pos: i + 1, ...r }));
+    .map((r, i) => ({
+      pos: i + 1,
+      ...r,
+      veredito: vereditoLinha(r, { pos: i + 1 }),
+    }));
 
   const amostraPequena = comGasto
     .filter((r) => r.leadConfirmado && r.leadsForm > 0 && r.leadsForm < minLeadsRanking)
     .sort((a, b) => (a.cplForm ?? Infinity) - (b.cplForm ?? Infinity))
-    .map((r, i) => ({ pos: i + 1, ...r }));
+    .map((r, i) => ({ pos: i + 1, ...r, veredito: 'Amostra pequena' }));
 
   const rankingVolumeCpl = comGasto
     .filter((r) => r.leadConfirmado && r.leadsForm >= minLeadsRanking && r.cplForm != null && r.cplForm <= cplVolumeMax)
     .sort((a, b) => b.leadsForm - a.leadsForm || a.cplForm - b.cplForm)
-    .map((r, i) => ({ pos: i + 1, ...r }));
+    .map((r, i) => ({
+      pos: i + 1,
+      ...r,
+      veredito: vereditoLinha(r, { pos: i + 1, noVolume: true }),
+    }));
+
+  const top10Cpl = rankingBase.slice(0, 10);
+  const topVolume = rankingVolumeCpl.slice(0, 10);
 
   const fora = comGasto.filter((r) => !r.leadConfirmado || r.leadsForm === 0);
 
@@ -168,7 +201,8 @@ export function montaRanking(data = [], {
       cplMedioForm: cplMedio,
     },
     rankingCpl: rankingBase,
-    rankingVolumeCpl,
+    top10Cpl,
+    rankingVolumeCpl: topVolume,
     amostraPequena,
     fora: fora.map((r) => ({
       campanha: r.campanha,
@@ -181,13 +215,15 @@ export function montaRanking(data = [], {
   };
 }
 
-/** Junta 7d + 30d num payload do painel. */
-export function payloadPainelRanking({ operacional, historico, conferencia = null } = {}) {
+/** Junta 7d + 30d + maximum (conta) num payload do painel. */
+export function payloadPainelRanking({ operacional, historico, contaMaxima, conferencia = null } = {}) {
   return {
-    ok: !!(operacional?.ok || historico?.ok),
+    ok: !!(operacional?.ok || historico?.ok || contaMaxima?.ok),
     geradoEm: new Date().toISOString(),
     metricaPrincipal: 'lead_formulario',
     regra: 'CPL_FORM = spend / leads_de_formulario · nunca clique',
+    /** Ranking real da conta (presets longos) — o que os prints do Gerenciador mostram. */
+    contaMaxima: contaMaxima || null,
     operacional7d: operacional || null,
     historico30d: historico || null,
     conferencia: conferencia || null,

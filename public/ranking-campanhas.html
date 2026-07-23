@@ -54,7 +54,8 @@
   <p class="sub">Lead de formulário Meta · nunca clique</p>
 </header>
 <div class="tabs">
-  <button class="tab on" data-p="7d">7 dias</button>
+  <button class="tab on" data-p="conta">Conta</button>
+  <button class="tab" data-p="7d">7 dias</button>
   <button class="tab" data-p="30d">30 dias</button>
 </div>
 <main id="app"><div class="empty">Carregando Meta…</div></main>
@@ -62,7 +63,7 @@
 <script>
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const $= (s)=>document.querySelector(s);
-let DATA=null, PER='7d';
+let DATA=null, PER='conta';
 
 function stClass(s){
   if(s==='Boa')return 'st-Boa';
@@ -79,42 +80,55 @@ function bloco(titulo, rows, {volume=false}={}){
       <div class="row">
         <div>
           <div class="nome"><span class="pos">${r.pos}º</span> ${r.campanha}</div>
-          <div class="meta">${r.cidadeProduto||'—'} · ${r.diasNoAr!=null?(r.diasNoAr+' dia(s)'):'dias —'}</div>
+          <div class="meta">${r.cidadeProduto||'—'} · ${r.diasNoAr!=null?(r.diasNoAr+' dia(s)'):'máx. conta'}</div>
         </div>
         <div class="cpl ${stClass(r.status)}">${brl(r.cplForm)}</div>
       </div>
       <div class="chips">
         <span class="chip">${r.leadsForm} form.</span>
         <span class="chip">${brl(r.gasto)}</span>
-        <span class="chip ${stClass(r.status)}">${r.status}</span>
+        <span class="chip ${stClass(r.status)}">${r.veredito||r.status}</span>
         ${volume?'<span class="chip">CPL ≤ R$ 40</span>':''}
       </div>
     </article>`).join('');
 }
 
+function pickBlk(){
+  if(PER==='conta') return DATA.contaMaxima;
+  if(PER==='30d') return DATA.historico30d;
+  return DATA.operacional7d;
+}
+
 function render(){
   const app=$('#app');
   if(!DATA||!DATA.ok){app.innerHTML=`<div class="err">${(DATA&&DATA.erro)||'Dados da Meta indisponíveis.'}</div>`;return;}
-  const blk = PER==='7d' ? DATA.operacional7d : DATA.historico30d;
+  const blk = pickBlk();
   if(!blk||!blk.ok){app.innerHTML=`<div class="err">${(blk&&blk.erro)||'Dados da Meta indisponíveis.'}</div>`;return;}
   const t=blk.totais||{};
   const conf=DATA.conferencia;
   let confHtml='';
-  if(conf && PER==='7d'){
-    confHtml=`<div class="conf"><b>Conferência BR_SC (7d):</b> API ${conf.leadsFormApi??'—'} form.
-      · ref. Gerenciador 9 · ${conf.bateLeads?'✅ bate':'⚠️ divergência'}<br>${conf.nota||''}
-      <br>Gasto 7d API: ${brl(conf.totalGasto7d)} · 30d: ${brl(conf.totalGasto30d)}
-      <br><span>${conf.notaRodape||''}</span></div>`;
+  if(conf && PER==='conta'){
+    confHtml=`<div class="conf"><b>Ranking real da conta</b> (preset maximum)<br>
+      Gasto API: ${brl(conf.totalGastoConta)} · ref. rodapé Gerenciador ${brl(conf.refRodapeGerenciador)}
+      · ${conf.bateRodapeAprox?'✅':'⚠️'} ${conf.notaRodape||''}<br>
+      Top tem Barra View: ${conf.topTemBarraView?'sim':'não'} · Alicerce: ${conf.topTemAlicerce?'sim':'não'}
+      </div>`;
   }
+  if(conf && PER==='7d'){
+    const br=conf.brSc7d;
+    confHtml=`<div class="conf"><b>Conferência BR_SC (7d):</b> API ${br?.leads??'—'} form. · ref. 9
+      · ${conf.notaBrSc||''}</div>`;
+  }
+  const rowsCpl = (blk.top10Cpl && blk.top10Cpl.length) ? blk.top10Cpl : (blk.rankingCpl||[]).slice(0,10);
   app.innerHTML = confHtml + `
     <div class="totais">
       <div class="t"><span>Gasto</span><b>${brl(t.totalGasto)}</b></div>
       <div class="t"><span>Leads form.</span><b>${t.totalLeadsForm??0}</b></div>
       <div class="t"><span>CPL méd.</span><b>${brl(t.cplMedioForm)}</b></div>
     </div>
-    ${bloco('Melhor CPL (menor custo / form.)', blk.rankingCpl)}
-    ${bloco('Melhor custo × volume (CPL ≤ R$ 40)', blk.rankingVolumeCpl, {volume:true})}
-    ${blk.amostraPequena?.length?bloco('Amostra pequena (&lt; 3 leads)', blk.amostraPequena):''}
+    ${bloco('TOP 10 · melhor CPL formulário', rowsCpl)}
+    ${bloco('Volume com CPL saudável (≤ R$ 40)', blk.rankingVolumeCpl, {volume:true})}
+    ${blk.amostraPequena?.length?bloco('Amostra pequena (&lt; 3 leads)', blk.amostraPequena.slice(0,5)):''}
   `;
   $('#ft').textContent = `${blk.periodo} · leitura ${blk.horarioLeitura||'—'} · ${blk.conta||''} · lead = formulário`;
 }

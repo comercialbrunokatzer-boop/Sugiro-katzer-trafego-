@@ -1,12 +1,13 @@
 // I/O do Ranking de Campanhas (arquivo "_" = NÃO vira função).
-// Busca Insights Meta (7d + 30d) sem expor token. Log só seguro.
+// 7d operacional · 30d · maximum (ranking real da conta / prints).
+// Sem token na resposta. Log só: campanha, leads, gasto, CPL, período.
 import { montaRanking, contaDiasNoAr, payloadPainelRanking } from './_ranking.mjs';
 import { classificaMetaResultado } from './_meta-status.mjs';
 
 const GRAPH = () => process.env.META_GRAPH || 'https://graph.facebook.com/v20.0';
 const CONTA = () => process.env.META_AD_ACCOUNT || 'act_1150648749960943';
 
-async function fetchInsights({ preset, timeIncrement = null }) {
+async function fetchInsights({ preset, timeIncrement = null, maxPages = 8 }) {
   const token = process.env.META_SYSTEM_TOKEN;
   const acct = CONTA();
   if (!token) {
@@ -40,11 +41,10 @@ async function fetchInsights({ preset, timeIncrement = null }) {
         }),
       };
     }
-    // Paginação simples (até 3 páginas)
     let data = body.data || [];
     let next = body.paging?.next;
     let pages = 1;
-    while (next && pages < 3) {
+    while (next && pages < maxPages) {
       const nr = await fetch(next);
       const nb = await nr.json();
       if (nb?.error || !Array.isArray(nb.data)) break;
@@ -77,13 +77,17 @@ function horarioBRT() {
   return new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
-/** Monta um bloco de ranking (preset) com dias no ar. */
-export async function rankingPreset(preset) {
-  const [camp, daily] = await Promise.all([
-    fetchInsights({ preset }),
-    fetchInsights({ preset, timeIncrement: 1 }),
-  ]);
-  const dias = camp.ok && daily.ok ? contaDiasNoAr(daily.data) : null;
+/**
+ * @param {string} preset
+ * @param {{ comDias?: boolean }} opts — dias no ar só em janelas curtas (7d/30d)
+ */
+export async function rankingPreset(preset, { comDias = false } = {}) {
+  const camp = await fetchInsights({ preset });
+  let dias = null;
+  if (comDias && camp.ok) {
+    const daily = await fetchInsights({ preset, timeIncrement: 1, maxPages: 5 });
+    if (daily.ok) dias = contaDiasNoAr(daily.data);
+  }
   const ranking = montaRanking(camp.data, {
     periodo: preset,
     leituraOk: camp.ok && camp.meta?.confiavel !== false,
@@ -91,53 +95,57 @@ export async function rankingPreset(preset) {
     conta: CONTA(),
     diasPorCampanha: dias,
   });
-  // log seguro (sem token / sem payload bruto)
-  for (const row of ranking.logSeguro || []) {
+  for (const row of (ranking.logSeguro || []).slice(0, 40)) {
     console.log(`[ranking] ${row.periodo} | ${row.campanha} | leads=${row.leads} | gasto=${row.gasto} | cpl=${row.cpl}`);
   }
   return { ranking, meta: camp.meta };
 }
 
 /**
- * Payload completo do painel: 7d operacional + 30d histórico.
- * Conferência opcional: nome parcial da campanha (ex. FortMyers_BR_SC) e leads esperados.
+ * Payload do painel:
+ * - contaMaxima = ranking real (prints / histórico longo)
+ * - operacional7d / historico30d = operação
  */
-export async function montaPayloadRanking({ conferenciaBrSc = true } = {}) {
-  const [op, hi] = await Promise.all([
-    rankingPreset('last_7d'),
-    rankingPreset('last_30d'),
+export async function montaPayloadRanking({ conferencia = true } = {}) {
+  const [max, op, hi] = await Promise.all([
+    rankingPreset('maximum', { comDias: false }),
+    rankingPreset('last_7d', { comDias: true }),
+    rankingPreset('last_30d', { comDias: false }),
   ]);
 
-  let conferencia = null;
-  if (conferenciaBrSc && op.ranking?.ok) {
-    const noLog = (op.ranking.logSeguro || []).find((c) => /BR_SC/i.test(c.campanha));
-    const leads = noLog?.leads ?? null;
-    const gasto = noLog?.gasto ?? null;
-    conferencia = {
-      campanhaRef: 'FortMyers_BR_SC',
-      periodo: 'last_7d',
-      leadsFormApi: leads,
-      gastoApi: gasto,
-      cplApi: noLog?.cpl ?? null,
-      esperadoGerenciadorLeads: 9,
-      bateLeads: leads === 9,
-      nota: leads == null
-        ? 'Campanha BR_SC não encontrada na leitura.'
-        : (leads === 9
-          ? 'API bate com referência do Gerenciador (9 leads / 7d).'
-          : `API retornou ${leads} leads form. (ref. Gerenciador: 9). Conferir período/timezone/atribuição.`),
-      totalGasto7d: op.ranking.totais?.totalGasto ?? null,
-      totalLeads7d: op.ranking.totais?.totalLeadsForm ?? null,
-      totalGasto30d: hi.ranking?.totais?.totalGasto ?? null,
-      totalLeads30d: hi.ranking?.totais?.totalLeadsForm ?? null,
+  let conferenciaOut = null;
+  if (conferencia) {
+    const top = max.ranking?.top10Cpl || max.ranking?.rankingCpl || [];
+    const temBarra = top.some((c) => /BARRA\s*VIEW|SANDRA/i.test(c.campanha));
+    const temAlicerce = top.some((c) => /ALICERCE|AYA/i.test(c.campanha));
+    const br = (op.ranking?.logSeguro || []).find((c) => /BR_SC/i.test(c.campanha));
+    const gastoMax = max.ranking?.totais?.totalGasto ?? null;
+    conferenciaOut = {
+      periodoConta: 'maximum',
+      totalGastoConta: gastoMax,
+      totalLeadsConta: max.ranking?.totais?.totalLeadsForm ?? null,
       refRodapeGerenciador: 64893.84,
-      notaRodape: 'R$ 64.893,84 é referência de outro período/filtro do Gerenciador — comparar só com o mesmo período da API.',
+      bateRodapeAprox: gastoMax != null && Math.abs(gastoMax - 64893.84) < 500,
+      notaRodape: gastoMax == null
+        ? 'Sem total maximum.'
+        : (Math.abs(gastoMax - 64893.84) < 500
+          ? 'Gasto maximum ≈ rodapé do Gerenciador (R$ 64.893,84).'
+          : `Gasto maximum API R$ ${gastoMax} vs rodapé ref. R$ 64.893,84 — conferir filtro/conta/período do print.`),
+      topTemBarraView: temBarra,
+      topTemAlicerce: temAlicerce,
+      brSc7d: br ? { leads: br.leads, gasto: br.gasto, cpl: br.cpl } : null,
+      esperadoBrSc7d: 9,
+      notaBrSc: br
+        ? (br.leads === 9 ? 'BR_SC 7d = 9 (bate).' : `BR_SC 7d API=${br.leads} (ref. 9).`)
+        : 'BR_SC ausente no 7d.',
+      top10Nomes: top.slice(0, 10).map((c) => c.campanha),
     };
   }
 
   return payloadPainelRanking({
+    contaMaxima: max.ranking,
     operacional: op.ranking,
     historico: hi.ranking,
-    conferencia,
+    conferencia: conferenciaOut,
   });
 }
