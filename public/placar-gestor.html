@@ -87,6 +87,14 @@ function showLock(msg){const l=$('#lock');l.style.display='flex';if(msg)$('#lock
 function hideLock(){$('#lock').style.display='none';}
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const intBR=(v)=>Number(v||0).toLocaleString('pt-BR');
+function getDecisionView(decisao){
+  if(decisao==='aplicar') return { cls:'ap', ic:'✓', rot:'Michel aplicou' };
+  if(decisao==='manter') return { cls:'ap', ic:'✓', rot:'Michel manteve' };
+  if(decisao==='aumentar') return { cls:'ap', ic:'⬆', rot:'Michel aumentou' };
+  if(decisao==='ajustar') return { cls:'aj', ic:'✎', rot:'Michel ajustou' };
+  if(decisao==='desistir') return { cls:'no', ic:'🛑', rot:'Michel desistiu' };
+  return { cls:'no', ic:'⏸', rot:'Michel — agora não' };
+}
 async function load(){
   const key=getKey();if(!key){showLock('');return;}
   try{
@@ -118,21 +126,10 @@ function render(st){
   // Decisões ao vivo
   const db=$('#decs');db.innerHTML='';
   (st.decisoes||[]).forEach(d=>{
-    const cls=d.decisao==='aplicar'||d.decisao==='aumentar'||d.decisao==='manter'?'ap'
-      :d.decisao==='ajustar'?'aj':'no';
-    const ic=d.decisao==='aplicar'||d.decisao==='manter'?'✓'
-      :d.decisao==='aumentar'?'⬆'
-      :d.decisao==='ajustar'?'✎'
-      :d.decisao==='desistir'?'🛑':'⏸';
-    const rot=d.decisao==='aplicar'?'Michel aplicou'
-      :d.decisao==='ajustar'?'Michel ajustou'
-      :d.decisao==='desistir'?'Michel desistiu'
-      :d.decisao==='manter'?'Michel manteve'
-      :d.decisao==='aumentar'?'Michel aumentou'
-      :'Michel — agora não';
+    const view=getDecisionView(d.decisao);
     const detalhe=d.ajuste||d.campanha||'';
     const el=document.createElement('div');el.className='dec';
-    el.innerHTML=`<div class="mk ${cls}">${ic}</div><div class="tx"><b>${rot}</b> — ${detalhe}<div class="meta">decisão · ${d.hora||''} · confere na Meta</div></div>`;
+    el.innerHTML=`<div class="mk ${view.cls}">${view.ic}</div><div class="tx"><b>${view.rot}</b> — ${detalhe}<div class="meta">decisão · ${d.hora||''} · confere na Meta</div></div>`;
     db.appendChild(el);
   });
   if(!(st.decisoes||[]).length)db.innerHTML='<div class="empty">Nada ainda hoje. Quando o Michel tocar um botão, aparece aqui na hora.</div>';
