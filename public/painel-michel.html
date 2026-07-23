@@ -196,7 +196,7 @@ function htmlCardCampanhas(t){
   const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
-  const pend=C.statusDecisao||'👁 Só olhar · execute no Painel de Campanhas';
+  const pend=C.statusDecisao||'👁 Visualizar · execute no Painel isolado';
   const pendCls=C.pendente===false?'pend ok':'pend';
   return `<div class="camp-card">
     <div class="metrica">${metrica}</div>
