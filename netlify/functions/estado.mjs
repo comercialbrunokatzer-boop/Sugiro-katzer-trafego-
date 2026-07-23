@@ -1,11 +1,13 @@
-// ESTADO — só ROTINA (Michel e CEO).
-// GET /api/estado        → tarefas + obs + modo (SEM %; SEM campanhas)
+// ESTADO — Rotina (Michel e CEO) + RESUMO enxuto de Campanhas (só porta de entrada).
+// GET /api/estado        → tarefas + obs + modo + campanhas{resumo} (SEM %)
 // GET /api/estado?ceo=1  → + pontualidade (% + saldo)
 //
-// Painel de Campanhas é OUTRO produto: /campanhas · /ranking-campanhas · /api/ranking-campanhas
+// Painel completo de Campanhas = OUTRO app: /campanhas · /ranking-campanhas
+// Na Rotina entra SÓ resumo + link — nunca o painel inteiro.
 import { createHash } from 'node:crypto';
 import { agoraBRT, pontualidade, TAREFAS, previstoMin, min2hm } from './_rotina.mjs';
 import { leEstado, json } from './_infra.mjs';
+import { lePlacar } from './_placar-io.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 function senhaGestorOk(event, params) {
@@ -13,6 +15,45 @@ function senhaGestorOk(event, params) {
   const chave = h['x-gestor-key'] || h['X-Gestor-Key'] || params.k || '';
   if (!chave) return false;
   return createHash('sha256').update(String(chave)).digest('hex') === GESTOR_HASH;
+}
+
+/** Resumo mínimo pra card na Rotina (porta de entrada → /campanhas). */
+async function resumoCampanhas() {
+  try {
+    const { placar, meta } = await lePlacar({ preset: 'last_7d' });
+    const confiavel = meta?.confiavel !== false && meta?.status === 'ok';
+    if (!confiavel) {
+      return {
+        confiavel: false,
+        resumo: meta?.mensagemPainel || meta?.mensagem || 'Dados da Meta indisponíveis.',
+        metaMensagem: meta?.mensagemPainel || meta?.mensagem || null,
+        n: null, totalGasto: null, totalLeads: null, cplMedio: null,
+        link: '/campanhas',
+      };
+    }
+    const n = (placar.campanhas || []).length;
+    const totalGasto = placar.totalGasto ?? 0;
+    const totalLeads = placar.totalLeads ?? 0;
+    const cplMedio = placar.cplMedio;
+    return {
+      confiavel: true,
+      n,
+      totalGasto,
+      totalLeads,
+      cplMedio,
+      resumo: `${n} camp. · R$ ${Number(totalGasto).toFixed(0)} · ${totalLeads} form.`,
+      metaMensagem: null,
+      link: '/campanhas',
+    };
+  } catch {
+    return {
+      confiavel: false,
+      resumo: 'Dados da Meta indisponíveis.',
+      metaMensagem: 'Dados da Meta indisponíveis.',
+      n: null, totalGasto: null, totalLeads: null, cplMedio: null,
+      link: '/campanhas',
+    };
+  }
 }
 
 export async function handler(event) {
@@ -40,9 +81,12 @@ export async function handler(event) {
     };
   });
 
+  const campanhas = await resumoCampanhas();
+
   const base = {
     ok: true, data: now.data, agora: now.hm, modo: estado.modo,
     domingo, tarefas, obs: estado.obs,
+    campanhas,
   };
 
   if (params.ceo) {

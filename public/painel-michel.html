@@ -38,9 +38,8 @@
   .prio h2{margin:0 0 8px;font-size:.88rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
   .prio li{margin:4px 0;font-size:.88rem}
   .campbox{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
-  .campbox h2{margin:0 0 6px;font-size:.95rem}.campbox .s{font-size:.8rem;color:var(--sub);margin-bottom:10px}
-  .campbox .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-  .chip{background:var(--ground);border-radius:8px;padding:4px 8px;font-size:.78rem;font-variant-numeric:tabular-nums}
+  .campbox h2{margin:0 0 6px;font-size:.95rem}
+  .campbox .s{font-size:.88rem;color:var(--sub);margin-bottom:12px;font-variant-numeric:tabular-nums;line-height:1.35}
   .orient{background:var(--run-bg);border:1px solid var(--hair);border-radius:14px;padding:12px 14px;margin-top:12px;font-size:.85rem}
   .orient b{color:var(--run)}
   .task{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:11px}
@@ -95,6 +94,13 @@
   </div>
 
   <div class="orient" id="orient">Carregando orientação…</div>
+
+  <!-- Porta de entrada: SÓ resumo + link → app Campanhas (não embute o painel) -->
+  <div class="campbox" id="campbox">
+    <h2>📊 Campanhas</h2>
+    <div class="s" id="campResumo">—</div>
+    <a class="btn" id="campLink" href="/campanhas">Abrir Campanhas</a>
+  </div>
 
   <div class="sec">Rotina do dia</div>
   <div id="tasks"></div>
@@ -170,11 +176,20 @@ function renderPrioridades(){
   $('#orient').innerHTML=orient;
 }
 
+/** Card Campanhas na Rotina: SÓ resumo + link (painel completo fica em /campanhas). */
+function renderCampanhas(){
+  const C=ST.campanhas||{};
+  const link=C.link||'/campanhas';
+  $('#campResumo').textContent=C.resumo||'Sem dados da Meta ainda';
+  const a=$('#campLink');
+  if(a) a.setAttribute('href', link);
+}
+
 function render(){
   if(!ST||!ST.ok)return;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga 🎉':'');
   document.querySelectorAll('#modo button').forEach(b=>b.classList.toggle('on',b.dataset.modo===ST.modo));
-  renderStrip();renderPrioridades();
+  renderStrip();renderPrioridades();renderCampanhas();
 
   const box=$('#tasks');box.innerHTML='';
   ST.tarefas.forEach(t=>{
