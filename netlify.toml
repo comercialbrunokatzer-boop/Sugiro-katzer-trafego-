@@ -38,14 +38,32 @@
   status = 200
   force = true
 
-# Atalhos amigáveis.
+# Atalhos amigáveis — dois placares (mesma base).
+[[redirects]]
+  from = "/placar-michel"
+  to = "/painel-michel.html"
+  status = 200
 [[redirects]]
   from = "/painel-michel"
   to = "/painel-michel.html"
   status = 200
 [[redirects]]
+  from = "/placar-gestor"
+  to = "/painel-ceo.html"
+  status = 200
+  force = true
+[[redirects]]
   from = "/painel-gestor"
   to = "/painel-ceo.html"
+  status = 200
+[[redirects]]
+  from = "/placar-gestor.html"
+  to = "/painel-ceo.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/campanhas-decisao"
+  to = "/campanhas-decisao.html"
   status = 200
 [[redirects]]
   from = "/guia"
@@ -65,22 +83,7 @@
   status = 200
   force = true
 
-# Quadradinho = ferramenta do item Campanhas (não é outro “Placar do Michel”).
-[[redirects]]
-  from = "/placar-michel"
-  to = "/placar-michel.html"
-  status = 200
-# Antigo “placar-gestor” redireciona pro Painel do Gestor (único ao vivo).
-[[redirects]]
-  from = "/placar-gestor"
-  to = "/painel-gestor"
-  status = 302
-  force = true
-[[redirects]]
-  from = "/placar-gestor.html"
-  to = "/painel-gestor"
-  status = 302
-  force = true
+# APIs do quadradinho (aberto a partir de Campanhas no Placar do Michel).
 [[redirects]]
   from = "/api/placar-estado"
   to = "/.netlify/functions/placar-estado"

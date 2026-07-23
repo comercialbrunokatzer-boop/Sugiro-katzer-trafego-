@@ -26,8 +26,8 @@ export async function disparaCard(now = agoraBRT()) {
     '',
     agenda,
     '',
-    `Rotina do dia 👉 ${url}/painel-michel`,
-    `(Campanhas: abra o item na rotina → decisão do quadradinho)`,
+    `Placar do Michel 👉 ${url}/placar-michel`,
+    `(Campanhas: abra a decisão dentro do placar)`,
   ].join('\n');
   const wM = await enviaWhats(process.env.WHATSAPP_MICHEL, michelMsg);
 
@@ -36,7 +36,7 @@ export async function disparaCard(now = agoraBRT()) {
     '',
     agenda,
     '',
-    `Painel ao vivo (Rotina + Campanhas): ${url}/painel-gestor`,
+    `Placar do Gestor (ao vivo): ${url}/placar-gestor`,
   ].join('\n');
   const wC = await enviaWhats(process.env.WHATSAPP_CEO, ceoMsg);
 

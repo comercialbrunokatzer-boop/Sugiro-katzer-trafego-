@@ -1,7 +1,7 @@
 {
-  "name": "Placar Katzer — Michel",
+  "name": "Placar do Michel — Katzer",
   "short_name": "Placar Michel",
-  "description": "Placar de Campanhas do Michel — gasto, leads, CPL e a decisão do dia (1 toque).",
+  "description": "Placar operacional do Michel — rotina, prioridades, campanhas e decisões do dia.",
   "start_url": "/placar-michel",
   "scope": "/",
   "display": "standalone",

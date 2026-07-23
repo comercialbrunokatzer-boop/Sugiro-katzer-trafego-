@@ -1,7 +1,7 @@
 {
-  "name": "Placar Gestor — Katzer",
+  "name": "Placar do Gestor — Katzer",
   "short_name": "Placar Gestor",
-  "description": "Placar de Campanhas — visão do Gestor: confere ao vivo as decisões do Michel (só o gestor).",
+  "description": "Acompanhe o Michel ao vivo — % do dia, rotina, campanhas e decisões.",
   "start_url": "/placar-gestor",
   "scope": "/",
   "display": "standalone",

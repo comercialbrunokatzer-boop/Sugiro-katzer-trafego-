@@ -3,8 +3,8 @@
 // GET /api/estado?ceo=1      -> visão do CEO (inclui pontualidade: % + saldo + atrasos)
 //                              + snapshot de Campanhas (Meta + decisões do quadradinho).
 //
-// O "Placar ao vivo" do Bruno É este painel (/painel-gestor). Campanhas é item da rotina;
-// o quadradinho (/placar-michel) é ferramenta aberta A PARTIR de Campanhas — não outro app.
+// O Placar do Michel (/placar-michel) e o Placar do Gestor (/placar-gestor)
+// leem a MESMA base. O quadradinho (/campanhas-decisao) é ferramenta de Campanhas.
 import { createHash } from 'node:crypto';
 import { agoraBRT, pontualidade, TAREFAS, previstoMin, min2hm } from './_rotina.mjs';
 import { leEstado, json } from './_infra.mjs';

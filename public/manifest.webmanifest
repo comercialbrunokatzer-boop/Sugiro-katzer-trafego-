@@ -1,8 +1,8 @@
 {
-  "name": "Rotina Katzer — Michel",
-  "short_name": "Rotina Katzer",
-  "description": "Rotina Produtiva do Michel — toque Feito em cada tarefa.",
-  "start_url": "/painel-michel",
+  "name": "Placar do Michel — Katzer",
+  "short_name": "Placar Michel",
+  "description": "Placar operacional do Michel — rotina, prioridades, campanhas e decisões do dia.",
+  "start_url": "/placar-michel",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

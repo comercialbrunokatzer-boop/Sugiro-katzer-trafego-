@@ -34,7 +34,7 @@ export async function handler(event) {
     `📊 *Campanhas — Michel decidiu* · ${now.hm}`,
     rotuloDecisao(item),
     '',
-    `Ao vivo no Painel do Gestor: ${url}/painel-gestor`,
+    `Ao vivo no Placar do Gestor: ${url}/placar-gestor`,
   ].join('\n');
   const w = await enviaWhats(ceo, msg);
 

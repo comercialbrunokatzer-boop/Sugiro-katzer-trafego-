@@ -1,8 +1,8 @@
 {
-  "name": "Painel Gestor — Katzer",
-  "short_name": "Painel Gestor",
-  "description": "Desempenho da Rotina do Michel — % do dia, saldo e atrasos (só o gestor).",
-  "start_url": "/painel-gestor",
+  "name": "Placar do Gestor — Katzer",
+  "short_name": "Placar Gestor",
+  "description": "Acompanhe o Michel ao vivo — % do dia, rotina, campanhas e decisões.",
+  "start_url": "/placar-gestor",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

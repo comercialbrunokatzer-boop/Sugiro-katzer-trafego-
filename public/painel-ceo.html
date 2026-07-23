@@ -2,13 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Painel do Gestor — Rotina do Michel</title>
+<title>Placar do Gestor — Rotina do Michel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="/manifest-gestor.webmanifest">
 <meta name="theme-color" content="#0d1820">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Painel Gestor">
+<meta name="apple-mobile-web-app-title" content="Placar Gestor">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icon-gestor.png">
 <link rel="icon" type="image/png" href="/icon-gestor.png">
@@ -57,8 +57,8 @@
 <div id="lock" style="display:none;position:fixed;inset:0;z-index:99;background:#0b1622;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">
   <div style="letter-spacing:.34em;font-size:13px;color:#d4ac60;text-transform:uppercase;font-family:Georgia,serif">Katzer</div>
   <div style="font-size:44px;margin:14px 0 4px">🔒</div>
-  <div style="color:#e8edeb;font-size:1.1rem;font-weight:700;margin-bottom:4px">Painel do Gestor</div>
-  <div style="color:#9fb1b3;font-size:.85rem;margin-bottom:18px">Digite sua senha pra ver o desempenho (%).</div>
+  <div style="color:#e8edeb;font-size:1.1rem;font-weight:700;margin-bottom:4px">Placar do Gestor</div>
+  <div style="color:#9fb1b3;font-size:.85rem;margin-bottom:18px">Digite sua senha pra acompanhar o Michel ao vivo.</div>
   <input id="lockPw" type="password" placeholder="senha" autocomplete="current-password"
     style="width:min(280px,80vw);border:1px solid #263742;background:#14232d;color:#e8edeb;border-radius:10px;padding:12px 14px;font-size:1rem;text-align:center;font-family:inherit">
   <div id="lockErr" style="color:#e0765c;font-size:.8rem;height:18px;margin-top:8px"></div>
@@ -66,8 +66,8 @@
   <label style="color:#9fb1b3;font-size:.78rem;margin-top:14px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="lockSave" checked> Manter conectado neste aparelho</label>
 </div>
 <div class="wrap">
-  <p class="eyebrow">Katzer OS · Painel do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
-  <h1>Rotina do Michel</h1>
+  <p class="eyebrow">Katzer OS · Placar do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
+  <h1>Acompanhamento do Michel</h1>
   <p class="date" id="date">carregando…</p>
 
   <div class="hero">
@@ -84,7 +84,7 @@
   </div>
 
   <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Campanhas: Meta real + decisões do quadradinho neste mesmo painel.</p>
-  <footer>Katzer OS · atualiza sozinho · dados salvos · um só painel</footer>
+  <footer>Katzer OS · Placar do Gestor · mesma base do Placar do Michel · app na tela</footer>
 </div>
 
 <script>
