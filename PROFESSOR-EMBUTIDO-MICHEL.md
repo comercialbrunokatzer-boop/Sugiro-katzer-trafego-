@@ -47,6 +47,7 @@ Por isso o cartão traz **DADO COMERCIAL** e o roteiro da Meta IA **proíbe deci
 
 ## Como o Copiloto usa este professor
 
-1. Em dias de dúvida (ex.: CPL subiu), repetir o bloco **MICHEL, APRENDA ISTO**.  
-2. No aprendizado do dia, preferir 1 frase no mesmo espírito (ex.: “CPL isolado não define campanha boa ou ruim”).  
-3. Nunca substituir o funil Katzer por uma métrica da Meta.
+1. **Um conceito por dia**, aplicado a **uma campanha real** (ver `ROTINA-DIARIA-COPILOTO.md`).  
+2. Em dias de dúvida (ex.: CPL subiu), usar o bloco **MICHEL, APRENDA ISTO** só no conceito do dia (não despejar CTR+CPM+frequência+CPL de uma vez, salvo revisão).  
+3. Em ~60 dias, o histórico de aprendizados cobre a operação — sem curso teórico.  
+4. Nunca substituir o funil Katzer por uma métrica da Meta.

@@ -145,6 +145,8 @@ Mas nenhum deles sozinho mostra se estamos vendendo.
 
 Usar no guia do painel e, quando fizer sentido, no cartão do dia.
 
+**Regra:** um conceito por dia, numa campanha real — ver `ROTINA-DIARIA-COPILOTO.md` (manhã 15 min · meio-dia comercial · fechamento). Em ~60 dias Michel aprende na própria operação.
+
 ---
 
 ## 9. Próximo passo recomendado (Bruno)
