@@ -46,7 +46,8 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
 .fase-meta{font-size:10px;color:#888}
 .fase-pills{display:flex;flex-wrap:wrap;gap:6px}
 .fase-pill{font-size:10px;padding:5px 9px;border-radius:8px;background:#fff;border:1px solid #e5e5e5;font-weight:600;cursor:pointer;color:#111}
-.fase-pill.open,.fase-pill:hover{border-color:#111;background:#111;color:#fff}
+.fase-pill.zero{opacity:.45;cursor:default;background:#f7f7f7}
+.fase-pill.open,.fase-pill:not(.zero):hover{border-color:#111;background:#111;color:#fff}
 .fase-leads{margin-top:8px;display:none;flex-direction:column;gap:6px}
 .fase-leads.show{display:flex}
 .lead-line{font-size:11px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#fff;border-radius:8px;border:1px solid #f0f0f0}
@@ -202,28 +203,31 @@ function htmlFases(cam){
   }
   const pills=fases.map((f,i)=>{
     const key=`fase-${String(cam.id).replace(/\W/g,'_')}-${i}`;
+    const zero=!f.n;
+    if(zero) return `<span class="fase-pill zero">${esc(f.nome)} · 0</span>`;
     return `<button type="button" class="fase-pill" data-fase="${key}" onclick="toggleFase(this,'${key}')">${esc(f.nome)} · ${f.n}</button>`;
   }).join('');
   const panels=fases.map((f,i)=>{
+    if(!f.n) return '';
     const key=`fase-${String(cam.id).replace(/\W/g,'_')}-${i}`;
     const leads=(f.leads||[]).map(l=>`
       <div class="lead-line">
         <b>${esc(l.nome||'Lead')}</b>
         <span style="color:#888">${esc(f.nome)}</span>
-        ${l.bitrixUrl?`<a class="bx" href="${esc(l.bitrixUrl)}" target="_blank" rel="noopener">Bitrix</a>`:''}
+        ${l.bitrixUrl?`<a class="bx" href="${esc(l.bitrixUrl)}" target="_blank" rel="noopener">Bitrix</a>`:'<span style="color:#bbb">sem Bitrix</span>'}
         ${l.whatsappUrl?`<a href="${esc(l.whatsappUrl)}" target="_blank" rel="noopener">WhatsApp</a>`:'<span style="color:#bbb">sem WA</span>'}
-      </div>`).join('') || `<div class="lead-line"><span style="color:#888">${esc(f.nome)} · ${f.n} no funil</span></div>`;
+      </div>`).join('') || `<div class="lead-line"><span style="color:#888">${esc(f.nome)} · ${f.n}</span></div>`;
     return `<div class="fase-leads" id="${key}">${leads}</div>`;
   }).join('');
   return `<div class="fase-box">
     <div class="fase-head">
       <div class="fase-n">${forms}</div>
       <div>
-        <div class="fase-label">Forms Meta → onde estão no funil</div>
-        <div class="fase-meta">${noFunil} no Funil Novo Katzer${cam.fasesFonte?` · ${esc(cam.fasesFonte)}`:''} · toque na fase p/ WhatsApp + Bitrix</div>
+        <div class="fase-label">Forms Meta → Funil Novo Katzer</div>
+        <div class="fase-meta">${noFunil} leads no funil${cam.fasesFonte?` · ${esc(cam.fasesFonte)}`:''} · toque na fase com leads → WhatsApp + Bitrix</div>
       </div>
     </div>
-    <div class="fase-pills">${pills||'<span class="fase-meta">Ainda sem match Bitrix nesta campanha</span>'}</div>
+    <div class="fase-pills">${pills||'<span class="fase-meta">Carregando fases…</span>'}</div>
     ${panels}
   </div>`;
 }

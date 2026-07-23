@@ -26,6 +26,8 @@ export const ORDEM_FUNIL = [
   'Follow Up', 'Negociação', 'Proposta', 'Contrato', 'Aprovação Exceção', 'Exceção', 'Ganhou',
 ];
 
+export const FASES_TERMINAIS = ['Rampage', 'Perdido'];
+
 const STAGE_TO_NOME = Object.fromEntries(
   Object.entries(ESTAGIO_BITRIX).map(([nome, id]) => [id, nome]),
 );
@@ -38,7 +40,7 @@ export function nomeFasePorStageId(stageId) {
 export function normalizaNomeFase(raw) {
   const s = String(raw || '').trim();
   if (!s) return 'Leads Novos';
-  if (ORDEM_FUNIL.includes(s) || s === 'Rampage' || s === 'Perdido') return s;
+  if (ORDEM_FUNIL.includes(s) || FASES_TERMINAIS.includes(s)) return s;
   if (/^novo$/i.test(s) || /leads?\s*novos?/i.test(s) || /fluxo\s*-?\s*leads/i.test(s)) return 'Leads Novos';
   if (/tentando/i.test(s)) return 'Tentando Contato';
   if (/carteira/i.test(s)) return 'Carteira corretor';
@@ -102,7 +104,6 @@ async function bitrixCall(metodo, params = {}) {
 async function telefonesPorContato(contactIds = []) {
   const ids = [...new Set(contactIds.map(String).filter(Boolean))];
   const map = {};
-  // Bitrix: até 50 por batch via crm.contact.list
   for (let i = 0; i < ids.length; i += 40) {
     const slice = ids.slice(i, i + 40);
     const page = await bitrixCall('crm.contact.list', {
@@ -123,76 +124,146 @@ async function telefonesPorContato(contactIds = []) {
   return map;
 }
 
-/**
- * Lista negócios do funil Katzer (até ~200) com etapa + WhatsApp do contato.
- * Match de campanha é feito depois por TITLE / campos.
- */
-export async function listaDealsFunil({ limit = 200 } = {}) {
-  const categoryId = Number(process.env.BITRIX_CATEGORY_ID || 1);
-  const all = [];
-  let start = 0;
-  while (all.length < limit) {
-    const page = await bitrixCall('crm.deal.list', {
-      filter: { CATEGORY_ID: categoryId },
-      select: ['ID', 'TITLE', 'STAGE_ID', 'CONTACT_ID', 'DATE_CREATE', 'COMMENTS'],
-      order: { DATE_MODIFY: 'DESC' },
-      start,
+/** Fallback: Helena já tem BITRIX_WEBHOOK_READ — App Decisão puxa o funil por lá. */
+async function listaDealsViaHelena({ limit = 250 } = {}) {
+  const base = (process.env.HELENA_FUNIL_URL || 'https://regal-chaja-662035.netlify.app').replace(/\/+$/, '');
+  const key = process.env.FUNIL_PROXY_KEY
+    || process.env.WHATSAPP_CEO
+    || process.env.WHATSAPP_MICHEL
+    || process.env.BRUNO_PHONE
+    || '';
+  if (!key) return { ok: false, deals: [], motivo: 'sem key p/ Helena funil' };
+  try {
+    const url = `${base}/api/funil-katzer?limit=${limit}&key=${encodeURIComponent(key)}`;
+    const r = await fetch(url, {
+      headers: { 'x-funil-key': key },
     });
-    if (!page.ok) return { ok: false, deals: all, motivo: page.motivo };
-    const batch = Array.isArray(page.result) ? page.result : [];
-    if (!batch.length) break;
-    for (const d of batch) {
-      all.push({
-        id: d.ID,
-        title: d.TITLE || '',
-        stageId: d.STAGE_ID,
-        fase: nomeFasePorStageId(d.STAGE_ID) || d.STAGE_ID || '—',
-        contactId: d.CONTACT_ID,
-        bitrixUrl: `${portalBase()}/crm/deal/details/${d.ID}/`,
-        comments: d.COMMENTS || '',
-      });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) {
+      return { ok: false, deals: [], motivo: j.erro || `Helena HTTP ${r.status}` };
     }
-    if (batch.length < 50) break;
-    start += 50;
-    if (start > 400) break;
+    const deals = (j.deals || []).map((d) => ({
+      id: d.id,
+      title: d.title || '',
+      stageId: d.stageId,
+      fase: normalizaNomeFase(d.fase || d.stageId),
+      contactId: d.contactId,
+      bitrixUrl: d.bitrixUrl || `${portalBase()}/crm/deal/details/${d.id}/`,
+      comments: d.comments || '',
+      sourceDescription: d.sourceDescription || '',
+      utmCampaign: d.utmCampaign || '',
+      utmContent: d.utmContent || '',
+      telefone: d.telefone || null,
+      whatsappUrl: d.whatsappUrl || linkWhatsApp(d.telefone),
+    }));
+    return { ok: true, deals, fonte: 'helena' };
+  } catch (e) {
+    return { ok: false, deals: [], motivo: String(e.message || e) };
   }
-  const contatos = await telefonesPorContato(all.map((d) => d.contactId));
-  for (const d of all) {
-    const c = contatos[String(d.contactId)] || null;
-    d.telefone = c?.telefone || null;
-    d.whatsappUrl = c?.whatsappUrl || null;
-    if (c?.nome && (!d.title || /^\d+$/.test(d.title))) d.title = c.nome;
+}
+
+/**
+ * Lista negócios do funil Katzer com etapa + WhatsApp.
+ * 1) webhook local  2) proxy Helena (regal-chaja)
+ */
+export async function listaDealsFunil({ limit = 250 } = {}) {
+  if (bitrixBase()) {
+    const categoryId = Number(process.env.BITRIX_CATEGORY_ID || 1);
+    const all = [];
+    let start = 0;
+    while (all.length < limit) {
+      const page = await bitrixCall('crm.deal.list', {
+        filter: { CATEGORY_ID: categoryId },
+        select: [
+          'ID', 'TITLE', 'STAGE_ID', 'CONTACT_ID', 'DATE_CREATE', 'COMMENTS',
+          'SOURCE_DESCRIPTION', 'UTM_CAMPAIGN', 'UTM_CONTENT',
+        ],
+        order: { DATE_MODIFY: 'DESC' },
+        start,
+      });
+      if (!page.ok) break;
+      const batch = Array.isArray(page.result) ? page.result : [];
+      if (!batch.length) break;
+      for (const d of batch) {
+        all.push({
+          id: d.ID,
+          title: d.TITLE || '',
+          stageId: d.STAGE_ID,
+          fase: nomeFasePorStageId(d.STAGE_ID) || d.STAGE_ID || '—',
+          contactId: d.CONTACT_ID,
+          bitrixUrl: `${portalBase()}/crm/deal/details/${d.ID}/`,
+          comments: d.COMMENTS || '',
+          sourceDescription: d.SOURCE_DESCRIPTION || '',
+          utmCampaign: d.UTM_CAMPAIGN || '',
+          utmContent: d.UTM_CONTENT || '',
+        });
+      }
+      if (batch.length < 50) break;
+      start += 50;
+      if (start > 400) break;
+    }
+    if (all.length) {
+      const contatos = await telefonesPorContato(all.map((d) => d.contactId));
+      for (const d of all) {
+        const c = contatos[String(d.contactId)] || null;
+        d.telefone = c?.telefone || null;
+        d.whatsappUrl = c?.whatsappUrl || null;
+        if (c?.nome && (!d.title || /^\d+$/.test(d.title))) d.title = c.nome;
+      }
+      return { ok: true, deals: all, fonte: 'webhook-local' };
+    }
   }
-  return { ok: true, deals: all };
+
+  const viaHelena = await listaDealsViaHelena({ limit });
+  if (viaHelena.ok) return viaHelena;
+  return {
+    ok: false,
+    deals: [],
+    motivo: viaHelena.motivo || 'BITRIX_WEBHOOK ausente e Helena funil indisponível',
+  };
 }
 
 function tokensCampanha(nome) {
   return String(nome || '')
     .toUpperCase()
     .split(/[^A-Z0-9ÁÉÍÓÚÃÕÂÊÔÇ]+/i)
-    .filter((t) => t.length >= 4)
-    .filter((t) => !['TESTE', 'FORT', 'MYERS', 'FORTMYERS', 'CONFIG', 'VIDEO', 'NOVO'].includes(t));
+    .filter((t) => t.length >= 3)
+    .filter((t) => !['TESTE', 'FORT', 'MYERS', 'FORTMYERS', 'CONFIG', 'VIDEO', 'NOVO', 'THE', 'AND'].includes(t));
 }
 
 export function dealBateCampanha(deal, nomeCampanha) {
-  const hay = `${deal.title || ''} ${deal.comments || ''}`.toUpperCase();
+  const hay = [
+    deal.title,
+    deal.comments,
+    deal.sourceDescription,
+    deal.utmCampaign,
+    deal.utmContent,
+  ].filter(Boolean).join(' ').toUpperCase();
   const nome = String(nomeCampanha || '').toUpperCase();
   if (!hay || !nome) return false;
-  if (hay.includes(nome.slice(0, 24))) return true;
+  // match direto pedaço do nome da campanha
+  if (nome.length >= 12 && hay.includes(nome.slice(0, 20))) return true;
   const toks = tokensCampanha(nomeCampanha);
   if (!toks.length) return false;
   const hits = toks.filter((t) => hay.includes(t));
-  return hits.length >= Math.min(2, toks.length) || (toks.length === 1 && hits.length === 1);
+  // 1 token longo (≥6) basta; senão precisa de 2
+  if (hits.some((t) => t.length >= 6)) return true;
+  return hits.length >= Math.min(2, toks.length);
 }
 
 /**
- * Para uma campanha: contagem por fase do funil + leads com links.
+ * Para uma campanha: TODAS as fases do funil + qtd + leads (WA/Bitrix).
+ * Fases sem lead vêm com n=0 (Michel vê o funil inteiro).
  */
 export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = []) {
   const matched = (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha));
   const map = new Map();
+  for (const nome of [...ORDEM_FUNIL, ...FASES_TERMINAIS]) {
+    map.set(nome, { nome, n: 0, leads: [] });
+  }
+
   for (const d of matched) {
-    const fase = d.fase || '—';
+    const fase = normalizaNomeFase(d.fase || 'Leads Novos');
     if (!map.has(fase)) map.set(fase, { nome: fase, n: 0, leads: [] });
     const bucket = map.get(fase);
     bucket.n += 1;
@@ -206,7 +277,6 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = []) {
     });
   }
 
-  // Enriquece com leads locais (Caçador) — WhatsApp + fase
   for (const l of leadsLocais || []) {
     const fase = normalizaNomeFase(l.faseBitrix || l.statusPosMapeamento || l.status || 'Leads Novos');
     if (!map.has(fase)) map.set(fase, { nome: fase, n: 0, leads: [] });
@@ -229,11 +299,16 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = []) {
     }
   }
 
-  const fases = ORDEM_FUNIL
+  const ordem = [...ORDEM_FUNIL, ...FASES_TERMINAIS];
+  const fases = ordem
     .filter((nome) => map.has(nome))
     .map((nome) => map.get(nome))
-    .concat([...map.values()].filter((f) => !ORDEM_FUNIL.includes(f.nome)));
+    .concat([...map.values()].filter((f) => !ordem.includes(f.nome)));
 
   const total = fases.reduce((s, f) => s + f.n, 0);
-  return { total, fases, fonte: matched.length ? 'bitrix+local' : (leadsLocais.length ? 'local' : 'vazio') };
+  return {
+    total,
+    fases,
+    fonte: matched.length ? 'bitrix+local' : (leadsLocais.length ? 'local' : 'vazio'),
+  };
 }

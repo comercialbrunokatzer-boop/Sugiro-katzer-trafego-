@@ -130,6 +130,11 @@
   from = "/api/decisao-app"
   to = "/.netlify/functions/decisao-app"
   status = 200
+
+[[redirects]]
+  from = "/api/sync-bitrix-env"
+  to = "/.netlify/functions/sync-bitrix-env"
+  status = 200
   force = true
 [[redirects]]
   from = "/app"
