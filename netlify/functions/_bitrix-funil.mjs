@@ -182,7 +182,7 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = []) {
 
   // Enriquece com leads locais (Caçador) — WhatsApp + fase
   for (const l of leadsLocais || []) {
-    const fase = l.faseBitrix || l.statusPosMapeamento || l.status || 'Leads Novos';
+    const fase = normalizaNomeFase(l.faseBitrix || l.statusPosMapeamento || l.status || 'Leads Novos');
     if (!map.has(fase)) map.set(fase, { nome: fase, n: 0, leads: [] });
     const bucket = map.get(fase);
     const wa = linkWhatsApp(l.telefone);
