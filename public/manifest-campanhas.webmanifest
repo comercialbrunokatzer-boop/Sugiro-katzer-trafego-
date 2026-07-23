@@ -2,7 +2,7 @@
   "name": "Campanhas Katzer",
   "short_name": "Campanhas",
   "description": "Painel de Campanhas Katzer — Meta, formulário, CPL BOM, decisão. App separado da Rotina.",
-  "start_url": "/",
+  "start_url": "/painel.html",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0f2a24",
