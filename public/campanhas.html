@@ -236,23 +236,16 @@ function leadCard(l){
   </article>`;
 }
 
-function renderCacador(){
-  const box=$('#cacador');
-  if(!IS_EXECUTA){ box.innerHTML=''; return; }
-  if(!CAC||!CAC.ok){
-    box.innerHTML=`<div class="cac-head">CAÇAR LEADS DE HOJE - 2 TOQUES</div><div class="sub">${(CAC&&CAC.erro)||'Carregando caçador…'}</div>`;
-    return;
-  }
-  const leads=CAC.leads||[];
-  box.innerHTML=`
-    <div class="cac-head">${CAC.titulo||'CAÇAR LEADS DE HOJE - 2 TOQUES (vai pro Bitrix)'}</div>
-    <p class="cac-sub">${CAC.aviso||''} · ${CAC.pendentes??0} pendente(s)</p>
-    ${leads.length?leads.map(leadCard).join(''):'<div class="sub">Nenhum lead de hoje ainda.</div>'}
-  `;
-  box.querySelectorAll('.lead').forEach(el=>{
+function pendentes(){
+  return (CAC&&CAC.leads||[]).filter(l=>!l.qualidade);
+}
+
+function bindQualidade(root, after){
+  root.querySelectorAll('[data-lead]').forEach(el=>{
     const id=el.dataset.lead;
     el.querySelectorAll('[data-q]').forEach(b=>{
       b.onclick=async()=>{
+        unlockAudio();
         const qualidade=b.dataset.q;
         el.querySelectorAll('button').forEach(x=>x.disabled=true);
         const res=await fetch(api('/api/cacador'),{
@@ -262,7 +255,7 @@ function renderCacador(){
         if(res.ok){
           toast(res.toast||'Registrado - CPL BOM recalculado');
           CAC=res;
-          renderCacador();
+          if(after) after(); else { renderCacador(); renderFloatLead(); }
         } else {
           toast(res.erro||'Não deu');
           el.querySelectorAll('button').forEach(x=>x.disabled=false);
@@ -270,6 +263,58 @@ function renderCacador(){
       };
     });
   });
+}
+
+function renderFloatLead(){
+  const box=$('#floatLead');
+  if(!IS_EXECUTA){ box.classList.remove('on'); stopBeepLoop(); return; }
+  const pend=pendentes();
+  if(!pend.length){ box.classList.remove('on'); stopBeepLoop(); return; }
+  const l=pend[0];
+  const isNew=!seenLeadIds.has(l.id);
+  pend.forEach(x=>seenLeadIds.add(x.id));
+  box.classList.add('on');
+  box.innerHTML=`
+    <div class="fl-t">🔔 Lead ao vivo · ${pend.length} pendente(s)</div>
+    <div class="fl-n">${l.nome||'Lead'}</div>
+    <div class="fl-s">${l.campanha||''}${l.cidade?' · '+l.cidade:''} · marca qualidade</div>
+    <div class="fl-btns" data-lead="${l.id}">
+      ${(l.botoes||[{tipo:'bom',label:'🟢 Bom'},{tipo:'curioso',label:'🟡 Curioso'},{tipo:'errado',label:'🔴 Errado'},{tipo:'comprador',label:'💰 Comprador'}]).map(b=>
+        `<button type="button" data-q="${b.tipo}">${b.label}</button>`
+      ).join('')}
+    </div>`;
+  bindQualidade(box, ()=>{ renderCacador(); renderFloatLead(); });
+  if(isNew) bipeChato();
+  startBeepLoop();
+}
+
+function stopBeepLoop(){
+  if(beepTimer){ clearInterval(beepTimer); beepTimer=null; }
+}
+function startBeepLoop(){
+  if(beepTimer) return;
+  // bipe chato a cada 8s enquanto houver pendente
+  beepTimer=setInterval(()=>{
+    if(!pendentes().length){ stopBeepLoop(); return; }
+    bipeChato();
+  },8000);
+}
+
+function renderCacador(){
+  const box=$('#cacador');
+  if(!IS_EXECUTA){ box.innerHTML=''; return; }
+  if(!CAC||!CAC.ok){
+    box.innerHTML=`<div class="cac-sub">${(CAC&&CAC.erro)||'Carregando caçador…'}</div>`;
+    renderFloatLead();
+    return;
+  }
+  const leads=CAC.leads||[];
+  box.innerHTML=`
+    <p class="cac-sub">${CAC.aviso||'2 toques · alimenta CPL BOM'} · ${CAC.pendentes??0} pendente(s)</p>
+    ${leads.length?leads.map(leadCard).join(''):'<div class="sub">Nenhum lead de hoje ainda — o flutuante aparece quando cair.</div>'}
+  `;
+  bindQualidade(box, ()=>{ renderCacador(); renderFloatLead(); });
+  renderFloatLead();
 }
 
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
@@ -302,7 +347,7 @@ async function loadDecisoes(){
 }
 
 async function loadCacador(){
-  if(!IS_EXECUTA){ $('#cacador').innerHTML=''; return; }
+  if(!IS_EXECUTA){ $('#cacador').innerHTML=''; $('#floatLead').classList.remove('on'); return; }
   try{
     CAC=await fetch(api('/api/cacador')).then(r=>r.json());
   }catch{CAC={ok:false,erro:'Caçador indisponível'};}
@@ -319,9 +364,10 @@ async function load(){
     if(!DATA.recomendacoes) DATA={erro:'Recomendações indisponíveis.'};
   }catch{DATA={erro:'Dados da Meta indisponíveis.'};}
   renderDecisao();
-  loadCacador();
+  await loadCacador();
 }
 load();
+if(IS_EXECUTA) setInterval(loadCacador, 12000);
 </script>
 </body>
 </html>
