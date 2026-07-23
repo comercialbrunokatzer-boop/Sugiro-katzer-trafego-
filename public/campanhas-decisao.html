@@ -78,10 +78,10 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/placar-michel">← Voltar ao Placar do Michel</a>
+  <a class="back" href="/campanhas">← Painel de Campanhas</a>
   <div class="brand">
     <div class="k">K</div>
-    <div><div class="t">Katzer OS</div><div class="s">Campanhas · decisão do dia</div></div>
+    <div><div class="t">Katzer OS</div><div class="s">Campanhas · decisão (formulário)</div></div>
   </div>
 
   <!-- QUADRADO 1: Campanhas — hoje -->
@@ -124,8 +124,11 @@ function corDot(c){
   return 'gray';
 }
 function linhaVal(c){
+  const sem=c.semaforo;
+  const emoji=sem?.emoji||'';
   if(c.leadConfirmado===false) return c.avisoLead||'Form. não confirmado';
-  if(c.cpl!=null) return `${brl(c.cpl)}/form. · ${c.leads}`;
+  if(sem?.codigo==='SEM_BASE') return `${emoji} SEM BASE · ${c.leads} form.`;
+  if(c.cpl!=null) return `${emoji} ${brl(c.cpl)}/form. · ${c.leads}`;
   if((c.leads||0)===0) return `${brl(c.gasto)} · 0 form.`;
   return `${brl(c.gasto)} · ${c.leads} form.`;
 }
@@ -251,9 +254,12 @@ function renderDecisao(){
 
   body.innerHTML=`
     <div class="sug">
-      <div class="lab">Sugestão da IA</div>
+      <div class="lab">${s.tipo==='observar'?'⚪ SEM BASE - Observar':(s.semaforo?(s.semaforo.emoji+' '+s.semaforo.label):'Sugestão da IA')}</div>
       <div class="tit">${s.titulo}</div>
-      <div class="mot">Motivo: ${s.motivo}</div>
+      ${s.recomendacao?`<div class="mot" style="font-weight:700;color:var(--gold,#d4ac60);margin-top:6px">${s.recomendacao}</div>`:''}
+      <div class="mot" style="white-space:pre-line;margin-top:8px">${s.motivo||''}</div>
+      ${s.alertaPublico?`<div class="mot" style="color:var(--late);margin-top:8px">⚠️ ${s.alertaPublico}</div>`:''}
+      ${s.cidade?`<div class="mot" style="margin-top:6px">Cidade: <b>${s.cidade}</b>${s.publico?' · Público: '+s.publico:''}</div>`:''}
     </div>
     <div class="actions">
       <button class="act ok" data-dec="aplicar"><span class="ic">✅</span><b>Aplicar</b><small>Registra — você aplica na Meta</small></button>

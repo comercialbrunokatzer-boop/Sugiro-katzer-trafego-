@@ -3,6 +3,7 @@
 // NÃO conta: clique, link_click, conversa WhatsApp, impressão, engajamento.
 // NÃO soma action_types sobrepostos (lead + lead_grouped) — escolhe 1 por prioridade.
 import fs from 'node:fs';
+import { enriqueceCampanha, podeEscalar, LEADS_MIN_ESCALAR } from './_campanhas-regras.mjs';
 
 /**
  * Prioridade = o que o Gerenciador mostra como “Lead (formulário)”.
@@ -173,16 +174,16 @@ export function montaPlacar(data = []) {
     const gasto = round2(num(c.spend));
     const { leads, fonte, aviso, confirmado } = extraiLeadsFormulario(c);
     const cpl = (confirmado && leads > 0) ? round2(gasto / leads) : null;
-    return {
+    return enriqueceCampanha({
       nome: c.campaign_name || '(sem nome)',
       id: c.campaign_id || null,
       gasto,
-      leads, // cadastros de formulário
-      cpl,   // custo por lead de formulário
+      leads,
+      cpl,
       fonteLead: fonte,
       avisoLead: aviso,
       leadConfirmado: confirmado,
-    };
+    });
   })
     .filter((c) => c.gasto > 0)
     .sort((a, b) => b.gasto - a.gasto);
@@ -222,20 +223,32 @@ export function montaPlacar(data = []) {
 }
 
 /**
- * Decisão do dia com base em cadastros de formulário + CPL (não clique).
- *  - ESCALAR: tem cadastro confirmado e CPL <= média.
+ * Decisão do dia — formulário only.
+ *  - ESCALAR: leads >= 10, CPL ok, sem público fora do BR em Piçarras.
+ *  - OBSERVAR: tem lead mas < 10 (SEM BASE) — NÃO entra em escalar.
  *  - REVISAR: gastou (>= R$50) e ZERO cadastro de formulário confirmado.
  */
 export function decideDoDia(campanhas = [], cplMedio = null, { gastoMinRevisar = 50 } = {}) {
   const escalar = campanhas
-    .filter((c) => c.leadConfirmado !== false && c.leads > 0 && (cplMedio == null || c.cpl <= cplMedio))
+    .filter((c) => podeEscalar(c) && (cplMedio == null || c.cpl <= cplMedio))
     .sort((a, b) => (a.cpl ?? Infinity) - (b.cpl ?? Infinity))
     .slice(0, 3);
+
+  const observar = campanhas
+    .filter((c) => c.leadConfirmado !== false && c.leads > 0 && c.leads < LEADS_MIN_ESCALAR)
+    .sort((a, b) => (a.cpl ?? Infinity) - (b.cpl ?? Infinity))
+    .slice(0, 5);
+
+  const alertasPublico = campanhas
+    .filter((c) => c.alertaPublico)
+    .slice(0, 5);
+
   const revisar = campanhas
     .filter((c) => c.leadConfirmado !== false && c.leads === 0 && c.gasto >= gastoMinRevisar)
     .sort((a, b) => b.gasto - a.gasto)
     .slice(0, 3);
-  return { escalar, revisar };
+
+  return { escalar, observar, alertasPublico, revisar };
 }
 
 const brl = (v) => (v == null ? '—' : `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -251,18 +264,20 @@ export function resumoPlacarWhats(placar, { periodo = 'últimos 7 dias' } = {}) 
     else cpl = 'sem cadastro form. ainda';
     return `• *${c.nome}*\n   ${brl(c.gasto)} · ${c.leads} cadastro(s) form. · ${cpl}`;
   });
-  const esc = (p.decisao?.escalar || []).map((c) => `🟢 escalar *${c.nome}* (CPL form. ${brl(c.cpl)})`);
+  const esc = (p.decisao?.escalar || []).map((c) => `🟢 escalar *${c.nome}* (CPL form. ${brl(c.cpl)} · ${c.leads} form.)`);
+  const obs = (p.decisao?.observar || []).slice(0, 2).map((c) => `⚪ SEM BASE *${c.nome}* (${c.leads} form. · precisa ${LEADS_MIN_ESCALAR})`);
   const rev = (p.decisao?.revisar || []).map((c) => `🔴 revisar *${c.nome}* (${brl(c.gasto)} · 0 cadastro form.)`);
   return [
     '📊 *Placar de Campanhas — Michel*',
-    `_${periodo} · leads = cadastro de formulário Meta_`,
+    `_${periodo} · leads = cadastro de formulário Meta · min ${LEADS_MIN_ESCALAR} pra escalar_`,
     '',
     linhas.join('\n'),
     '',
     `*Total:* ${brl(p.totalGasto)} · ${p.totalLeads || 0} cadastros form. · CPL form. médio ${brl(p.cplMedio)}`,
     '',
     '*Decisão do dia:*',
-    ...(esc.length ? esc : ['— sem campanha clara pra escalar']),
+    ...(esc.length ? esc : ['— sem campanha com base pra escalar']),
+    ...(obs.length ? obs : []),
     ...(rev.length ? rev : []),
   ].filter((x) => x !== undefined).join('\n');
 }

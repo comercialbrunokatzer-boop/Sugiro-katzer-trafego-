@@ -1,31 +1,14 @@
 // Ranking de campanhas por CPL de FORMULÁRIO (arquivo "_" = NÃO vira função).
 // Nunca usa clique / link_click / landing_page_view como resultado.
 import { extraiLeadsFormulario } from './_placar.mjs';
+import { cidadeReal } from './_campanhas-regras.mjs';
 
 const round2 = (v) => Math.round(Number(v) * 100) / 100;
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-/** Extrai cidade/produto aproximado do nome da campanha (heurística Katzer). */
+/** Cidade real canônica (Piçarras / Barra Velha / Itapoá…). */
 export function extraiCidadeProduto(nome = '') {
-  const n = String(nome);
-  if (/BARRA\s*VIEW|BARRA\s*VELHA|SANDRA/i.test(n)) return 'Barra Velha / Barra View';
-  if (/ALICERCE|AYA|PI[CÇ]ARRAS|PICARRAS/i.test(n)) return 'Piçarras / Alicerce';
-  if (/EDSEL/i.test(n)) return 'Edsel / Alicerce';
-  if (/TORRESANI|PUNTA\s*CANA|PUNTACANA/i.test(n)) return 'Punta Cana';
-  if (/YARA/i.test(n)) return 'Yara';
-  if (/AMANAY|ROGGA/i.test(n) && !/FORT\s*MYERS|FORTMYERS|EXTERIOR TESTE/i.test(n)) return 'Rogga / Amanay';
-  if (/PUNTA\s*C/i.test(n)) return 'Punta Cana / VIDEO';
-  if (/BR[_\s-]?SC|SANTA\s*CATARINA/i.test(n)) return 'BR · SC';
-  if (/PORTUGAL/i.test(n)) return 'Portugal';
-  if (/ESPANHA|SPAIN/i.test(n)) return 'Espanha';
-  if (/MIAMI|ORLANDO/i.test(n)) return 'Miami / Orlando';
-  if (/EUA[_\s-]?Brasileiros|BRASILEIROS/i.test(n)) return 'EUA · Brasileiros';
-  if (/EUA[_\s-]?Americanos|AMERICANOS/i.test(n)) return 'EUA · Americanos';
-  if (/ROGGA|EXTERIOR/i.test(n)) return 'Exterior / ROGGA';
-  if (/FORT\s*MYERS|FORTMYERS/i.test(n)) return 'Fort Myers';
-  if (/Lead\s*\|\s*Cadastro|CADASTRO/i.test(n)) return 'Cadastro Katzer';
-  if (/WhatsApp|Mensagem|Tr[áa]fego/i.test(n)) return 'Tráfego / Msg';
-  return '—';
+  return cidadeReal(nome);
 }
 
 /** Veredito curto pro ranking (só formulário). */

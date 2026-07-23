@@ -1,7 +1,9 @@
 // Núcleo do PLACAR-QUADRADINHO (arquivo "_" = NÃO vira função).
-// Guarda a lógica PURA das decisões do Michel (Aplicar / Ajustar / Agora não)
-// e monta a lista de sugestões a partir do placar. Sem I/O e SEM depender da
-// rotina — o Placar é um quintal independente (facilita o corte #6 depois).
+// Aplicar / Ajustar / Agora não + regras: base mínima 10, semáforo, cidade, público BR.
+
+import {
+  LEADS_MIN_ESCALAR, cidadeReal, publicoForaDoBrasil, semaforoCampanha,
+} from './_campanhas-regras.mjs';
 
 const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao', 'desistir', 'manter', 'aumentar']);
 const slug = (s) => String(s || '').toLowerCase()
@@ -19,26 +21,97 @@ export function agoraBRT(d = new Date()) {
   return { data: `${o.year}-${o.month}-${o.day}`, hm: `${o.hour}:${o.minute}`, min: (+o.hour % 24) * 60 + (+o.minute) };
 }
 
+function enrichSug(c, tipo) {
+  const cidade = c.cidade || cidadeReal(c.nome);
+  const pub = c.publico != null
+    ? { publico: c.publico, alerta: !!c.alertaPublico, motivo: c.alertaPublico }
+    : publicoForaDoBrasil(c.nome);
+  const semaforo = c.semaforo || semaforoCampanha({
+    leads: c.leads, cpl: c.cpl, leadConfirmado: c.leadConfirmado !== false,
+  });
+  return {
+    id: (tipo === 'escalar' ? 'esc-' : tipo === 'observar' ? 'obs-' : 'rev-') + slug(c.nome),
+    campanha: c.nome,
+    tipo,
+    cpl: c.cpl ?? null,
+    gasto: c.gasto ?? 0,
+    leads: c.leads ?? 0,
+    cidade,
+    publico: pub.publico || c.publico || null,
+    alertaPublico: pub.alerta ? (pub.motivo || c.alertaPublico) : null,
+    semaforo,
+    diasNoAr: c.diasNoAr ?? null,
+  };
+}
+
 /** Transforma a "decisão do dia" do placar numa lista de sugestões tocáveis. */
 export function montaSugestoes(placar = {}) {
   const d = (placar && placar.decisao) || {};
-  const map = (arr, tipo) => (Array.isArray(arr) ? arr : []).map((c) => ({
-    id: (tipo === 'escalar' ? 'esc-' : 'rev-') + slug(c.nome),
-    campanha: c.nome, tipo, cpl: c.cpl ?? null, gasto: c.gasto ?? 0, leads: c.leads ?? 0,
-  }));
-  return [...map(d.escalar, 'escalar'), ...map(d.revisar, 'revisar')];
+  return [
+    ...(Array.isArray(d.escalar) ? d.escalar.map((c) => enrichSug(c, 'escalar')) : []),
+    ...(Array.isArray(d.observar) ? d.observar.map((c) => enrichSug(c, 'observar')) : []),
+    ...(Array.isArray(d.revisar) ? d.revisar.map((c) => enrichSug(c, 'revisar')) : []),
+  ];
 }
 
 /**
- * Uma sugestão principal no formato do quadradinho:
- * "Mover R$ X/dia de ORIGEM → DESTINO" (quando há campanha pra revisar e outra pra escalar).
- * Sem inventar venda — texto honesto com CPL/gasto.
+ * Sugestão principal do quadradinho.
+ * NUNCA escala com leads < 10 — mostra OBSERVAR / SEM BASE.
+ * Inclui cidade real, semáforo e alerta de público fora do BR.
  */
 export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   const d = (placar && placar.decisao) || {};
   const origem = (d.revisar && d.revisar[0]) || null;
   const destino = (d.escalar && d.escalar[0]) || null;
+  const observar = (d.observar && d.observar[0]) || null;
+
+  // Se o "melhor CPL" tem < 10 leads, NÃO escalar — observar.
+  if (observar && !destino) {
+    const cidade = observar.cidade || cidadeReal(observar.nome);
+    const pub = publicoForaDoBrasil(observar.nome);
+    const sem = observar.semaforo || semaforoCampanha(observar);
+    const linhasMotivo = [
+      `Base: ${observar.leads} leads - SEM BASE MÍNIMA (precisa ${LEADS_MIN_ESCALAR})`,
+      `Cidade: ${cidade === 'Piçarras' ? 'Fort Myers - Piçarras' : cidade}`,
+    ];
+    if (pub.publico) {
+      linhasMotivo.push(
+        pub.alerta
+          ? `Público: ${pub.publico} - ALERTA: público fora do Brasil`
+          : `Público: ${pub.publico}`,
+      );
+    }
+    if (observar.diasNoAr != null) {
+      linhasMotivo.push(`Dias no ar: ${observar.diasNoAr} dias${observar.diasNoAr <= 3 ? ' - em aprendizado' : ''}`);
+    }
+    if (observar.cpl != null) {
+      linhasMotivo.push(`CPL form. R$ ${Number(observar.cpl).toFixed(0)} (irrelevante sem base)`);
+    }
+    if (pub.alerta) linhasMotivo.push(pub.motivo);
+    return {
+      id: 'obs-' + slug(observar.nome),
+      tipo: 'observar',
+      origem: null,
+      destino: observar.nome,
+      valorDia: null,
+      titulo: `SEM BASE - Observar ${observar.nome}`,
+      motivo: linhasMotivo.join('\n'),
+      recomendacao: `OBSERVAR - Não escalar até ${LEADS_MIN_ESCALAR} leads`,
+      campanha: observar.nome,
+      gasto: observar.gasto ?? 0,
+      leads: observar.leads ?? 0,
+      cpl: observar.cpl ?? null,
+      cidade,
+      publico: pub.publico,
+      alertaPublico: pub.alerta ? pub.motivo : null,
+      semaforo: sem,
+      diasNoAr: observar.diasNoAr ?? null,
+    };
+  }
+
   if (origem && destino) {
+    const cidO = origem.cidade || cidadeReal(origem.nome);
+    const cidD = destino.cidade || cidadeReal(destino.nome);
     return {
       id: `mov-${slug(origem.nome)}-para-${slug(destino.nome)}`,
       tipo: 'mover',
@@ -46,14 +119,22 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       destino: destino.nome,
       valorDia,
       titulo: `Mover R$ ${valorDia}/dia do ${origem.nome} → ${destino.nome}`,
-      motivo: `${origem.nome}: R$ ${Number(origem.gasto || 0).toFixed(0)} gastos, ${origem.leads || 0} cadastro(s) de formulário. ${destino.nome} tem melhor CPL de formulário (${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}/cadastro` : 'abaixo da média'}).`,
+      motivo: [
+        `${origem.nome} (${cidO}): R$ ${Number(origem.gasto || 0).toFixed(0)} · ${origem.leads || 0} form.`,
+        `${destino.nome} (${cidD}): ${destino.leads} form. · CPL R$ ${destino.cpl != null ? Number(destino.cpl).toFixed(0) : '—'} · base ok (≥${LEADS_MIN_ESCALAR})`,
+      ].join('\n'),
+      recomendacao: 'Mover verba com base mínima',
       campanha: `${origem.nome} → ${destino.nome}`,
       gasto: origem.gasto ?? 0,
-      leads: origem.leads ?? 0,
+      leads: destino.leads ?? 0,
       cpl: destino.cpl ?? null,
+      cidade: cidD,
+      semaforo: destino.semaforo || semaforoCampanha(destino),
     };
   }
+
   if (origem) {
+    const cidade = origem.cidade || cidadeReal(origem.nome);
     return {
       id: 'rev-' + slug(origem.nome),
       tipo: 'revisar',
@@ -61,14 +142,20 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       destino: null,
       valorDia: null,
       titulo: `Revisar / cortar ${origem.nome}`,
-      motivo: `R$ ${Number(origem.gasto || 0).toFixed(0)} gastos · ${origem.leads || 0} cadastro(s) de formulário — queimando verba.`,
+      motivo: `Cidade: ${cidade}\nR$ ${Number(origem.gasto || 0).toFixed(0)} gastos · ${origem.leads || 0} cadastro(s) de formulário — queimando verba.`,
+      recomendacao: 'Revisar verba',
       campanha: origem.nome,
       gasto: origem.gasto ?? 0,
       leads: origem.leads ?? 0,
       cpl: origem.cpl ?? null,
+      cidade,
+      semaforo: origem.semaforo || semaforoCampanha(origem),
     };
   }
+
   if (destino) {
+    const cidade = destino.cidade || cidadeReal(destino.nome);
+    const sem = destino.semaforo || semaforoCampanha(destino);
     return {
       id: 'esc-' + slug(destino.nome),
       tipo: 'escalar',
@@ -76,13 +163,29 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       destino: destino.nome,
       valorDia,
       titulo: `Escalar ${destino.nome} (+R$ ${valorDia}/dia)`,
-      motivo: `CPL formulário ${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}` : 'bom'} — abaixo da média. Vale mais verba.`,
+      motivo: [
+        `Base: ${destino.leads} leads (≥${LEADS_MIN_ESCALAR})`,
+        `Cidade: ${cidade === 'Piçarras' ? 'Fort Myers - Piçarras' : cidade}`,
+        `CPL form. R$ ${destino.cpl != null ? Number(destino.cpl).toFixed(0) : '—'} — ${sem.label}`,
+      ].join('\n'),
+      recomendacao: 'Escalar com base mínima',
       campanha: destino.nome,
       gasto: destino.gasto ?? 0,
       leads: destino.leads ?? 0,
       cpl: destino.cpl ?? null,
+      cidade,
+      semaforo: sem,
     };
   }
+
+  // Há observação com alerta mesmo se também houver outras coisas
+  if (observar) {
+    return montaSugestaoPrincipal({
+      ...placar,
+      decisao: { ...d, escalar: [] },
+    }, { valorDia });
+  }
+
   return null;
 }
 
@@ -120,9 +223,10 @@ export function rotuloDecisao(item = {}) {
   const acao = map[item.decisao] || `· ${item.decisao || 'Decisão'}`;
   const alvo = item.tipo === 'mover' ? 'mover'
     : item.tipo === 'escalar' ? 'escalar'
-      : item.tipo === 'revisar' ? 'revisar'
-        : item.tipo === 'campanha' ? 'campanha'
-          : (item.tipo || '');
+      : item.tipo === 'observar' ? 'observar'
+        : item.tipo === 'revisar' ? 'revisar'
+          : item.tipo === 'campanha' ? 'campanha'
+            : (item.tipo || '');
   const aj = item.ajuste ? ` — ${item.ajuste}` : '';
   const camp = item.campanha ? ` *${item.campanha}*` : '';
   return `${acao}${alvo ? ` · ${alvo}` : ''}${camp}${aj}`;

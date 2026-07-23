@@ -36,8 +36,10 @@ const data = [
 ];
 
 test('cidade/produto heurística', () => {
-  assert.equal(extraiCidadeProduto('FortMyers_BR_SC'), 'BR · SC');
-  assert.match(extraiCidadeProduto('PUNTA C.'), /Punta/);
+  assert.equal(extraiCidadeProduto('FortMyers_BR_SC'), 'Piçarras');
+  assert.equal(extraiCidadeProduto('[BARRA VIEW][SANDRA]'), 'Barra Velha');
+  assert.equal(extraiCidadeProduto('[ROGGA][AMANAY]'), 'Itapoá');
+  assert.equal(extraiCidadeProduto('[ALICERCE][AYA]'), 'Piçarras');
 });
 
 test('linhaRanking: CPL form; nunca clique; null sem lead', () => {

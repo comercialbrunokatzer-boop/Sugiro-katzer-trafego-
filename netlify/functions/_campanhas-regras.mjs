@@ -1,0 +1,112 @@
+// Regras do Painel de Campanhas / quadradinho (arquivo "_" = NÃO vira função).
+// Lead de formulário · base mínima · semáforo · cidade real · público BR.
+
+/** Base mínima para recomendar ESCALAR. */
+export const LEADS_MIN_ESCALAR = 10;
+
+/** Semáforo CPL (só com base mínima). */
+export const CPL_BOA = 30;
+export const CPL_ATENCAO = 50;
+
+/**
+ * Cidade/produto real (Bruno).
+ * FORT MYERS / ALICERCE → Piçarras
+ * BARRA VIEW → Barra Velha
+ * AMANAY → Itapoá
+ */
+export function cidadeReal(nome = '') {
+  const n = String(nome);
+  if (/BARRA\s*VIEW|BARRA\s*VELHA|SANDRA/i.test(n)) return 'Barra Velha';
+  if (/AMANAY|ITAPO[ÁA]/i.test(n)) return 'Itapoá';
+  if (/ALICERCE|AYA|EDSEL|PI[CÇ]ARRAS|PICARRAS/i.test(n)) return 'Piçarras';
+  if (/FORT\s*MYERS|FORTMYERS/i.test(n)) return 'Piçarras';
+  if (/TORRESANI|PUNTA\s*CANA|PUNTACANA/i.test(n)) return 'Punta Cana';
+  if (/ROGGA/i.test(n) && !/AMANAY/i.test(n)) return 'Rogga';
+  if (/YARA/i.test(n)) return 'Yara';
+  return '—';
+}
+
+/** Público suspeito fora do Brasil para produto Piçarras / Fort Myers. */
+export function publicoForaDoBrasil(nome = '') {
+  const n = String(nome);
+  if (/EUA[_\s-]?Americanos|AMERICANOS/i.test(n)) {
+    return { alerta: true, publico: 'Americanos em EUA', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+  }
+  if (/MIAMI|ORLANDO|ORLA/i.test(n)) {
+    return { alerta: true, publico: 'Miami/Orlando', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+  }
+  if (/PORTUGAL/i.test(n)) {
+    return { alerta: true, publico: 'Portugal', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+  }
+  if (/ESPANHA|SPAIN/i.test(n)) {
+    return { alerta: true, publico: 'Espanha', motivo: 'Público fora do Brasil - verificar qualidade no Bitrix' };
+  }
+  if (/EUA[_\s-]?Brasileiros|BRASILEIROS/i.test(n)) {
+    return { alerta: false, publico: 'Brasileiros em EUA', motivo: null };
+  }
+  if (/BR[_\s-]?SC/i.test(n)) return { alerta: false, publico: 'BR_SC', motivo: null };
+  if (/AMANAY/i.test(n)) return { alerta: false, publico: 'SC+PR', motivo: null };
+  return { alerta: false, publico: null, motivo: null };
+}
+
+/**
+ * Semáforo oficial:
+ * 🟢 BOA = leads >=10 e CPL < 30
+ * 🟡 ATENÇÃO = leads >=10 e CPL 30–50
+ * 🔴 CARO = leads >=10 e CPL > 50
+ * ⚪ SEM BASE = leads < 10
+ */
+export function semaforoCampanha({ leads = 0, cpl = null, leadConfirmado = true } = {}) {
+  const n = Number(leads) || 0;
+  if (!leadConfirmado) {
+    return { codigo: 'SEM_BASE', emoji: '⚪', label: 'SEM BASE', detalhe: 'Formulário não confirmado' };
+  }
+  if (n < LEADS_MIN_ESCALAR) {
+    return {
+      codigo: 'SEM_BASE',
+      emoji: '⚪',
+      label: 'SEM BASE',
+      detalhe: `Base: ${n} leads - SEM BASE MÍNIMA (precisa ${LEADS_MIN_ESCALAR})`,
+    };
+  }
+  if (cpl == null) {
+    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: 'CPL indisponível' };
+  }
+  if (cpl < CPL_BOA) {
+    return { codigo: 'BOA', emoji: '🟢', label: 'BOA', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} < R$ ${CPL_BOA}` };
+  }
+  if (cpl <= CPL_ATENCAO) {
+    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} (R$ ${CPL_BOA}–${CPL_ATENCAO})` };
+  }
+  return { codigo: 'CARO', emoji: '🔴', label: 'CARO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} > R$ ${CPL_ATENCAO}` };
+}
+
+/** Pode escalar? Só com base mínima + sem alerta de público fora do BR (para Piçarras). */
+export function podeEscalar(c = {}) {
+  const leads = Number(c.leads) || 0;
+  if (c.leadConfirmado === false) return false;
+  if (leads < LEADS_MIN_ESCALAR) return false;
+  if (c.cpl == null) return false;
+  const cidade = cidadeReal(c.nome);
+  const pub = publicoForaDoBrasil(c.nome);
+  if (cidade === 'Piçarras' && pub.alerta) return false;
+  return true;
+}
+
+/** Enriquece campanha com cidade, semáforo, público. */
+export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
+  const cidade = cidadeReal(c.nome);
+  const pub = publicoForaDoBrasil(c.nome);
+  const semaforo = semaforoCampanha({
+    leads: c.leads, cpl: c.cpl, leadConfirmado: c.leadConfirmado !== false,
+  });
+  return {
+    ...c,
+    cidade,
+    publico: pub.publico,
+    alertaPublico: pub.alerta ? pub.motivo : null,
+    semaforo,
+    diasNoAr: diasNoAr != null ? diasNoAr : (c.diasNoAr ?? null),
+    podeEscalar: podeEscalar(c),
+  };
+}
