@@ -1,7 +1,8 @@
-name: 🔐 Seta env vars no site do Tráfego (Z-API + telefones)
+name: 🔐 Seta env vars no site do Tráfego (Z-API + Meta + telefones)
 
 # Lê os segredos do repo e grava como Environment variables no site Netlify,
-# pra as funções (registrar/estado) conseguirem mandar WhatsApp. Valores mascarados.
+# pra as funções (registrar/estado/placar) mandarem WhatsApp e lerem a Meta.
+# Valores mascarados — nunca echo do conteúdo.
 on:
   workflow_dispatch:
     inputs:
@@ -23,6 +24,7 @@ jobs:
     env:
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       SITE_NAME: ${{ github.event.inputs.site_name || 'rotina-produtiva-michel' }}
+      META_SYSTEM_TOKEN: ${{ secrets.META_SYSTEM_TOKEN }}
       ZAPI_INSTANCE: ${{ secrets.ZAPI_INSTANCE }}
       ZAPI_TOKEN: ${{ secrets.ZAPI_TOKEN }}
       ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
@@ -54,6 +56,7 @@ jobs:
             local K="$1" V="$2"
             if [ -n "$V" ]; then echo "::add-mask::$V"; netlify env:set "$K" "$V" --force >/dev/null && echo "· $K ✔"; else echo "· $K (vazio, pulado)"; fi
           }
+          set_if META_SYSTEM_TOKEN "$META_SYSTEM_TOKEN"
           set_if ZAPI_INSTANCE "$ZAPI_INSTANCE"
           set_if ZAPI_TOKEN "$ZAPI_TOKEN"
           set_if ZAPI_CLIENT_TOKEN "$ZAPI_CLIENT_TOKEN"
@@ -61,7 +64,6 @@ jobs:
           set_if WHATSAPP_MICHEL "$WHATSAPP_MICHEL"
           set_if WHATSAPP_CAROL "$WHATSAPP_CAROL"
           set_if EMAIL_CEO "$EMAIL_CEO"
-          # Netlify Blobs em modo manual (site deployado por CLI): siteID + token.
           set_if BLOBS_SITE_ID "$NETLIFY_SITE_ID"
           set_if BLOBS_TOKEN "$NETLIFY_AUTH_TOKEN"
           echo "Env vars gravadas."
