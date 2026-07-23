@@ -22,28 +22,37 @@ function senhaGestorOk(event, params) {
 /** Snapshot enxuto de campanhas pra embutir no Painel do Gestor / item Campanhas. */
 async function snapshotCampanhas(data) {
   try {
-    const [{ placar }, bruto] = await Promise.all([
+    const [{ placar, meta, ts }, bruto] = await Promise.all([
       lePlacar({ preset: 'last_7d' }),
       leDecisoes(data),
     ]);
     const decisoes = listaDecisoes(bruto);
-    const sugestao = montaSugestaoPrincipal(placar);
+    const confiavel = meta?.confiavel !== false;
+    const sugestao = (confiavel && meta?.status === 'ok') ? montaSugestaoPrincipal(placar) : null;
     const alertas = [];
-    (placar.decisao?.revisar || []).forEach((c) => {
-      alertas.push(`revisar ${c.nome} (R$ ${Number(c.gasto || 0).toFixed(0)} · ${c.leads || 0} lead)`);
-    });
-    (placar.decisao?.escalar || []).slice(0, 3).forEach((c) => {
-      alertas.push(`escalar ${c.nome} (CPL ${c.cpl != null ? `R$ ${Number(c.cpl).toFixed(0)}` : '—'})`);
-    });
+    if (confiavel) {
+      (placar.decisao?.revisar || []).forEach((c) => {
+        alertas.push(`revisar ${c.nome} (R$ ${Number(c.gasto || 0).toFixed(0)} · ${c.leads || 0} lead)`);
+      });
+      (placar.decisao?.escalar || []).slice(0, 3).forEach((c) => {
+        alertas.push(`escalar ${c.nome} (CPL ${c.cpl != null ? `R$ ${Number(c.cpl).toFixed(0)}` : '—'})`);
+      });
+    } else if (meta?.mensagemPainel) {
+      alertas.push(meta.mensagemPainel);
+    }
+    const n = (placar.campanhas || []).length;
     return {
-      ok: true,
-      n: (placar.campanhas || []).length,
-      totalGasto: placar.totalGasto ?? 0,
-      totalLeads: placar.totalLeads ?? 0,
-      cplMedio: placar.cplMedio,
-      top: (placar.campanhas || []).slice(0, 3).map((c) => ({
+      ok: confiavel,
+      confiavel,
+      metaStatus: meta?.status || 'ok',
+      metaMensagem: meta?.mensagemPainel || null,
+      n: confiavel ? n : null,
+      totalGasto: confiavel ? (placar.totalGasto ?? 0) : null,
+      totalLeads: confiavel ? (placar.totalLeads ?? 0) : null,
+      cplMedio: confiavel ? placar.cplMedio : null,
+      top: confiavel ? (placar.campanhas || []).slice(0, 3).map((c) => ({
         nome: c.nome, gasto: c.gasto, leads: c.leads, cpl: c.cpl,
-      })),
+      })) : [],
       sugestao,
       decisoes: decisoes.map((d) => ({
         id: d.id, campanha: d.campanha, decisao: d.decisao, ajuste: d.ajuste, hora: d.hora,
@@ -51,10 +60,21 @@ async function snapshotCampanhas(data) {
       })),
       alertas,
       pendenteAplicar: decisoes.length === 0,
-      aplicadoNaMeta: false, // modo seguro — Michel aplica na mão; ainda sem verificação API
+      aplicadoNaMeta: false,
+      ultimaLeitura: ts || null,
+      resumo: !confiavel
+        ? (meta?.mensagemPainel || 'Dados da Meta indisponíveis')
+        : `${n} camp. · R$ ${Number(placar.totalGasto || 0).toFixed(0)} · ${placar.totalLeads || 0} leads`,
     };
   } catch {
-    return { ok: false, n: 0, decisoes: [], alertas: [], pendenteAplicar: true, aplicadoNaMeta: false };
+    return {
+      ok: false, confiavel: false, metaStatus: 'erro_temporario',
+      metaMensagem: 'Dados da Meta indisponíveis.',
+      n: null, totalGasto: null, totalLeads: null, cplMedio: null,
+      decisoes: [], alertas: ['Dados da Meta indisponíveis.'],
+      pendenteAplicar: true, aplicadoNaMeta: false,
+      resumo: 'Dados da Meta indisponíveis.',
+    };
   }
 }
 

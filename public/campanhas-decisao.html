@@ -112,7 +112,7 @@ const brl2=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFra
 
 async function load(){
   try{
-    const r=await fetch('/api/placar-estado');
+    const r=await fetch('/api/placar-estado?refresh=1');
     ST=await r.json();
     render();
   }catch(e){toast('Sem conexão');}
@@ -137,9 +137,26 @@ function decCampanha(nome){
 
 function renderLista(){
   const box=$('#lista');box.innerHTML='';
+  const meta=ST.meta||{};
   const camps=(ST.placar&&ST.placar.campanhas)||[];
-  if(!camps.length){box.innerHTML='<div class="empty">Sem campanha com gasto no período.</div>';}
-  else camps.slice(0,8).forEach(c=>{
+
+  // Erro de integração ≠ zero real
+  if(meta.confiavel===false && !meta.usandoCache){
+    box.innerHTML=`<div class="empty" style="color:var(--late)">${meta.mensagem||'Dados da Meta indisponíveis.'}<br><span style="font-size:.72rem;color:var(--sub)">Não tome decisão até corrigirmos a leitura.</span></div>`;
+  } else if(meta.status==='sem_gasto' || (meta.confiavel && !camps.length && meta.status!=='sem_campanha')){
+    box.innerHTML=`<div class="empty">${meta.mensagem||'Nenhum gasto registrado nos últimos 7 dias.'}</div>`;
+  } else if(meta.status==='sem_campanha'){
+    box.innerHTML=`<div class="empty">${meta.mensagem||'Nenhuma campanha encontrada na conta configurada.'}</div>`;
+  } else if(!camps.length){
+    box.innerHTML=`<div class="empty">${meta.mensagem||'Dados da Meta indisponíveis.'}</div>`;
+  } else {
+    if(meta.usandoCache && meta.mensagem){
+      const w=document.createElement('div');
+      w.className='empty';w.style.cssText='color:var(--warn);font-size:.78rem;padding:6px 0 10px';
+      w.textContent=meta.mensagem;
+      box.appendChild(w);
+    }
+    camps.slice(0,8).forEach(c=>{
     const done=decCampanha(c.nome);
     const wrap=document.createElement('div');wrap.className='camp-block';
     wrap.innerHTML=`
@@ -181,7 +198,9 @@ function renderLista(){
     });
     box.appendChild(wrap);
   });
-  $('#hm').textContent=ST.ultimaLeitura||ST.agora||'';
+  }
+  const hm=ST.ultimaLeitura||ST.agora||'—';
+  $('#hm').textContent=(meta.usandoCache?'cache · ':'')+'leitura '+hm;
 }
 
 async function postCampanha(nome,decisao,ajuste){
@@ -219,7 +238,11 @@ function renderDecisao(){
   }
 
   if(!s){
-    body.innerHTML=`<div class="empty">Sem base clara pra sugerir hoje.<br>Olhe as campanhas e volte amanhã.</div>
+    const meta=ST.meta||{};
+    const msgErro=meta.confiavel===false
+      ? (meta.mensagem||'Os dados da Meta não foram carregados. Não tome decisão até corrigirmos a leitura.')
+      : 'Sem base clara para recomendar alteração.<br>Olhe as campanhas e volte amanhã.';
+    body.innerHTML=`<div class="empty">${msgErro}</div>
       <button class="ghost" id="btnVoltar">← Voltar</button>`;
     $('#btnVoltar').onclick=()=>{VIEW='lista';render();};
     return;

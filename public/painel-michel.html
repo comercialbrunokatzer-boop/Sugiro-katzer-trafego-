@@ -182,6 +182,11 @@ function renderPrioridades(){
 
 function renderCampanhas(){
   const C=ST.campanhas||{};
+  if(C.confiavel===false){
+    $('#campResumo').textContent=C.metaMensagem||C.resumo||'Dados da Meta indisponíveis.';
+    $('#campChips').innerHTML='<span class="chip">integração</span>';
+    return;
+  }
   $('#campResumo').textContent=C.resumo||'Sem dados da Meta ainda';
   const chips=[];
   chips.push(`<span class="chip">${C.n||0} campanhas</span>`);
