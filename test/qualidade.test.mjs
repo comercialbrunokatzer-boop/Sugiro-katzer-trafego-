@@ -6,6 +6,8 @@ import {
   textoCplBrutoVsBom,
   resumoCplBomQualidade,
   leadsBons,
+  ordenaPorCpl,
+  escolheMelhorParaEscalar,
 } from '../netlify/functions/_qualidade.mjs';
 
 test('CPL Bruto / CPL BOM — TESTE FORTMYERS (Bruno)', () => {
@@ -82,4 +84,27 @@ test('resumo sem caça → pendente (não inventa bom por CPL bruto)', () => {
   ]);
   assert.equal(r.fonte, 'pendente');
   assert.match(r.texto, /ainda não marcada/);
+});
+
+test('ordena por CPL BOM + escolhe menor BOM com ≥10 e público BR', () => {
+  const mapa = {
+    fm: { id: 'fm', nome: 'TESTE FORTMYERS', bom: 8, curioso: 22, errado: 6, comprador: 3 },
+    am: { id: 'am', nome: 'AMANAY ITAPOÁ', bom: 20, curioso: 4, errado: 0, comprador: 0 },
+    eua: { id: 'eua', nome: '[FortMyers_EUA_Americanos]', bom: 10, curioso: 0, errado: 0, comprador: 0 },
+  };
+  const camps = [
+    enriqueceComQualidade({ id: 'fm', nome: 'TESTE FORTMYERS', gasto: 624, leads: 39, cpl: 16, leadConfirmado: true }, mapa),
+    enriqueceComQualidade({ id: 'am', nome: 'AMANAY ITAPOÁ', gasto: 264, leads: 24, cpl: 11, leadConfirmado: true }, mapa),
+    enriqueceComQualidade({ id: 'eua', nome: '[FortMyers_EUA_Americanos]', gasto: 70, leads: 12, cpl: 5.8, leadConfirmado: true }, mapa),
+  ];
+  const ord = ordenaPorCpl(camps, { modo: 'bom' });
+  // lista ordena por CPL BOM puro (EUA R$7 aparece primeiro) — trava aparece na UI
+  assert.equal(ord[0].id, 'eua');
+  assert.equal(ord[1].id, 'am');
+  const best = escolheMelhorParaEscalar(camps);
+  assert.ok(best);
+  assert.equal(best.metrica, 'cpl_bom');
+  assert.equal(best.campanha.id, 'am'); // EUA bloqueado PUBLICO EXTERNO
+  assert.equal(camps.find((c) => c.id === 'eua').travaEscalar.codigo, 'PUBLICO_EXTERNO');
+  assert.ok(camps.find((c) => c.id === 'eua').bloqueadoEscalar);
 });

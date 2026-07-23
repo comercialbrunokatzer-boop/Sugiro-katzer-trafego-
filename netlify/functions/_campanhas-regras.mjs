@@ -4,14 +4,25 @@
 /** Base mínima para recomendar ESCALAR. */
 export const LEADS_MIN_ESCALAR = 10;
 
-/** Semáforo CPL (só com base mínima). */
+/** Semáforo CPL Bruto (legado / sem caça). */
 export const CPL_BOA = 30;
 export const CPL_ATENCAO = 50;
+
+/** Semáforo CPL BOM (prompt final Bruno): <25 🟢 · 25–45 🟡 · >45 🔴 · <10 leads ⚪ */
+export const CPL_BOM_VERDE = 25;
+export const CPL_BOM_AMARELO = 45;
 
 /** Texto canônico Bruno: ⚪ SEM BASE - 3 leads, precisa 10 */
 export function rotuloSemBase(leads = 0) {
   const n = Number(leads) || 0;
   return `⚪ SEM BASE - ${n} leads, precisa ${LEADS_MIN_ESCALAR}`;
+}
+
+/** Texto canônico: PUBLICO EXTERNO (Americanos/MIAMI/PORTUGAL em Piçarras). */
+export function rotuloPublicoExterno(motivo = null) {
+  return motivo
+    ? `🚫 PUBLICO EXTERNO — ${motivo}`
+    : '🚫 PUBLICO EXTERNO — Americanos/MIAMI/PORTUGAL em Piçarras';
 }
 
 /**
@@ -57,15 +68,18 @@ export function publicoForaDoBrasil(nome = '') {
 
 /**
  * Semáforo oficial:
- * 🟢 BOA = leads >=10 e CPL < 30
- * 🟡 ATENÇÃO = leads >=10 e CPL 30–50
- * 🔴 CARO = leads >=10 e CPL > 50
- * ⚪ SEM BASE = leads < 10
+ * 🟢 BOA = leads >=10 e CPL < limiar verde
+ * 🟡 ATENÇÃO = leads >=10 e CPL no meio
+ * 🔴 CARO = leads >=10 e CPL > limiar amarelo
+ * ⚪ SEM BASE = leads < 10 (cinza)
+ * @param {{ modo?: 'bruto'|'bom' }} opts — bom usa régua 25/45
  */
-export function semaforoCampanha({ leads = 0, cpl = null, leadConfirmado = true } = {}) {
+export function semaforoCampanha({ leads = 0, cpl = null, leadConfirmado = true } = {}, { modo = 'bruto' } = {}) {
   const n = Number(leads) || 0;
+  const verde = modo === 'bom' ? CPL_BOM_VERDE : CPL_BOA;
+  const amarelo = modo === 'bom' ? CPL_BOM_AMARELO : CPL_ATENCAO;
   if (!leadConfirmado) {
-    return { codigo: 'SEM_BASE', emoji: '⚪', label: 'SEM BASE', detalhe: 'Formulário não confirmado' };
+    return { codigo: 'SEM_BASE', emoji: '⚪', label: 'SEM BASE', detalhe: 'Formulário não confirmado', cor: 'cinza' };
   }
   if (n < LEADS_MIN_ESCALAR) {
     return {
@@ -74,30 +88,51 @@ export function semaforoCampanha({ leads = 0, cpl = null, leadConfirmado = true 
       label: 'SEM BASE',
       detalhe: rotuloSemBase(n),
       bloqueadoEscalar: true,
+      cor: 'cinza',
     };
   }
   if (cpl == null) {
-    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: 'CPL indisponível' };
+    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: 'CPL indisponível', cor: 'amarelo' };
   }
-  if (cpl < CPL_BOA) {
-    return { codigo: 'BOA', emoji: '🟢', label: 'BOA', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} < R$ ${CPL_BOA}` };
+  if (cpl < verde) {
+    return { codigo: 'BOA', emoji: '🟢', label: 'BOA', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} < R$ ${verde}`, cor: 'verde' };
   }
-  if (cpl <= CPL_ATENCAO) {
-    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} (R$ ${CPL_BOA}–${CPL_ATENCAO})` };
+  if (cpl <= amarelo) {
+    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} (R$ ${verde}–${amarelo})`, cor: 'amarelo' };
   }
-  return { codigo: 'CARO', emoji: '🔴', label: 'CARO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} > R$ ${CPL_ATENCAO}` };
+  return { codigo: 'CARO', emoji: '🔴', label: 'CARO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} > R$ ${amarelo}`, cor: 'vermelho' };
 }
 
-/** Pode escalar? Só com base mínima + sem alerta de público fora do BR (para Piçarras). */
+/** Pode escalar? Base mín. + sem PUBLICO EXTERNO em Piçarras. */
 export function podeEscalar(c = {}) {
   const leads = Number(c.leads) || 0;
   if (c.leadConfirmado === false) return false;
   if (leads < LEADS_MIN_ESCALAR) return false;
-  if (c.cpl == null) return false;
+  if (c.cpl == null && c.cplBom == null && c.cplDecisao == null) return false;
   const cidade = cidadeReal(c.nome);
   const pub = publicoForaDoBrasil(c.nome);
   if (cidade === 'Piçarras' && pub.alerta) return false;
   return true;
+}
+
+/** Travas de escalar (prompt final). */
+export function travaEscalar(c = {}) {
+  const leads = Number(c.leads) || 0;
+  const cidade = c.cidade || cidadeReal(c.nome);
+  const pub = c.alertaPublico != null
+    ? { alerta: !!c.alertaPublico, motivo: c.alertaPublico, publico: c.publico }
+    : publicoForaDoBrasil(c.nome);
+
+  if (c.leadConfirmado === false) {
+    return { ok: false, codigo: 'SEM_BASE', rotulo: '⚪ SEM BASE — formulário não confirmado' };
+  }
+  if (leads < LEADS_MIN_ESCALAR) {
+    return { ok: false, codigo: 'SEM_BASE', rotulo: rotuloSemBase(leads) };
+  }
+  if (cidade === 'Piçarras' && pub.alerta) {
+    return { ok: false, codigo: 'PUBLICO_EXTERNO', rotulo: rotuloPublicoExterno(pub.motivo || pub.publico) };
+  }
+  return { ok: true, codigo: null, rotulo: null };
 }
 
 /**
@@ -157,13 +192,14 @@ export function resumoCplBom(campanhas = [], {
   };
 }
 
-/** Enriquece campanha com cidade, semáforo, público. */
+/** Enriquece campanha com cidade, semáforo, público, trava. */
 export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
   const cidade = cidadeReal(c.nome);
   const pub = publicoForaDoBrasil(c.nome);
   const semaforo = semaforoCampanha({
     leads: c.leads, cpl: c.cpl, leadConfirmado: c.leadConfirmado !== false,
   });
+  const trava = travaEscalar({ ...c, cidade, alertaPublico: pub.alerta ? pub.motivo : null, publico: pub.publico });
   return {
     ...c,
     cidade,
@@ -172,5 +208,7 @@ export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
     semaforo,
     diasNoAr: diasNoAr != null ? diasNoAr : (c.diasNoAr ?? null),
     podeEscalar: podeEscalar(c),
+    travaEscalar: trava,
+    bloqueadoEscalar: !trava.ok,
   };
 }

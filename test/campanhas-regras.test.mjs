@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  cidadeReal, publicoForaDoBrasil, semaforoCampanha, podeEscalar, LEADS_MIN_ESCALAR, resumoCplBom, rotuloSemBase,
+  cidadeReal, publicoForaDoBrasil, semaforoCampanha, podeEscalar, LEADS_MIN_ESCALAR, resumoCplBom, rotuloSemBase, travaEscalar,
 } from '../netlify/functions/_campanhas-regras.mjs';
 import { montaPlacar } from '../netlify/functions/_placar.mjs';
 import { montaSugestaoPrincipal } from '../netlify/functions/_placar-estado.mjs';
@@ -20,13 +20,32 @@ test('público fora do Brasil alerta em Piçarras', () => {
   assert.equal(publicoForaDoBrasil('FortMyers_BR_SC').alerta, false);
 });
 
-test('semáforo: SEM BASE / BOA / ATENÇÃO / CARO', () => {
+test('semáforo bruto: SEM BASE / BOA / ATENÇÃO / CARO', () => {
   assert.equal(semaforoCampanha({ leads: 3, cpl: 7 }).codigo, 'SEM_BASE');
   assert.equal(semaforoCampanha({ leads: 3, cpl: 7 }).detalhe, '⚪ SEM BASE - 3 leads, precisa 10');
   assert.equal(semaforoCampanha({ leads: 12, cpl: 18 }).codigo, 'BOA');
   assert.equal(semaforoCampanha({ leads: 12, cpl: 40 }).codigo, 'ATENCAO');
   assert.equal(semaforoCampanha({ leads: 12, cpl: 77 }).codigo, 'CARO');
 });
+
+test('semáforo BOM: <25 verde · 25–45 amarelo · >45 vermelho · <10 cinza', () => {
+  assert.equal(semaforoCampanha({ leads: 3, cpl: 7 }, { modo: 'bom' }).cor, 'cinza');
+  assert.equal(semaforoCampanha({ leads: 12, cpl: 13 }, { modo: 'bom' }).cor, 'verde');
+  assert.equal(semaforoCampanha({ leads: 12, cpl: 30 }, { modo: 'bom' }).cor, 'amarelo');
+  assert.equal(semaforoCampanha({ leads: 12, cpl: 56 }, { modo: 'bom' }).cor, 'vermelho');
+});
+
+test('trava PUBLICO EXTERNO em Piçarras', () => {
+  const t = travaEscalar({ nome: '[FortMyers_EUA_Americanos]', leads: 12, cpl: 20, leadConfirmado: true });
+  assert.equal(t.ok, false);
+  assert.equal(t.codigo, 'PUBLICO_EXTERNO');
+  assert.match(t.rotulo, /PUBLICO EXTERNO/);
+  const ok = travaEscalar({ nome: 'FortMyers_BR_SC', leads: 12, cpl: 20, leadConfirmado: true });
+  assert.equal(ok.ok, true);
+  const sem = travaEscalar({ nome: 'FortMyers_BR_SC', leads: 3, cpl: 7, leadConfirmado: true });
+  assert.equal(sem.codigo, 'SEM_BASE');
+});
+
 
 test('rotuloSemBase canônico Bruno', () => {
   assert.equal(rotuloSemBase(3), '⚪ SEM BASE - 3 leads, precisa 10');

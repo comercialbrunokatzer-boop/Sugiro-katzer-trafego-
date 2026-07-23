@@ -9,7 +9,10 @@
 //   AMANAY: 24 leads, R$264 → Bruto R$11
 //     20 bons → CPL BOM R$13,20 → MELHOR DA CONTA
 
-import { CPL_BOA, CPL_ATENCAO, LEADS_MIN_ESCALAR, cidadeReal } from './_campanhas-regras.mjs';
+import {
+  CPL_BOA, CPL_ATENCAO, CPL_BOM_VERDE, CPL_BOM_AMARELO,
+  LEADS_MIN_ESCALAR, cidadeReal, travaEscalar, semaforoCampanha,
+} from './_campanhas-regras.mjs';
 
 export const QUALIDADE_TIPOS = ['bom', 'curioso', 'errado', 'comprador'];
 
@@ -77,32 +80,15 @@ export function calculaCplQualidade({ gasto = 0, leads = 0 } = {}, qualidade = n
     cplBruto,
     cplBom,
     pctBons,
-    // Semáforo: se tem qualidade marcada, julga pelo CPL BOM; senão pelo bruto
-    semaforoBruto: semaforoPorCpl(leadsTotais, cplBruto),
-    semaforoBom: temQualidade ? semaforoPorCpl(bons, cplBom) : null,
-    semaforoDecisao: temQualidade ? semaforoPorCpl(bons, cplBom) : semaforoPorCpl(leadsTotais, cplBruto),
+    // BOM: régua <25 / 25–45 / >45 · base = leads FORM (trava 10)
+    semaforoBruto: semaforoCampanha({ leads: leadsTotais, cpl: cplBruto }, { modo: 'bruto' }),
+    semaforoBom: temQualidade
+      ? semaforoCampanha({ leads: leadsTotais, cpl: cplBom }, { modo: 'bom' })
+      : null,
+    semaforoDecisao: temQualidade
+      ? semaforoCampanha({ leads: leadsTotais, cpl: cplBom }, { modo: 'bom' })
+      : semaforoCampanha({ leads: leadsTotais, cpl: cplBruto }, { modo: 'bruto' }),
   };
-}
-
-function semaforoPorCpl(baseLeads, cpl) {
-  if (baseLeads < LEADS_MIN_ESCALAR) {
-    return {
-      codigo: 'SEM_BASE',
-      emoji: '⚪',
-      label: 'SEM BASE',
-      detalhe: `⚪ SEM BASE - ${baseLeads} leads, precisa ${LEADS_MIN_ESCALAR}`,
-    };
-  }
-  if (cpl == null) {
-    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: 'CPL indisponível' };
-  }
-  if (cpl < CPL_BOA) {
-    return { codigo: 'BOA', emoji: '🟢', label: 'BOA', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} < R$ ${CPL_BOA}` };
-  }
-  if (cpl <= CPL_ATENCAO) {
-    return { codigo: 'ATENCAO', emoji: '🟡', label: 'ATENÇÃO', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} (R$ ${CPL_BOA}–${CPL_ATENCAO})` };
-  }
-  return { codigo: 'CARO', emoji: '🔴', label: 'CARA', detalhe: `CPL R$ ${Number(cpl).toFixed(0)} > R$ ${CPL_ATENCAO}` };
 }
 
 function round2(n) {
@@ -120,9 +106,11 @@ export function enriqueceComQualidade(campanha = {}, qualidadeMap = {}) {
     { gasto: campanha.gasto, leads: campanha.leads },
     q,
   );
+  const cidade = campanha.cidade || cidadeReal(nome);
+  const trava = travaEscalar({ ...campanha, nome, cidade });
   return {
     ...campanha,
-    cidade: campanha.cidade || cidadeReal(nome),
+    cidade,
     cplBruto: calc.cplBruto,
     cplBom: calc.cplBom,
     pctBons: calc.pctBons,
@@ -132,11 +120,66 @@ export function enriqueceComQualidade(campanha = {}, qualidadeMap = {}) {
     qualidade: calc.qualidade,
     semaforoBruto: calc.semaforoBruto,
     semaforoBom: calc.semaforoBom,
-    // CPL “de decisão”: BOM se houver caçada; senão bruto (formulário)
     cplDecisao: calc.temQualidade ? calc.cplBom : calc.cplBruto,
     semaforoDecisao: calc.semaforoDecisao,
+    travaEscalar: trava,
+    bloqueadoEscalar: !trava.ok,
   };
 }
+
+/**
+ * Ordena lista: modo bom → menor CPL BOM (sem qualidade no fim).
+ * modo bruto → menor CPL bruto.
+ */
+export function ordenaPorCpl(campanhas = [], { modo = 'bom' } = {}) {
+  const lista = [...(Array.isArray(campanhas) ? campanhas : [])];
+  const key = modo === 'bom' ? 'cplBom' : 'cplBruto';
+  return lista.sort((a, b) => {
+    const va = a[key] ?? (modo === 'bruto' ? a.cpl : null);
+    const vb = b[key] ?? (modo === 'bruto' ? b.cpl : null);
+    if (va == null && vb == null) return (b.gasto || 0) - (a.gasto || 0);
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    return va - vb;
+  });
+}
+
+/**
+ * Decisão §6: menor CPL BOM com leads>=10 e público BR.
+ * Sem caça → fallback CPL bruto com mesmas travas.
+ */
+export function escolheMelhorParaEscalar(campanhas = []) {
+  const elegiveis = (campanhas || []).filter((c) => {
+    const trava = c.travaEscalar || travaEscalar(c);
+    return trava.ok && c.leadConfirmado !== false;
+  });
+
+  const comBom = elegiveis.filter((c) => c.temQualidade && c.cplBom != null);
+  if (comBom.length) {
+    const top = [...comBom].sort((a, b) => a.cplBom - b.cplBom)[0];
+    return {
+      campanha: top,
+      metrica: 'cpl_bom',
+      cpl: top.cplBom,
+      motivo: `Menor CPL BOM R$ ${Number(top.cplBom).toFixed(2)} · ${top.leads} leads · público BR · ${top.cidade || cidadeReal(top.nome)}`,
+    };
+  }
+
+  const comBruto = elegiveis.filter((c) => (c.cplBruto ?? c.cpl) != null);
+  if (comBruto.length) {
+    const top = [...comBruto].sort((a, b) => (a.cplBruto ?? a.cpl) - (b.cplBruto ?? b.cpl))[0];
+    return {
+      campanha: top,
+      metrica: 'cpl_bruto',
+      cpl: top.cplBruto ?? top.cpl,
+      motivo: `Menor CPL Bruto R$ ${Number(top.cplBruto ?? top.cpl).toFixed(0)} · ${top.leads} leads · público BR (caça pendente)`,
+    };
+  }
+  return null;
+}
+
+export { CPL_BOM_VERDE, CPL_BOM_AMARELO, CPL_BOA, CPL_ATENCAO, LEADS_MIN_ESCALAR };
+
 
 /**
  * Texto comparativo Bruno:

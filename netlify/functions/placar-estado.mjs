@@ -10,7 +10,10 @@ import { createHash } from 'node:crypto';
 import { agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes } from './_placar-estado.mjs';
 import { lePlacar, leDecisoes, mensagemMeta } from './_placar-io.mjs';
 import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
-import { enriqueceComQualidade, textoCplBrutoVsBom, calculaCplQualidade } from './_qualidade.mjs';
+import {
+  enriqueceComQualidade, textoCplBrutoVsBom, calculaCplQualidade,
+  ordenaPorCpl, escolheMelhorParaEscalar,
+} from './_qualidade.mjs';
 import {
   DECISAO_VERSAO,
   montaRecomendacoes,
@@ -19,6 +22,8 @@ import {
   ehPublicoProibidoEscalar,
 } from './_recomendacoes.mjs';
 import { json } from './_infra.mjs';
+import { LEADS_MIN_ESCALAR } from './_campanhas-regras.mjs';
+import { cidadeReal } from './_campanhas-regras.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 function senhaGestorOk(event, params) {
@@ -77,30 +82,64 @@ export async function handler(event) {
     mensagem: meta?.mensagemPainel || mensagemMeta(meta),
   };
 
-  // Decisão do dia V4: BR_SC criativo + Amanay — NUNCA EUA_Americanos a R$7
+  // Decisão do dia: §6 menor CPL BOM ≥10 + público BR; V4 cards oficiais ao lado
   const recBundle = metaOut.confiavel
     ? montaRecomendacoes({ operacional7d: placarParaOperacional(placarQ) })
     : { ok: false, versao: DECISAO_VERSAO, recomendacoes: [] };
+  const melhorBom = escolheMelhorParaEscalar(campanhasQ);
   const sugestaoV4 = sugestaoPrincipalV4(recBundle.recomendacoes || []);
-  const sugestaoLegado = metaOut.confiavel && metaOut.status === 'ok'
-    ? montaSugestaoPrincipal(placarQ)
-    : null;
-  let sugestaoPrincipal = sugestaoV4;
-  if (!sugestaoPrincipal && sugestaoLegado
-      && !ehPublicoProibidoEscalar(sugestaoLegado.campanha || sugestaoLegado.destino || '')) {
-    sugestaoPrincipal = sugestaoLegado;
+  let sugestaoPrincipal = null;
+  if (melhorBom?.metrica === 'cpl_bom' && melhorBom.campanha) {
+    const c = melhorBom.campanha;
+    sugestaoPrincipal = {
+      id: 'esc-bom-' + (c.id || c.nome || 'x'),
+      tipo: 'escalar',
+      versao: DECISAO_VERSAO,
+      destino: c.nome,
+      valorDia: 30,
+      titulo: `Escalar ${c.nome} — menor CPL BOM`,
+      motivo: melhorBom.motivo,
+      recomendacao: `CPL BOM R$ ${Number(melhorBom.cpl).toFixed(2)} · base ${c.leads} ≥ ${LEADS_MIN_ESCALAR} · público BR`,
+      campanha: c.nome,
+      leads: c.leads,
+      cpl: melhorBom.cpl,
+      cplBom: c.cplBom,
+      cplBruto: c.cplBruto,
+      cidade: c.cidade || cidadeReal(c.nome),
+      semaforo: c.semaforoBom || c.semaforoDecisao,
+      bloqueadoEscalar: false,
+      metrica: 'cpl_bom',
+      cardsV4: recBundle.recomendacoes || [],
+    };
+  } else if (sugestaoV4) {
+    sugestaoPrincipal = sugestaoV4;
+  } else {
+    const sugestaoLegado = metaOut.confiavel && metaOut.status === 'ok'
+      ? montaSugestaoPrincipal(placarQ)
+      : null;
+    if (sugestaoLegado
+        && !ehPublicoProibidoEscalar(sugestaoLegado.campanha || sugestaoLegado.destino || '')) {
+      sugestaoPrincipal = sugestaoLegado;
+    }
   }
+
+  const rankingCplBom = ordenaPorCpl(campanhasQ, { modo: 'bom' });
+  const rankingCplBruto = ordenaPorCpl(campanhasQ, { modo: 'bruto' });
 
   const body = {
     ok: true,
     metricaPrincipal: 'lead_formulario',
     metricaQualidade: 'cpl_bom = gasto ÷ (bom + comprador)',
     decisaoVersao: DECISAO_VERSAO,
+    modoCplDefault: 'bom',
     data: now.data,
     agora: now.hm,
     ultimaLeitura: ts ? agoraBRT(new Date(ts)).hm : null,
     periodo: 'last_7d',
     placar: placarQ,
+    rankingCplBom,
+    rankingCplBruto,
+    melhorParaEscalar: melhorBom,
     sugestoes: metaOut.confiavel ? montaSugestoes(placarQ) : [],
     sugestaoPrincipal,
     recomendacoes: recBundle,
