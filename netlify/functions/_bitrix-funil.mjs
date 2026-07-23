@@ -34,6 +34,32 @@ export function nomeFasePorStageId(stageId) {
   return STAGE_TO_NOME[String(stageId || '')] || null;
 }
 
+/** Normaliza rótulos locais / legados para o Funil Novo Katzer. */
+export function normalizaNomeFase(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return 'Leads Novos';
+  if (ORDEM_FUNIL.includes(s) || s === 'Rampage' || s === 'Perdido') return s;
+  if (/^novo$/i.test(s) || /leads?\s*novos?/i.test(s) || /fluxo\s*-?\s*leads/i.test(s)) return 'Leads Novos';
+  if (/tentando/i.test(s)) return 'Tentando Contato';
+  if (/carteira/i.test(s)) return 'Carteira corretor';
+  if (/mapeament/i.test(s)) return 'Mapeamento';
+  if (/aprova.*viagem/i.test(s)) return 'Aprovação Viagem';
+  if (/em viagem|cliente em viagem/i.test(s)) return 'Cliente em viagem';
+  if (/agendamento meet|meetins/i.test(s)) return 'Agendamento Meetins';
+  if (/agendado f[ií]sico/i.test(s)) return 'Agendado Físico';
+  if (/reagend/i.test(s)) return 'Reagendamento de Visita';
+  if (/follow/i.test(s)) return 'Follow Up';
+  if (/negocia/i.test(s)) return 'Negociação';
+  if (/proposta/i.test(s)) return 'Proposta';
+  if (/contrato/i.test(s)) return 'Contrato';
+  if (/exce[cç][aã]o/i.test(s) && /aprova/i.test(s)) return 'Aprovação Exceção';
+  if (/^exce[cç][aã]o$/i.test(s)) return 'Exceção';
+  if (/ganhou|won/i.test(s)) return 'Ganhou';
+  if (/rampage/i.test(s)) return 'Rampage';
+  if (/perdido|lost|saiu/i.test(s)) return 'Perdido';
+  return s;
+}
+
 function bitrixBase() {
   return (
     process.env.BITRIX_WEBHOOK_READ
