@@ -5,8 +5,17 @@
 import { QUALIDADE_TIPOS, normalizaQualidade, leadsBons } from './_qualidade.mjs';
 import { cidadeReal } from './_campanhas-regras.mjs';
 import { identidadeCampanha } from './_mapeamento-v41.mjs';
+import {
+  ABCD,
+  ABCD_ROTULO,
+  normalizaAbcd,
+  normalizaStatusPos,
+  isVermelho,
+  marcaAuditoria,
+  resumoAuditoria,
+} from './_auditoria-abcd.mjs';
 
-export { QUALIDADE_TIPOS };
+export { QUALIDADE_TIPOS, ABCD, ABCD_ROTULO, marcaAuditoria, resumoAuditoria, isVermelho };
 
 /**
  * Sem estrutura EN: Bom/Comprador em público inglês → Curioso.
@@ -39,6 +48,7 @@ export function leadsDemoHoje() {
       recebidoEm: new Date(agora - 12 * 60 * 1000).toISOString(),
       qualidade: null,
       fonte: 'demo',
+      statusPosMapeamento: 'Em mapeamento',
     },
     {
       id: 'demo-maria',
@@ -51,6 +61,21 @@ export function leadsDemoHoje() {
       recebidoEm: new Date(agora - 34 * 60 * 1000).toISOString(),
       qualidade: null,
       fonte: 'demo',
+      statusPosMapeamento: 'Em mapeamento',
+    },
+    {
+      id: 'demo-vermelho-saiu',
+      nome: 'Carlos Vermelho',
+      telefone: '48 9xxxx',
+      campanha: 'AMANAY_ITAPOA_ROGGA_BR-SC',
+      campanhaId: null,
+      cidade: 'Itapoá',
+      status: 'Saiu mapeamento',
+      recebidoEm: new Date(agora - 90 * 60 * 1000).toISOString(),
+      qualidade: 'bom',
+      fonte: 'demo',
+      statusPosMapeamento: 'Saiu',
+      // sem qualidadeReal → VERMELHO (trava)
     },
   ];
 }
@@ -86,7 +111,11 @@ export function normalizaLead(l = {}) {
   const id = String(l.id || '').trim() || `lead-${Date.now()}`;
   const campanha = String(l.campanha || l.campanhaNome || '').trim();
   const q = l.qualidade && QUALIDADE_TIPOS.includes(l.qualidade) ? l.qualidade : null;
-  return {
+  const provisoria = normalizaAbcd(l.qualidadeProvisoria);
+  const real = normalizaAbcd(l.qualidadeReal);
+  const statusPos = normalizaStatusPos(l.statusPosMapeamento);
+  const qualidadeIa = normalizaAbcd(l.qualidadeIa);
+  const base = {
     id,
     nome: String(l.nome || '').trim() || 'Sem nome',
     telefone: String(l.telefone || l.fone || '').trim() || '—',
@@ -100,7 +129,29 @@ export function normalizaLead(l = {}) {
     marcadoPor: l.marcadoPor || null,
     fonte: l.fonte || 'demo',
     bitrixUrl: l.bitrixUrl || null,
+    bitrixId: l.bitrixId || null,
     corretor: l.corretor || l.corretorResponsavel || null,
+    // Parte 2 — auditoria A/B/C/D
+    qualidadeProvisoria: provisoria,
+    provisoriaEm: l.provisoriaEm || null,
+    provisoriaPor: l.provisoriaPor || null,
+    qualidadeReal: real,
+    realEm: l.realEm || null,
+    realPor: l.realPor || null,
+    statusPosMapeamento: statusPos,
+    qualidadeIa,
+    confiancaIa: l.confiancaIa ?? null,
+    motivoIa: l.motivoIa || null,
+    resumoIa: l.resumoIa || null,
+    riscoIa: l.riscoIa || null,
+    sinaisIa: l.sinaisIa || null,
+    iaVia: l.iaVia || null,
+    iaEm: l.iaEm || null,
+    timeline: l.timeline || null,
+  };
+  return {
+    ...base,
+    travaVermelha: isVermelho(base),
   };
 }
 
@@ -175,6 +226,7 @@ export function payloadCacador(leads = [], { agora = Date.now() } = {}) {
   const lista = (Array.isArray(leads) ? leads : []).map(normalizaLead);
   const pendentes = lista.filter((l) => !l.qualidade);
   const marcados = lista.filter((l) => l.qualidade);
+  const auditoria = resumoAuditoria(lista);
   return {
     ok: true,
     titulo: 'CAÇAR LEADS DE HOJE - 2 TOQUES (vai pro Bitrix)',
@@ -182,6 +234,8 @@ export function payloadCacador(leads = [], { agora = Date.now() } = {}) {
     toastOk: 'Registrado - CPL BOM recalculado',
     corretores: ['Michel', 'Helena', 'Carol', 'Bruno'],
     regraIngles: 'Sem estrutura pra atender em inglês → lead EN continua Curioso',
+    abcd: ABCD.map((k) => ({ tipo: k, label: `${k} · ${ABCD_ROTULO[k]}` })),
+    auditoria,
     leads: lista.map((l) => ({
       ...l,
       linha: linhaLead(l, { agora }),
@@ -191,9 +245,16 @@ export function payloadCacador(leads = [], { agora = Date.now() } = {}) {
         label: rotuloBotao(t),
         ativo: l.qualidade === t,
       })),
+      botoesAbcd: ABCD.map((t) => ({
+        tipo: t,
+        label: t,
+        ativoProv: l.qualidadeProvisoria === t,
+        ativoReal: l.qualidadeReal === t,
+      })),
     })),
     pendentes: pendentes.length,
     marcados: marcados.length,
+    vermelhos: auditoria.vermelhos,
     totaisPorCampanha: totaisPorCampanha(lista),
   };
 }

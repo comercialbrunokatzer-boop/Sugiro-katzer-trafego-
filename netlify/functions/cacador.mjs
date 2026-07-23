@@ -1,9 +1,7 @@
-// GET  /api/cacador  → leads de hoje + botões 2 toques
-// POST /api/cacador  → { leadId, qualidade: bom|curioso|errado|comprador }
-// Toast canônico: "Registrado - CPL BOM recalculado"
-// V6: cada BOM / Comprador pinga WhatsApp do Bruno (Evolution → Z-API).
+// GET  /api/cacador  → leads de hoje + botões 2 toques + auditoria A/B/C/D
+// POST /api/cacador  → { leadId, qualidade } OU { leadId, qualidadeProvisoria|qualidadeReal|statusPosMapeamento }
 import { json, enviaWhats } from './_infra.mjs';
-import { leLeadsHoje, marcaLeadESincroniza } from './_cacador-io.mjs';
+import { leLeadsHoje, marcaLeadESincroniza, marcaAuditoriaESincroniza } from './_cacador-io.mjs';
 import { payloadCacador, QUALIDADE_TIPOS } from './_cacador.mjs';
 
 export async function handler(event) {
@@ -25,11 +23,46 @@ export async function handler(event) {
       return json(400, { ok: false, erro: 'body inválido' });
     }
     try {
-      const qualidade = body.qualidade || body.tipo || body.marca;
       const leadId = body.leadId || body.id;
       if (!leadId) return json(400, { ok: false, erro: 'informe leadId' });
+
+      const temAuditoria = body.qualidadeProvisoria != null
+        || body.qualidadeReal != null
+        || body.statusPosMapeamento != null
+        || body.acao === 'auditoria';
+      if (temAuditoria) {
+        const result = await marcaAuditoriaESincroniza({
+          leadId,
+          qualidadeProvisoria: body.qualidadeProvisoria,
+          qualidadeReal: body.qualidadeReal,
+          statusPosMapeamento: body.statusPosMapeamento,
+          quem: body.quem || body.corretor || 'Michel',
+        });
+        const payload = payloadCacador(result.leads);
+        let whats = { enviado: false };
+        if (result.vermelho) {
+          const ceo = process.env.WHATSAPP_CEO || '';
+          if (ceo) {
+            whats = await enviaWhats(
+              ceo,
+              `🔴 TRAVA · *${result.lead.nome}* Saiu sem Qualidade Real\nCorretor: ${result.lead.corretor || body.quem || '—'}\nPreencher A/B/C/D Real no Painel.`,
+            );
+          }
+        }
+        return json(200, {
+          ok: true,
+          toast: result.toast,
+          lead: result.lead,
+          vermelho: result.vermelho,
+          bloqueiaAvancoBitrix: result.bloqueiaAvancoBitrix,
+          whats,
+          ...payload,
+        });
+      }
+
+      const qualidade = body.qualidade || body.tipo || body.marca;
       if (!QUALIDADE_TIPOS.includes(qualidade)) {
-        return json(400, { ok: false, erro: `qualidade: ${QUALIDADE_TIPOS.join(' / ')}` });
+        return json(400, { ok: false, erro: `qualidade: ${QUALIDADE_TIPOS.join(' / ')} ou auditoria A/B/C/D` });
       }
       const result = await marcaLeadESincroniza({
         leadId,

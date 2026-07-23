@@ -13,6 +13,11 @@
   # maximum + 7d + 30d pode passar de 10s
   timeout = 26
 
+# Helena Auditora — a cada 15 min (classifica A/B/C/D leads pagos)
+[functions.helena-auditora]
+  schedule = "*/15 * * * *"
+  timeout = 26
+
 # Health check.
 [[redirects]]
   from = "/health"
@@ -109,6 +114,16 @@
 [[redirects]]
   from = "/api/cacador"
   to = "/.netlify/functions/cacador"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/auditoria"
+  to = "/.netlify/functions/auditoria"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/helena-auditora"
+  to = "/.netlify/functions/helena-auditora"
   status = 200
   force = true
 

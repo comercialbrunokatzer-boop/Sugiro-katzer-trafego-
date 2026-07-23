@@ -59,6 +59,14 @@
   .lead .btns button.on{outline:2px solid var(--gold);background:#1a3d33}
   .lead .btns button:disabled{opacity:.55}
   .lead.done-mark{border-color:rgba(61,186,126,.45)}
+  .lead.vermelho{border-color:rgba(212,101,90,.85);background:rgba(80,20,16,.45);box-shadow:0 0 0 1px rgba(212,101,90,.35)}
+  .lead .abcd{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+  .lead .abcd button{border:1px solid var(--line);background:#122c26;color:var(--ink);border-radius:8px;padding:7px 9px;font-size:.72rem;font-weight:800;font-family:inherit;cursor:pointer}
+  .lead .abcd button.on-p{outline:2px solid #5b8def}
+  .lead .abcd button.on-r{outline:2px solid var(--good)}
+  .lead .abcd-lab{font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  .verm-box{background:rgba(212,101,90,.18);border:1px solid rgba(212,101,90,.5);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:.78rem;line-height:1.4}
+  .met-box{font-size:.72rem;color:var(--muted);margin:0 0 10px;line-height:1.4}
   .qhead{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:4px 0 10px}
   .qbox{border:1px solid var(--line);border-radius:16px;padding:12px;margin:0 0 14px;background:rgba(18,44,38,.5)}
   .tog{display:flex;gap:6px;flex-wrap:wrap}
@@ -265,10 +273,19 @@ function leadCard(l){
   const btns=(l.botoes||[]).map(b=>
     `<button type="button" data-q="${b.tipo}" class="${b.ativo?'on':''}" ${l._saving?'disabled':''}>${b.label}</button>`
   ).join('');
-  return `<article class="lead ${l.qualidade?'done-mark':''}" data-lead="${l.id}">
-    <div class="ln">${l.linha||l.nome}${l.fonte==='demo'||String(l.id||'').startsWith('demo-')?' <span style="color:var(--warn);font-size:.7rem">· TESTE/DEMO</span>':''}</div>
-    <div class="meta">${l.cidade||''}${l.corretor?' · corretor '+l.corretor:''}${l.qualidade?' · marcado: '+l.qualidade:''}${l.fonte==='demo'?' · ⚠️ não está no Bitrix':''}${l.bitrixUrl?' · <a href="'+l.bitrixUrl+'" style="color:var(--gold)">Bitrix</a>':''}</div>
+  const abcd=(l.botoesAbcd||['A','B','C','D'].map(t=>({tipo:t,label:t}))).map(b=>
+    `<button type="button" data-real="${b.tipo}" class="${b.ativoReal?'on-r':''}${b.ativoProv?' on-p':''}" title="Qualidade Real">${b.label}</button>`
+  ).join('');
+  const ia=l.qualidadeIa?` · IA ${l.qualidadeIa}${l.confiancaIa!=null?' ('+l.confiancaIa+'%)':''}`:'';
+  const st=l.statusPosMapeamento?` · pós: ${l.statusPosMapeamento}`:'';
+  const prov=l.qualidadeProvisoria?` · Prov ${l.qualidadeProvisoria}`:'';
+  const real=l.qualidadeReal?` · Real ${l.qualidadeReal}`:'';
+  return `<article class="lead ${l.qualidade?'done-mark':''} ${l.travaVermelha?'vermelho':''}" data-lead="${l.id}">
+    <div class="ln">${l.travaVermelha?'🔴 ':''}${l.linha||l.nome}${l.fonte==='demo'||String(l.id||'').startsWith('demo-')?' <span style="color:var(--warn);font-size:.7rem">· TESTE/DEMO</span>':''}</div>
+    <div class="meta">${l.cidade||''}${l.corretor?' · corretor '+l.corretor:''}${l.qualidade?' · CPL: '+l.qualidade:''}${prov}${real}${ia}${st}${l.fonte==='demo'?' · ⚠️ não está no Bitrix':''}${l.bitrixUrl?' · <a href="'+l.bitrixUrl+'" style="color:var(--gold)">Bitrix</a>':''}</div>
     <div class="btns">${btns}</div>
+    <div class="abcd-lab">${l.travaVermelha?'TRAVA — Qualidade Real obrigatória':'Qualidade Real A/B/C/D'}${l.qualidadeProvisoria?' · Prov: '+l.qualidadeProvisoria:''}</div>
+    <div class="abcd">${abcd}</div>
   </article>`;
 }
 
@@ -290,6 +307,25 @@ function bindQualidade(root, after){
         }).then(x=>x.json()).catch(()=>({ok:false}));
         if(res.ok){
           toast(res.toast||'Registrado - CPL BOM recalculado');
+          CAC=res;
+          if(after) after(); else { renderCacador(); renderFloatLead(); }
+        } else {
+          toast(res.erro||'Não deu');
+          el.querySelectorAll('button').forEach(x=>x.disabled=false);
+        }
+      };
+    });
+    el.querySelectorAll('[data-real]').forEach(b=>{
+      b.onclick=async()=>{
+        unlockAudio();
+        const qualidadeReal=b.dataset.real;
+        el.querySelectorAll('button').forEach(x=>x.disabled=true);
+        const res=await fetch(api('/api/cacador'),{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({leadId:id,qualidadeReal,quem:corretorAtual(),corretor:corretorAtual()})
+        }).then(x=>x.json()).catch(()=>({ok:false}));
+        if(res.ok){
+          toast(res.toast||'Qualidade Real salva');
           CAC=res;
           if(after) after(); else { renderCacador(); renderFloatLead(); }
         } else {
@@ -345,11 +381,27 @@ function renderCacador(){
     return;
   }
   const leads=CAC.leads||[];
+  const aud=CAC.auditoria||{};
+  const vermHtml=aud.vermelhos
+    ? `<div class="verm-box"><b>🔴 ${aud.vermelhos} VERMELHO(S)</b> — Saiu do mapeamento sem Qualidade Real. Preencha A/B/C/D.<br>${(aud.leadsVermelhos||[]).map(v=>`· ${v.nome}`).join('<br>')}</div>`
+    : '';
+  const metHtml=`<div class="met-box">${aud.acerto?.texto||''}${aud.comIa!=null?` · IA: ${aud.comIa}`:''} · <button type="button" id="btnAuditora" style="border:1px solid var(--line);background:#122c26;color:var(--gold);border-radius:8px;padding:4px 8px;font-size:.7rem;font-weight:800;cursor:pointer">Rodar Helena Auditora</button></div>`;
+  // Vermelhos primeiro
+  const ordenados=[...leads].sort((a,b)=>(b.travaVermelha?1:0)-(a.travaVermelha?1:0));
   box.innerHTML=`
-    <p class="cac-sub">${CAC.aviso||'2 toques · alimenta CPL BOM'} · ${CAC.pendentes??0} pendente(s)</p>
-    ${leads.length?leads.map(leadCard).join(''):'<div class="sub">Nenhum lead de hoje ainda — o flutuante aparece quando cair.</div>'}
+    <p class="cac-sub">Michel olha <b>VERMELHOS</b> + alertas Garimpo. CPL BOM = toque Bom/Curioso. Restante: Helena Auditora.</p>
+    ${vermHtml}${metHtml}
+    ${ordenados.length?ordenados.map(leadCard).join(''):'<div class="sub">Nenhum lead de hoje ainda — o flutuante aparece quando cair.</div>'}
   `;
   bindQualidade(box, ()=>{ renderCacador(); renderFloatLead(); });
+  const ba=$('#btnAuditora');
+  if(ba) ba.onclick=async()=>{
+    ba.disabled=true; ba.textContent='Auditando…';
+    const res=await fetch(api('/api/auditoria'),{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).catch(()=>({ok:false}));
+    if(res.ok){ toast(`Auditora: ${res.processados||0} classificado(s)`); CAC=res; renderCacador(); }
+    else toast(res.erro||'Auditora falhou');
+    ba.disabled=false; ba.textContent='Rodar Helena Auditora';
+  };
   renderFloatLead();
 }
 

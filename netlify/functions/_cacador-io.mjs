@@ -1,6 +1,6 @@
 // I/O do Caçador — leads de hoje + marcas (Blobs).
 import { getStore } from '@netlify/blobs';
-import { leadsDemoHoje, normalizaLead, marcaLead, totaisPorCampanha } from './_cacador.mjs';
+import { leadsDemoHoje, normalizaLead, marcaLead, totaisPorCampanha, marcaAuditoria } from './_cacador.mjs';
 import { leQualidade, salvaQualidadeCampanha } from './_qualidade-io.mjs';
 
 const STORE = 'placar-michel';
@@ -73,4 +73,12 @@ export async function marcaLeadESincroniza({ leadId, qualidade, quem = 'Michel',
     ...result,
     qualidadeAtualizadoEm: qual.atualizadoEm,
   };
+}
+
+/** Marca Provisória / Real / Status pós-mapeamento (Parte 2). */
+export async function marcaAuditoriaESincroniza(opts = {}) {
+  const { leads } = await leLeadsHoje();
+  const result = marcaAuditoria(leads, opts);
+  await salvaLeadsHoje(result.leads, { fonte: 'auditoria' });
+  return result;
 }

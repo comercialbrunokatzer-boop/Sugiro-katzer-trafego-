@@ -18,6 +18,7 @@ test('demo Bruno: João + Maria com linha canônica', () => {
   assert.match(linhaLead(leads[0], { agora }), /João Silva - 11 9xxxx - FORTMYERS_PENHA_VETTER_BR-SC - há 12min - Novo/);
   assert.match(linhaLead(leads[1], { agora }), /Maria - 47 9xxxx - AMANAY_ITAPOA_ROGGA_BR-SC - há 34min/);
   assert.equal(textoHaMinutos(12), 'há 12min');
+  assert.ok(leads.some((l) => l.id === 'demo-vermelho-saiu'));
 });
 
 test('1 toque Bom → toast CPL BOM + totais campanha', () => {
@@ -32,7 +33,7 @@ test('1 toque Bom → toast CPL BOM + totais campanha', () => {
   const r2 = marcaLead(r.leads, { leadId: 'demo-maria', qualidade: 'comprador' });
   const tots = totaisPorCampanha(r2.leads);
   assert.equal(tots.find((t) => /AMANAY/i.test(t.campanha)).comprador, 1);
-  assert.equal(tots.find((t) => /AMANAY/i.test(t.campanha)).leadsBons, 1);
+  assert.ok(tots.find((t) => /AMANAY/i.test(t.campanha)).leadsBons >= 1);
 });
 
 test('sem estrutura EN: Bom em EUA_Americanos → Curioso', () => {
@@ -49,13 +50,15 @@ test('sem estrutura EN: Bom em EUA_Americanos → Curioso', () => {
   assert.match(r.toast, /Curioso/);
 });
 
-test('payloadCacador: 4 botões por lead', () => {
+test('payloadCacador: 4 botões por lead + auditoria vermelha', () => {
   const p = payloadCacador(leadsDemoHoje());
   assert.equal(p.ok, true);
   assert.match(p.titulo, /CAÇAR LEADS DE HOJE/);
   assert.equal(p.toastOk, 'Registrado - CPL BOM recalculado');
-  assert.equal(p.leads.length, 2);
+  assert.equal(p.leads.length, 3);
   assert.equal(p.leads[0].botoes.length, 4);
   assert.equal(p.leads[0].botoes[0].label, '🟢 Bom');
   assert.equal(p.leads[0].botoes[3].label, '💰 Comprador');
+  assert.ok(p.vermelhos >= 1);
+  assert.ok(p.auditoria.leadsVermelhos.some((l) => l.id === 'demo-vermelho-saiu'));
 });

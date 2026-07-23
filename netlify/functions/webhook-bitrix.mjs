@@ -43,8 +43,13 @@ export async function handler(event) {
     cidade: body.cidade || body.CITY || '',
     status: body.status || 'Novo',
     bitrixUrl: body.bitrixUrl || body.URL || null,
-    fonte: 'bitrix',
+    bitrixId: body.bitrixId || body.ID || body.id || null,
+    fonte: body.fonte || 'bitrix',
     recebidoEm: new Date().toISOString(),
+    statusPosMapeamento: body.statusPosMapeamento || body.STATUS_POS || null,
+    qualidadeProvisoria: body.qualidadeProvisoria || body.UF_CRM_QUALIDADE_PROV || null,
+    qualidadeReal: body.qualidadeReal || body.UF_CRM_QUALIDADE_REAL || null,
+    timeline: body.timeline || null,
   });
 
   const { leads } = await leLeadsHoje();
