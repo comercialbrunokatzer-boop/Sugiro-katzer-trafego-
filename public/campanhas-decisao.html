@@ -87,6 +87,13 @@
   .lead .btns button{border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:10px;padding:9px 4px;font-size:.72rem;font-weight:700;font-family:inherit;cursor:pointer}
   .lead .btns button.on{outline:2px solid var(--gold,#c4a35a)}
   .dot.yellow{background:var(--warn)}
+  .qbar{display:flex;height:8px;border-radius:999px;overflow:hidden;margin:8px 0 4px;background:#0a1c18}
+  .qbar span{display:block;height:100%}
+  .qbar .bom{background:var(--ok)}
+  .qbar .cur{background:var(--warn)}
+  .qbar .err{background:var(--late)}
+  .qbar .cmp{background:#6bc4ff}
+  .qleg{font-size:.68rem;color:var(--sub);line-height:1.35}
 </style>
 </head>
 <body>
@@ -194,6 +201,25 @@ function decCampanha(nome){
   return (ST.decisoes||[]).find(d=>d.id===id)||null;
 }
 
+function barraQualidade(c){
+  const q=c.qualidade||{};
+  const bom=Number(q.bom)||0, cur=Number(q.curioso)||0, err=Number(q.errado)||0, cmp=Number(q.comprador)||0;
+  const tot=bom+cur+err+cmp;
+  if(!tot) return '';
+  const pct=(n)=>Math.round((100*n)/tot);
+  const pb=pct(bom+cmp), pc=pct(cur), pe=pct(err);
+  // comprador entra no verde (bons); curioso amarelo; errado vermelho
+  const wBom=pct(bom), wCmp=pct(cmp);
+  return `<div class="qbar" title="Qualidade caçada">
+      <span class="bom" style="width:${wBom}%"></span>
+      <span class="cmp" style="width:${wCmp}%"></span>
+      <span class="cur" style="width:${pc}%"></span>
+      <span class="err" style="width:${pe}%"></span>
+    </div>
+    <div class="qleg">🟢 ${pct(bom)}% bom · 🟡 ${pc}% curioso · 🔴 ${pe}% errado · 💰 ${pct(cmp)}% comprador
+      ${c.cplBruto!=null&&c.cplBom!=null?` · Bruto ${brl(c.cplBruto)} → BOM ${brl2(c.cplBom)}`:''}</div>`;
+}
+
 function renderLista(){
   const box=$('#lista');box.innerHTML='';
   const meta=ST.meta||{};
@@ -225,6 +251,7 @@ function renderLista(){
         <div class="val">${linhaVal(c)}</div>
         <div class="dot ${corDot(c)}"></div>
       </div>
+      ${c.temQualidade?barraQualidade(c):''}
       ${bloqueado&&trava.codigo==='PUBLICO_EXTERNO'?`<div class="camp-done" style="color:var(--late)">🚫 PUBLICO EXTERNO — não escalar</div>`:''}
       ${done?`<div class="camp-done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:''}
       <div class="camp-actions">
