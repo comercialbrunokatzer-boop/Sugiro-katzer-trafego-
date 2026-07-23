@@ -51,13 +51,9 @@
 <header>
   <div class="brand">Katzer · Tráfego</div>
   <h1>Ranking · CPL formulário</h1>
-  <p class="sub">Formulário OU WhatsApp (cliente chamou) · nunca clique</p>
+  <p class="sub" id="subModo">Lead de formulário Meta · nunca clique</p>
 </header>
-  <div class="nav" style="display:flex;gap:8px;padding:0 16px 8px;max-width:720px;margin:0 auto">
-    <a href="/campanhas" style="flex:1;text-align:center;text-decoration:none;color:#9bb5ab;border:1px solid #2a4a40;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">Decisão</a>
-    <a href="/ranking-campanhas" style="flex:1;text-align:center;text-decoration:none;color:#1a1408;background:#c4a35a;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">Ranking</a>
-    <a href="/qualidade" style="flex:1;text-align:center;text-decoration:none;color:#9bb5ab;border:1px solid #2a4a40;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">Caçador</a>
-  </div>
+  <div class="nav" id="navModo" style="display:flex;gap:8px;padding:0 16px 8px;max-width:720px;margin:0 auto"></div>
   <div class="tabs">
   <button class="tab on" data-p="conta">Conta</button>
   <button class="tab" data-p="7d">7 dias</button>
@@ -140,6 +136,25 @@ function render(){
 
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
 const api=(path)=>API_BASE+path;
+const IS_EXECUTA=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname);
+const EXEC_URL='https://dashing-elf-41a723.netlify.app';
+
+(function modoNav(){
+  const sub=$('#subModo');
+  const nav=$('#navModo');
+  if(IS_EXECUTA){
+    sub.textContent='App EXECUTA · formulário/WhatsApp · nunca clique';
+    nav.innerHTML=
+      '<a href="/campanhas" style="flex:1;text-align:center;text-decoration:none;color:#9bb5ab;border:1px solid #2a4a40;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">Decisão</a>'+
+      '<a href="/ranking-campanhas" style="flex:1;text-align:center;text-decoration:none;color:#1a1408;background:#c4a35a;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">Ranking</a>'+
+      '<a href="/qualidade" style="flex:1;text-align:center;text-decoration:none;color:#9bb5ab;border:1px solid #2a4a40;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">Caçador</a>';
+  } else {
+    sub.textContent='👁 Disciplina · visualizar · lead form. · nunca clique';
+    nav.innerHTML=
+      '<a href="/ranking-campanhas" style="flex:1;text-align:center;text-decoration:none;color:#1a1408;background:#c4a35a;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">Ranking</a>'+
+      '<a href="'+EXEC_URL+'/campanhas" style="flex:1;text-align:center;text-decoration:none;color:#c4a35a;border:1px solid #c4a35a;border-radius:999px;padding:8px;font-size:.78rem;font-weight:700">▶ Executar</a>';
+  }
+})();
 
 async function load(){
   try{

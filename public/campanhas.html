@@ -61,25 +61,46 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">Katzer · Painel de Campanhas</div>
-  <h1>Decisão do dia · V4</h1>
-  <p class="sub">Aqui o Michel EXECUTA · insights · Caçador. Rotina é só olhar.</p>
-  <div class="trava-topo">V4 — NÃO sugerir EUA_Americanos / MIAMI / PORTUGAL. TRAVA 1: sem 10 leads não escala.</div>
-  <div class="nav">
-    <a href="/ranking-campanhas">Ranking</a>
-    <a href="/campanhas">Decisão</a>
-    <a href="/qualidade">Caçador</a>
-    <a href="/campanhas-decisao">Lista</a>
-  </div>
+  <div class="brand" id="brandLine">Katzer · Painel de Campanhas</div>
+  <h1 id="h1Title">Decisão do dia · V4</h1>
+  <p class="sub" id="subModo">Aqui o Michel EXECUTA · insights · Caçador. Rotina é só olhar.</p>
+  <div class="trava-topo" id="travaTopo">V4 — NÃO sugerir EUA_Americanos / MIAMI / PORTUGAL. TRAVA 1: sem 10 leads não escala.</div>
+  <div class="nav" id="navModo"></div>
+  <div id="ctaVisual" style="display:none" class="trava-topo"></div>
   <div id="app"><div class="sub">Carregando…</div></div>
   <div id="cacador"></div>
-  <footer>Michel executa na Meta · Bruno acompanha</footer>
+  <footer id="ft">Michel executa na Meta · Bruno acompanha</footer>
 </div>
 <div class="toast" id="toast"></div>
 <script>
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
 const $= (s)=>document.querySelector(s);
+const IS_EXECUTA=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname);
+const EXEC_URL='https://dashing-elf-41a723.netlify.app';
 let DATA=null, DECS=[], CAC=null;
+
+(function modoHeader(){
+  if(IS_EXECUTA){
+    $('#brandLine').textContent='Katzer · EXECUTA';
+    $('#subModo').textContent='Painel isolado · Aplicar · Ajustar · Caçador. Disciplina (Rotina) só visualiza.';
+    $('#navModo').innerHTML=
+      '<a href="/ranking-campanhas">Ranking</a><a href="/campanhas">Decisão</a><a href="/qualidade">Caçador</a><a href="/campanhas-decisao">Lista</a>';
+    $('#ft').textContent='Michel executa na Meta · Bruno acompanha';
+  } else {
+    $('#brandLine').textContent='Katzer · Disciplina · visualizar';
+    $('#h1Title').textContent='Decisão do dia · só olhar';
+    $('#subModo').textContent='👁 Visualizar na Rotina. Executar = painel isolado.';
+    $('#travaTopo').textContent='Sem botão de escalar aqui — abre o Painel pra executar.';
+    $('#navModo').innerHTML=
+      '<a href="/ranking-campanhas">Ranking</a><a href="'+EXEC_URL+'/campanhas">▶ Executar</a>';
+    const cta=$('#ctaVisual');
+    cta.style.display='block';
+    cta.style.borderColor='rgba(196,163,90,.5)';
+    cta.style.color='#e8d5a3';
+    cta.innerHTML='Painel isolado é pra <b>executar</b>. <a href="'+EXEC_URL+'/campanhas" style="color:#c4a35a;font-weight:800">Abrir app Campanhas →</a>';
+    $('#ft').textContent='Disciplina = visualizar · Painel isolado = executar';
+  }
+})();
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
@@ -92,9 +113,15 @@ function card(r){
   const escala=/escalar|duplicar/i.test(r.tipo||'');
   const semBase=escala && leads!=null && leads<10;
   const trava=semBase?`<div class="trava-topo" style="margin-top:10px">TRAVA 1 — SEM BASE MÍNIMA (${leads} leads · precisa 10). Só observar.</div>`:'';
-  const acoes=done?`<div class="done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:(semBase
-    ?`<div class="acoes"><button class="no" data-dec="agora-nao" style="grid-column:1/-1"><b>Observar — não escalar</b><small>Sem base mínima</small></button></div>`
-    :`<div class="acoes">
+  let acoes='';
+  if(!IS_EXECUTA){
+    acoes=`<div class="acoes"><a href="${EXEC_URL}/campanhas" style="grid-column:1/-1;text-align:center;text-decoration:none;border:1px solid var(--gold);border-radius:12px;padding:12px;color:var(--gold);font-weight:800">▶ Executar no Painel</a></div>`;
+  } else if(done){
+    acoes=`<div class="done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`;
+  } else if(semBase){
+    acoes=`<div class="acoes"><button class="no" data-dec="agora-nao" style="grid-column:1/-1"><b>Observar — não escalar</b><small>Sem base mínima</small></button></div>`;
+  } else {
+    acoes=`<div class="acoes">
       <button class="ok" data-dec="aplicar"><b>Aplicar</b><small>Registra</small></button>
       <button class="warn" data-dec="ajustar"><b>Ajustar</b><small>Você decide</small></button>
       <button class="no" data-dec="agora-nao"><b>Agora não</b><small>Espera</small></button>
@@ -102,7 +129,8 @@ function card(r){
     <div class="ajuste">
       <input placeholder="${r.valorDiaSugerido!=null?'Ex: R$ '+r.valorDiaSugerido+'/dia · ou descreva':'Descreva o ajuste'}">
       <button data-conf>Confirmar ajuste</button>
-    </div>`);
+    </div>`;
+  }
   return `<article class="card" data-id="${r.id}">
     <div class="prod">${r.produto} · ${r.publico||''}</div>
     <div class="tit">${r.titulo}</div>
@@ -120,6 +148,7 @@ function renderDecisao(){
   const recs=DATA?.recomendacoes?.recomendacoes;
   if(!recs?.length){app.innerHTML=`<div class="err">${DATA?.erro||'Dados da Meta indisponíveis.'}</div>`;return;}
   app.innerHTML=recs.map(card).join('');
+  if(!IS_EXECUTA) return;
   app.querySelectorAll('.card').forEach(el=>{
     const id=el.dataset.id;
     const r=recs.find(x=>x.id===id);
@@ -152,6 +181,7 @@ function leadCard(l){
 
 function renderCacador(){
   const box=$('#cacador');
+  if(!IS_EXECUTA){ box.innerHTML=''; return; }
   if(!CAC||!CAC.ok){
     box.innerHTML=`<div class="cac-head">CAÇAR LEADS DE HOJE - 2 TOQUES</div><div class="sub">${(CAC&&CAC.erro)||'Carregando caçador…'}</div>`;
     return;
@@ -215,6 +245,7 @@ async function loadDecisoes(){
 }
 
 async function loadCacador(){
+  if(!IS_EXECUTA){ $('#cacador').innerHTML=''; return; }
   try{
     CAC=await fetch(api('/api/cacador')).then(r=>r.json());
   }catch{CAC={ok:false,erro:'Caçador indisponível'};}

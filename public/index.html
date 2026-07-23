@@ -49,13 +49,13 @@
     el.innerHTML =
       '<p class="eyebrow">Katzer OS · App Campanhas</p>' +
       '<h1>Painel de Campanhas</h1>' +
-      '<p class="lede">Aqui o Michel EXECUTA · insights · CPL BOM · Caçador. Rotina é só olhar.</p>' +
-      '<a class="card" href="/campanhas"><div class="ic">⬜</div><div><div class="t">Decisão do dia</div><div class="s">Aplicar · Ajustar · Agora não · insights</div></div><div class="arw">▸</div></a>' +
+      '<p class="lede">Painel isolado · EXECUTA. Disciplina (Rotina) só visualiza ranking/resumo.</p>' +
+      '<a class="card" href="/campanhas"><div class="ic">⬜</div><div><div class="t">Decisão do dia</div><div class="s">Aplicar · Ajustar · Agora não</div></div><div class="arw">▸</div></a>' +
       '<a class="card" href="/campanhas-decisao"><div class="ic">📋</div><div><div class="t">Lista · Bruto / BOM</div><div class="s">Toggle · semáforo · travas · Caçador</div></div><div class="arw">▸</div></a>' +
-      '<a class="card" href="/ranking-campanhas"><div class="ic">📈</div><div><div class="t">Ranking</div><div class="s">Form ou WhatsApp · nunca clique</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="/ranking-campanhas"><div class="ic">📈</div><div><div class="t">Ranking</div><div class="s">Também na Rotina · aqui junto pra contexto</div></div><div class="arw">▸</div></a>' +
       '<a class="card" href="/qualidade"><div class="ic">🎯</div><div><div class="t">Caçador · CPL BOM</div><div class="s">Bom · Curioso · Errado · Comprador</div></div><div class="arw">▸</div></a>' +
       '<a class="card" href="/como-instalar-campanhas"><div class="ic">📲</div><div><div class="t">Instalar este app</div><div class="s">2º ícone no celular do Michel</div></div><div class="arw">▸</div></a>' +
-      '<div class="hint">Rotina = olhar resumo. Aqui = pensar e executar (dinheiro).</div>' +
+      '<div class="hint">Disciplina = visualizar. Painel isolado = executar.</div>' +
       '<div class="status"><span class="dot"></span> campanhas-katzer · EXECUTA</div>' +
       '<footer>Katzer OS · Campanhas</footer>';
   } else {
@@ -63,14 +63,14 @@
     document.getElementById('manifest').href = '/manifest.webmanifest';
     document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', 'Placar Michel');
     el.innerHTML =
-      '<p class="eyebrow">Katzer OS · Rotina</p>' +
+      '<p class="eyebrow">Katzer OS · Disciplina</p>' +
       '<h1>Rotina do Michel</h1>' +
-      '<p class="lede">Tarefas do dia. Em Campanhas ele só OLHA o resumo — executar fica no outro app.</p>' +
+      '<p class="lede">Tarefas + visualizar tráfego. Executar decisão = painel isolado.</p>' +
       '<a class="card" href="/placar-michel"><div class="ic">🗂️</div><div><div class="t">Placar do Michel</div><div class="s">Tocar Feito em cada tarefa</div></div><div class="arw">▸</div></a>' +
-      '<a class="card" href="/placar-gestor"><div class="ic">👀</div><div><div class="t">Placar do Gestor</div><div class="s">% ao vivo · Bruno</div></div><div class="arw">▸</div></a>' +
-      '<a class="card" href="https://dashing-elf-41a723.netlify.app/"><div class="ic">📊</div><div><div class="t">Abrir Painel de Campanhas</div><div class="s">Lá ele EXECUTA · insights · Caçador</div></div><div class="arw">▸</div></a>' +
-      '<div class="hint">Rotina = olhar / fazer tarefas. Campanhas = executar decisão de dinheiro.</div>' +
-      '<div class="status"><span class="dot"></span> rotina-produtiva-michel · SÓ OLHAR em Campanhas</div>' +
+      '<a class="card" href="/ranking-campanhas"><div class="ic">📈</div><div><div class="t">Ranking · visualizar</div><div class="s">CPL formulário · sem escalar</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="https://dashing-elf-41a723.netlify.app/"><div class="ic">▶</div><div><div class="t">Painel de Campanhas</div><div class="s">Lá ele EXECUTA · decisão · Caçador</div></div><div class="arw">▸</div></a>' +
+      '<div class="hint">Ranking pode ficar na Rotina (visualizar). Painel isolado é pra executar.</div>' +
+      '<div class="status"><span class="dot"></span> rotina-produtiva-michel · DISCIPLINA · visualizar</div>' +
       '<footer>Katzer OS · Rotina</footer>';
   }
 })();
