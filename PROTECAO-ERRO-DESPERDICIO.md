@@ -2,58 +2,48 @@
 
 | | |
 |---|---|
-| **Status** | OFICIAL (base CEO · 2026-07-23) — completar se houver lista adicional |
+| **Status** | OFICIAL (CEO · 2026-07-23) |
 | **Canal** | Supervisor de Tráfego Katzer · Copiloto do Michel |
 | **Objetivo** | Evitar decisão errada, queima de verba e gasto inútil de tokens |
 
----
-
-## 1. Proteção de decisão (não errar o diagnóstico)
-
-* **Não decidir só pelo CPL** — nem CTR, CPM ou frequência isolados.  
-* Separar sempre **mídia ≠ qualidade ≠ conversão ≠ financeiro** (`INDICADORES-KATZER.md`).  
-* Usar a **árvore sintoma → problema provável** antes de pausar ou escalar.  
-* **Um conceito por dia** — evita overload e “curso teórico” que não muda a operação.  
-* Meta IA só com **roteiro obrigatório** — proibido só perguntar “o que faço com essa campanha?”.
+O Copiloto **nunca** recomenda o que está nesta lista. São travas duras.
 
 ---
 
-## 2. Proteção de verba (não desperdar dinheiro)
+## Regras “NUNCA” (obrigatórias)
 
-* **Nível 1** — análise, rascunho, aprendizado (sem mexer no ar à toa).  
-* **Nível 2** — só com **recomendação registrada** + **ficha de mudança** (inclui “como desfazer”).  
-* **Nível 3** — **parecer do Bruno** (verba relevante, pausa principal, produto, oferta, público central, exclusão, automação de orçamento, impacto em caixa).  
-* Sem “Como desfazer” → **não executar**.  
-* Respeitar **prazo de observação** antes de nova mudança na mesma campanha.
-
----
-
-## 3. Proteção de tokens / estrutura (não desperdar IA)
-
-* Código e regra **antes** de modelo (`GOVERNANCA-CUSTO-IA` no Helena).  
-* MVP do Copiloto = templates + Meta API + rotina — **sem** plataforma enorme.  
-* Não manter agentes “pensando” sem tarefa; não duplicar Cursor + Copilot na mesma conclusão.  
-* Kill switches: cron do placar, key WhatsApp, listas vazias / homolog.
+1. **Nunca** recomendar alteração com poucas horas de dados.  
+2. **Nunca** pausar uma campanha somente porque o CPL subiu em um único dia.  
+3. **Nunca** aumentar orçamento de forma agressiva sem autorização.  
+4. **Nunca** alterar várias variáveis ao mesmo tempo.  
+5. **Nunca** considerar recomendação automática da Meta como verdade absoluta.  
+6. **Nunca** culpar a campanha sem verificar atendimento e CRM.  
+7. **Nunca** dizer “campanha ruim” sem apresentar evidência.  
+8. **Nunca** deixar Michel executar sem explicar onde clicar e como reverter.  
+9. **Nunca** consumir IA cara para cálculos que uma regra simples consegue fazer.
 
 ---
 
-## 4. Proteção operacional (não culpar o lugar errado)
+## Apoio (já no sistema)
 
-* Manhã = mídia; meio-dia = **cruzar atendimento** (não pausar campanha boa por falha de resposta).  
-* Fechamento do dia registra o que foi / não foi / o que precisa de Bruno.  
-* Corretores ativos: Elyas · Leandro · Edsel; Michel = gestor; Bruno = sócio (parecer).
+* Quatro fases + árvore sintoma → hipótese: `INDICADORES-KATZER.md`  
+* Níveis 1 / 2 / 3: `AUTONOMIA-MICHEL-TRAFEGO.md`  
+* Ficha (o quê / por quê / desfazer): `FICHA-MUDANCA.md`  
+* Roteiro Meta IA: `META-IA-ROTEIRO-MICHEL.md`  
+* Lei de custo (Helena): `docs/GOVERNANCA-CUSTO-IA.md`
 
 ---
 
 ## Checklist rápido (antes de qualquer mudança no ar)
 
 ```
-[ ] Diagnóstico por fase (não só CPL)?
-[ ] Sintoma → hipótese da árvore?
-[ ] Nível 1, 2 ou 3 classificado?
-[ ] Ficha preenchida (se 2/3) com como desfazer?
-[ ] Bruno necessário? Se sim, parar.
-[ ] Prazo de observação definido?
+[ ] Tem dados suficientes (não poucas horas)?
+[ ] Não estou pausando só por CPL de 1 dia?
+[ ] Orçamento agressivo? → precisa autorização (Nível 3)
+[ ] Uma variável de cada vez?
+[ ] Meta IA confrontada com CRM/atendimento?
+[ ] Evidência escrita (não achismo “campanha ruim”)?
+[ ] Onde clicar + como reverter explicados?
+[ ] Cálculo/filtro feito por regra, não por IA cara?
+[ ] Ficha preenchida (se Nível 2/3)?
 ```
-
-Se o CEO enviar itens extras de “proteção contra erro e desperdício”, entram abaixo sem apagar esta base.
