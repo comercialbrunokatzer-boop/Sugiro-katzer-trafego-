@@ -13,7 +13,7 @@ test('pontualidade: estados aguardando / concluido / atrasado', () => {
   assert.equal(reun.estado, 'concluido');
   assert.equal(ag.estado, 'atrasado');
   assert.equal(disc.estado, 'aguardando');
-  assert.equal(P.linhas.find((l) => l.id === 'campanhas'), undefined);
+  assert.equal(P.linhas.find((l) => l.id === 'campanhas')?.nome, 'Campanhas');
 });
 
 test('pontualidade: nao_realizado após fim do dia; bloqueado no domingo', () => {

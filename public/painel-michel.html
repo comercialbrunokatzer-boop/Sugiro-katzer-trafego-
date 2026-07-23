@@ -40,6 +40,11 @@
   .campbox{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
   .campbox h2{margin:0 0 6px;font-size:.95rem}
   .campbox .s{font-size:.88rem;color:var(--sub);margin-bottom:12px;font-variant-numeric:tabular-nums;line-height:1.35}
+  .camp-card{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair)}
+  .camp-card .metrica{font-size:.84rem;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600;line-height:1.4}
+  .camp-card .bom{margin-top:8px;font-size:.8rem;color:var(--ok);font-weight:700;background:var(--ok-bg);border-radius:8px;padding:7px 10px;display:inline-block}
+  .camp-card .bom.soft{color:var(--gold);background:rgba(168,121,42,.12)}
+  .camp-card .cta{margin-top:10px}
   .orient{background:var(--run-bg);border:1px solid var(--hair);border-radius:14px;padding:12px 14px;margin-top:12px;font-size:.85rem}
   .orient b{color:var(--run)}
   .task{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:11px}
@@ -94,13 +99,6 @@
   </div>
 
   <div class="orient" id="orient">Carregando orientação…</div>
-
-  <!-- Porta de entrada: SÓ resumo + link → app Campanhas (não embute o painel) -->
-  <div class="campbox" id="campbox">
-    <h2>📊 Campanhas</h2>
-    <div class="s" id="campResumo">—</div>
-    <a class="btn" id="campLink" href="/campanhas">Abrir Campanhas</a>
-  </div>
 
   <div class="sec">Rotina do dia</div>
   <div id="tasks"></div>
@@ -163,48 +161,78 @@ function renderPrioridades(){
   const ts=ST.tarefas||[];
   const urg=ts.filter(t=>!t.feito&&(t.estado==='atrasado'||t.atrasoAberto>0));
   const next=ts.filter(t=>!t.feito&&t.estado==='aguardando').slice(0,2);
+  const camp=ts.find(t=>t.id==='campanhas'&&!t.feito);
   const items=[];
   urg.forEach(t=>items.push(`🔴 ${t.nome} — atrasando (previsto ${t.previsto})`));
-  next.forEach(t=>items.push(`➡️ Próximo: ${t.nome} (${t.previsto})`));
+  if(camp&&!urg.find(u=>u.id==='campanhas')) items.push(`📊 Campanhas — abrir o painel se ainda não fez`);
+  next.forEach(t=>{if(t.id!=='campanhas'||items.every(i=>!i.includes('Campanhas'))) items.push(`➡️ Próximo: ${t.nome} (${t.previsto})`);});
   if(!items.length) items.push(ST.domingo?'Folga — domingo.':'✅ Nada urgente agora. Siga a rotina.');
   $('#prioList').innerHTML=items.slice(0,4).map(i=>`<li>${i}</li>`).join('');
 
   let orient='';
   if(ST.domingo) orient='<b>Hoje:</b> folga. Não há rotina.';
   else if(urg.length) orient=`<b>Agora:</b> regular o atraso em <b>${urg[0].nome}</b>. Depois volte à ordem.`;
+  else if(camp) orient='<b>Agora:</b> no horário de Campanhas, abra o Painel (resumo abaixo). Decisão fica no app Campanhas.';
   else orient='<b>Agora:</b> siga a próxima tarefa da lista. Sem atalho fora da ordem.';
   $('#orient').innerHTML=orient;
 }
 
-/** Card Campanhas na Rotina: SÓ resumo + link (painel completo fica em /campanhas). */
-function renderCampanhas(){
+function rotuloEstadoTarefa(t){
+  if(t.feito) return 'concluído';
+  if(t.estado==='em_andamento') return 'em andamento';
+  if(t.estado==='atrasado'||t.atrasoAberto>0) return 'atrasando';
+  if(t.estado==='nao_realizado') return 'não realizado';
+  if(t.estado==='bloqueado') return 'bloqueado';
+  return 'aguardando';
+}
+
+/** Card dentro da tarefa Campanhas: só resumo + link (layout Bruno). */
+function htmlCardCampanhas(t){
   const C=ST.campanhas||{};
   const link=C.link||'/campanhas';
-  $('#campResumo').textContent=C.resumo||'Sem dados da Meta ainda';
-  const a=$('#campLink');
-  if(a) a.setAttribute('href', link);
+  const cta=C.cta||'▶ Abrir Painel de Campanhas';
+  const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
+  const bom=C.cplBom||'';
+  const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
+  return `<div class="camp-card">
+    <div class="metrica">${metrica}</div>
+    ${bom?`<div class="${bomCls}">[${bom}]</div>`:''}
+    <div class="cta"><a class="btn" href="${link}">${cta}</a>
+      ${t.feito?'':`<button class="btn ghost" data-feito="${t.id}" style="margin-left:8px">Feito</button>`}
+      ${t.feito?`<button class="btn ghost" data-undo="${t.id}" style="margin-left:8px">desfazer</button>`:''}
+    </div>
+  </div>`;
 }
 
 function render(){
   if(!ST||!ST.ok)return;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga 🎉':'');
   document.querySelectorAll('#modo button').forEach(b=>b.classList.toggle('on',b.dataset.modo===ST.modo));
-  renderStrip();renderPrioridades();renderCampanhas();
+  renderStrip();renderPrioridades();
 
   const box=$('#tasks');box.innerHTML='';
   ST.tarefas.forEach(t=>{
     const el=document.createElement('div');el.className='task';
     const late=!t.feito&&(t.atrasoAberto>0||t.estado==='atrasado'||t.estado==='nao_realizado');
     const run=!t.feito&&t.estado==='em_andamento';
-    el.innerHTML=`<div class="top">
-      <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
-      <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${t.feito?' · feito '+t.hora:(late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':(run?' · em andamento':''))}</small></div>
-      ${t.feito
-        ? `<button class="btn ghost" data-undo="${t.id}">desfazer</button>`
-        : `<button class="btn" data-feito="${t.id}">Feito</button>`}
-    </div>
-    ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
-    ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
+    const isCamp=t.id==='campanhas';
+    if(isCamp){
+      const st=rotuloEstadoTarefa(t);
+      el.innerHTML=`<div class="top">
+        <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
+        <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto} · ${st}${t.feito&&t.hora?' · feito '+t.hora:''}</small></div>
+      </div>${htmlCardCampanhas(t)}`;
+    } else {
+      el.innerHTML=`<div class="top">
+        <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
+        <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${t.feito?' · feito '+t.hora:(late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':(run?' · em andamento':''))}</small></div>
+        ${t.feito
+          ? `<button class="btn ghost" data-undo="${t.id}">desfazer</button>`
+          : `<button class="btn" data-feito="${t.id}">Feito</button>`}
+      </div>
+      ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
+      ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
+    }
     box.appendChild(el);
   });
   const ol=$('#obsList');ol.innerHTML='';

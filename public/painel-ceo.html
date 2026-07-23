@@ -41,10 +41,12 @@
   .ic.ok{background:var(--ok-bg);color:var(--ok)}.ic.late{background:var(--late-bg);color:var(--late)}.ic.wait{background:var(--ground);color:var(--sub)}.ic.run{background:var(--run-bg);color:var(--run)}
   .nm{flex:1;min-width:0}.nm b{font-weight:700;font-size:.95rem}.nm small{display:block;color:var(--sub);font-size:.74rem;font-variant-numeric:tabular-nums}
   .tag{font-weight:800;font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}.tag.late{color:var(--late)}.tag.ok{color:var(--ok)}.tag.run{color:var(--run)}
-  .camp{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair);font-size:.78rem;color:var(--sub)}
-  .camp .m{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
-  .camp .chip{background:var(--ground);border-radius:8px;padding:4px 8px;font-variant-numeric:tabular-nums}
-  .camp .dec{margin-top:4px;color:var(--ink)}.camp .warn{color:var(--gold);font-weight:700;margin-top:4px}
+  .camp{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair);font-size:.84rem}
+  .camp .metrica{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);line-height:1.4}
+  .camp .bom{margin-top:8px;font-size:.8rem;color:var(--ok);font-weight:700;background:var(--ok-bg);border-radius:8px;padding:7px 10px;display:inline-block}
+  .camp .bom.soft{color:var(--gold);background:rgba(168,121,42,.12)}
+  .camp .cta{margin-top:10px}
+  .camp .cta a{display:inline-block;text-decoration:none;background:var(--sea);color:#fff;font-weight:800;font-size:.86rem;border-radius:9px;padding:9px 15px}
   .obsbox{margin-top:18px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:13px 15px}
   .obsbox h3{margin:0 0 8px;font-size:.88rem;color:var(--obs)}
   .obsentry{background:var(--panel);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:7px}
@@ -83,7 +85,7 @@
     <div id="obsList"></div>
   </div>
 
-  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Campanhas na Rotina = só resumo + link. Painel completo: <a href="/campanhas">/campanhas</a>.</p>
+  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Em Campanhas na Rotina: só resumo + link. Painel completo em <a href="/campanhas">/campanhas</a>.</p>
   <footer>Katzer OS · Rotina do Michel · app na tela</footer>
 </div>
 
@@ -131,6 +133,20 @@ function rotuloEstado(l){
   if(l.estado==='atrasado')return`<span class="tag late atraso" data-prev="${l.previsto}">atrasando…</span>`;
   return`<span class="tag" style="color:var(--sub)">aguardando</span>`;
 }
+function blocoCampanhas(l){
+  if(l.id!=='campanhas')return'';
+  const C=ST.campanhas||{};
+  const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
+  const bom=C.cplBom||'';
+  const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
+  const link=C.link||'/campanhas';
+  const cta=C.cta||'▶ Abrir Painel de Campanhas';
+  return`<div class="camp">
+    <div class="metrica">${metrica}</div>
+    ${bom?`<div class="${bomCls}">[${bom}]</div>`:''}
+    <div class="cta"><a href="${link}">${cta}</a></div>
+  </div>`;
+}
 function render(){
   if(!ST||!ST.ok)return;const P=ST.pontualidade;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga do Michel 🎉':'');
@@ -151,7 +167,7 @@ function render(){
       <div class="ic ${ic}">${mark}</div>
       <div class="nm"><b>${l.nome}</b><small>previsto ${l.previsto}${l.feito?' · feito '+l.hora:''}${l.nota?' · 📝 '+l.nota:''}</small></div>
       ${rotuloEstado(l)}
-    </div>`;
+    </div>${blocoCampanhas(l)}`;
     box.appendChild(el);
   });
   const ob=ST.obs||[];if(ob.length){$('#obsbox').style.display='';const ol=$('#obsList');ol.innerHTML='';ob.forEach(o=>{const e=document.createElement('div');e.className='obsentry';e.innerHTML=`<span class="who">${o.quem}</span><b>${o.nome}</b> — ${o.inicio}${o.duracao?' · '+o.duracao+' min':''}`;ol.appendChild(e);});}else{$('#obsbox').style.display='none';}

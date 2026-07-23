@@ -93,6 +93,41 @@ export function podeEscalar(c = {}) {
   return true;
 }
 
+/**
+ * Linha "CPL BOM médio: R$ X — Y% bons" pro card da Rotina.
+ * BOM = lead de formulário confirmado, amostra ≥3, CPL ≤ 40 (mesma régua do ranking).
+ */
+export const CPL_BOM_CARD = 40;
+export const LEADS_MIN_BOM_CARD = 3;
+
+export function resumoCplBom(campanhas = [], {
+  cplBom = CPL_BOM_CARD,
+  minLeads = LEADS_MIN_BOM_CARD,
+} = {}) {
+  const lista = Array.isArray(campanhas) ? campanhas : [];
+  const comGasto = lista.filter((c) => Number(c.gasto) > 0);
+  const avaliadas = comGasto.filter((c) => (
+    c.leadConfirmado !== false
+    && Number(c.leads) >= minLeads
+    && c.cpl != null
+  ));
+  const bons = avaliadas.filter((c) => Number(c.cpl) <= cplBom);
+  const base = avaliadas.length || comGasto.length || lista.length;
+  const pctBons = base > 0 ? Math.round((100 * bons.length) / base) : 0;
+  const cplBomMedio = bons.length
+    ? Math.round(bons.reduce((s, c) => s + Number(c.cpl), 0) / bons.length)
+    : null;
+  return {
+    cplBomMedio,
+    pctBons,
+    nBons: bons.length,
+    nAvaliadas: avaliadas.length,
+    texto: cplBomMedio != null
+      ? `CPL BOM médio: R$ ${cplBomMedio} — ${pctBons}% bons`
+      : (comGasto.length ? `CPL BOM: sem campanha boa ainda (régua R$ ${cplBom})` : 'CPL BOM: sem dados'),
+  };
+}
+
 /** Enriquece campanha com cidade, semáforo, público. */
 export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
   const cidade = cidadeReal(c.nome);
