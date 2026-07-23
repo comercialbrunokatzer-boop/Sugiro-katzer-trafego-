@@ -251,35 +251,77 @@ export async function listaDealsFunil({ limit = 250 } = {}) {
   };
 }
 
+/** Produtos/praças — match ESTRITO (nunca corretor/criativo). */
+const PRODUTOS = [
+  'ALICERCE', 'TORRESANI', 'PUNTA', 'PUNTACANA', 'GRANT', 'AMANAY', 'ALMARE',
+  'PERSONALITE', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'BARRA VIEW',
+  'GOLDEN BEACH', 'YARA', 'NAUT', 'ALICERCE', 'ROGGA', 'TROPICALE',
+];
+
+/** Nomes de corretor/criativo que NÃO podem casar campanha↔deal. */
+const STOP_MATCH = new Set([
+  'TESTE', 'FORT', 'MYERS', 'FORTMYERS', 'CONFIG', 'VIDEO', 'NOVO', 'THE', 'AND',
+  'META', 'ADS', 'ALISSON', 'AYA', 'IMAGEM', 'IMAGEM1', 'IMAGEM2', 'VIDEO01',
+  'VIDEO02', 'VIDEO03', 'COPIA', 'PAUSADA', 'ACTIVE', 'KATZER', 'LEAD', 'PATROC',
+  'FORMULARIO', 'CRM', 'CORRETOR',
+]);
+
 function tokensCampanha(nome) {
   const up = String(nome || '').toUpperCase();
   const parts = up
     .split(/[^A-Z0-9ÁÉÍÓÚÃÕÂÊÔÇ]+/i)
     .filter(Boolean);
-  // Compostos tipo BR_SC / EUA_BRASILEIROS — úteis no título do formulário Bitrix
   const compostos = (up.match(/[A-Z]{2,}(?:_[A-Z0-9]{2,})+/g) || [])
     .map((c) => c.replace(/_/g, ' '))
     .concat(up.match(/[A-Z]{2,}(?:_[A-Z0-9]{2,})+/g) || []);
-  const stop = new Set(['TESTE', 'FORT', 'MYERS', 'FORTMYERS', 'CONFIG', 'VIDEO', 'NOVO', 'THE', 'AND', 'META', 'ADS']);
   return [...new Set([...parts, ...compostos])]
     .filter((t) => t.length >= 2)
-    .filter((t) => !stop.has(t))
-    .filter((t) => !/^\d{1,2}$/.test(t)); // dia avulso
+    .filter((t) => !STOP_MATCH.has(t))
+    .filter((t) => !/^VIDEO\d+$/i.test(t) && !/^IMAGEM\d+$/i.test(t))
+    .filter((t) => !/^\d{1,2}$/.test(t));
 }
 
-/** Tokens entre colchetes do nome Meta: [ALICERCE][AYA][PUNTACANA] */
 function tokensColchetes(nome) {
   return [...String(nome || '').toUpperCase().matchAll(/\[([^\]]+)\]/g)]
     .map((m) => m[1].trim())
     .filter((t) => t.length >= 3)
-    .filter((t) => !/^\d{1,2}[\/\-]\d/.test(t)); // datas
+    .filter((t) => !/^\d{1,2}[\/\-]\d/.test(t))
+    .filter((t) => !STOP_MATCH.has(t))
+    .filter((t) => !/^VIDEO\d+$/i.test(t) && !/^IMAGEM\d+$/i.test(t));
+}
+
+/** Produto canônico da campanha Meta (se houver). */
+export function produtoCampanha(nomeCampanha) {
+  const nome = String(nomeCampanha || '').toUpperCase();
+  for (const t of tokensColchetes(nomeCampanha)) {
+    for (const p of PRODUTOS) {
+      if (t === p || t.includes(p) || p.includes(t)) return p;
+    }
+  }
+  for (const p of PRODUTOS) {
+    if (nome.includes(p)) return p;
+  }
+  if (/_BR_SC|BR_SC|CIDADES\s*SC/.test(nome)) return 'BR_SC';
+  return null;
+}
+
+function hayContemProduto(hay, produto) {
+  if (!produto) return false;
+  if (produto === 'BR_SC') {
+    return /\bCIDADES\s+SC\b/.test(hay) || /\bSC\s*\+\s*PR\b/.test(hay) || /\bFORT\s*MYERS\s+SC\b/.test(hay);
+  }
+  if (produto.includes('PUNTA') || produto === 'TORRESANI') {
+    // Torresani vende Punta — form Bitrix quase sempre traz PUNTA CANA
+    return /PUNTA|TORRESANI/.test(hay);
+  }
+  if (produto === 'NOVACONFIG' || produto === 'PUBLICOS') return /NOVACONFIG|PUBLICOS/.test(hay);
+  return hay.includes(produto);
 }
 
 export function dealBateCampanha(deal, nomeCampanha) {
   const hay = [
+    deal.titleForm, // prioriza título do form Bitrix (produto), não o nome da pessoa
     deal.title,
-    deal.titleForm,
-    deal.nomeContato,
     deal.comments,
     deal.sourceDescription,
     deal.utmCampaign,
@@ -287,30 +329,23 @@ export function dealBateCampanha(deal, nomeCampanha) {
   ].filter(Boolean).join(' ').toUpperCase();
   const nome = String(nomeCampanha || '').toUpperCase();
   if (!hay || !nome) return false;
-  // match direto pedaço do nome da campanha
-  if (nome.length >= 12 && hay.includes(nome.slice(0, 20))) return true;
-  // Colchetes do nome Meta costumam ser o produto real no Bitrix
-  for (const t of tokensColchetes(nomeCampanha)) {
-    if (t.length >= 5 && hay.includes(t)) return true;
-    // PUNTACANA no Meta ↔ "PUNTA CANA" no form Bitrix
-    if (t.includes('PUNTA') && /PUNTA/.test(hay)) return true;
-  }
-  // Form Bitrix da praça SC: "FORT MYERS CIDADES SC" / "FORT MYERS SC+PR"
-  // Obs: \b falha em FortMyers_BR_SC porque _ é word-char.
+
+  // Se a campanha tem produto conhecido → SÓ casa deal desse produto (fase correta)
+  const produto = produtoCampanha(nomeCampanha);
+  if (produto) return hayContemProduto(hay, produto);
+
+  // Fallbacks só quando não há produto no nome
   const isBrSc = /(?:^|[^A-Z0-9])BR[_-\s]?SC(?:[^A-Z0-9]|$)/.test(nome) || /_BR_SC/.test(nome);
-  if (isBrSc && (/\bCIDADES\s+SC\b/.test(hay) || /\bSC\s*\+\s*PR\b/.test(hay) || /\bFORT\s*MYERS\s+SC\b/.test(hay) || /\bFORT\s*MYERS\s+CIDADES\b/.test(hay))) return true;
+  if (isBrSc && hayContemProduto(hay, 'BR_SC')) return true;
   if (/\bPORTUGAL\b/.test(nome) && /\bPORTUGAL\b/.test(hay)) return true;
   if (/\bGRANT\b/.test(nome) && /\bGRANT\b/.test(hay)) return true;
-  if (/PUNTA/.test(nome) && /PUNTA/.test(hay)) return true;
-  if (/\bALICERCE\b/.test(nome) && /\bALICERCE\b/.test(hay)) return true;
   if (/\bPUBLICOS\b/.test(nome) && /\bNOVACONFIG\b/.test(hay)) return true;
   if (/\bEUA\b/.test(nome) && /\bBRASILEIR/.test(nome) && /\bEUA\b/.test(hay) && /\bBRASILEIR/.test(hay)) return true;
-  const toks = tokensCampanha(nomeCampanha);
+
+  const toks = tokensCampanha(nomeCampanha).filter((t) => t.length >= 5);
   if (!toks.length) return false;
   const hits = toks.filter((t) => hay.includes(t));
-  // 1 token longo (≥6) basta; senão precisa de 2
-  if (hits.some((t) => t.length >= 6)) return true;
-  return hits.length >= Math.min(2, toks.length);
+  return hits.length >= 1 && hits.every((t) => !STOP_MATCH.has(t));
 }
 
 /**
