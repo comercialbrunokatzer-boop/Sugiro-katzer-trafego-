@@ -22,13 +22,12 @@ function senhaGestorOk(event, params) {
 }
 
 /**
- * Card Campanhas na Rotina (layout Bruno):
+ * Card Campanhas na Rotina (layout Bruno) — SÓ OLHAR:
  *   7 campanhas | R$ 2351 | 46 leads | CPL méd R$ 51
  *   CPL BOM méd R$ 13 | 83% bons | Itapoá: R$ 13,20 BOM 🟢
- *   Decisão do dia: 3 análises pendentes no painel de campanhas
+ *   👁 Só olhar aqui · execute no Painel de Campanhas
  *   ▶ Abrir Painel de Campanhas
- * CPL méd = Bruto (gasto÷leads form). CPL BOM = gasto÷(Bom+Comprador).
- * Leads = formulário (nunca clique). Sem botão escalar.
+ * Sem lista de escalar. Sem Aplicar/Ajustar. Decisão = app Campanhas.
  */
 async function resumoCampanhas(data) {
   const link = CAMPANHAS_APP_URL + '/';
@@ -46,14 +45,15 @@ async function resumoCampanhas(data) {
     const pendente = nPendentes > 0;
     const statusDecisao = pendente
       ? (nPendentes === 1
-        ? 'Decisão do dia: 1 análise pendente no painel de campanhas'
-        : `Decisão do dia: ${nPendentes} análises pendentes no painel de campanhas`)
-      : 'Decisão do dia: nenhuma análise pendente no painel de campanhas';
+        ? '👁 Só olhar · 1 decisão pendente no Painel de Campanhas'
+        : `👁 Só olhar · ${nPendentes} decisões pendentes no Painel de Campanhas`)
+      : '👁 Só olhar · nada pendente no Painel de Campanhas';
 
     const confiavel = meta?.confiavel !== false && meta?.status === 'ok';
     if (!confiavel) {
       return {
         confiavel: false,
+        modo: 'olhar',
         resumo: meta?.mensagemPainel || meta?.mensagem || 'Dados da Meta indisponíveis.',
         metrica: null,
         cplBom: null,
@@ -74,11 +74,12 @@ async function resumoCampanhas(data) {
     const metrica = [
       `${n} campanhas`,
       `R$ ${Number(totalGasto).toFixed(0)}`,
-      `${totalLeads} leads (form)`,
+      `${totalLeads} leads`,
       `CPL méd ${cplMedio != null ? `R$ ${Number(cplMedio).toFixed(0)}` : '—'}`,
     ].join(' | ');
     return {
       confiavel: true,
+      modo: 'olhar',
       n, totalGasto, totalLeads, cplMedio,
       metrica,
       cplBom: bom.texto,
@@ -95,10 +96,11 @@ async function resumoCampanhas(data) {
   } catch {
     return {
       confiavel: false,
+      modo: 'olhar',
       resumo: 'Dados da Meta indisponíveis.',
       metrica: null,
       cplBom: null,
-      statusDecisao: 'Decisão do dia: análises pendentes no painel de campanhas',
+      statusDecisao: '👁 Só olhar · abra o Painel de Campanhas',
       pendente: true,
       nPendentes: null,
       n: null, totalGasto: null, totalLeads: null, cplMedio: null,

@@ -174,7 +174,7 @@ function renderPrioridades(){
   let orient='';
   if(ST.domingo) orient='<b>Hoje:</b> folga. Não há rotina.';
   else if(urg.length) orient=`<b>Agora:</b> regular o atraso em <b>${urg[0].nome}</b>. Depois volte à ordem.`;
-  else if(camp) orient='<b>Agora:</b> no horário de Campanhas, abra o Painel (resumo abaixo). Decisão fica no app Campanhas.';
+  else if(camp) orient='<b>Agora:</b> no horário de Campanhas, só OLHE o resumo e abra o Painel. Executar (decisão/insights) fica no app Campanhas.';
   else orient='<b>Agora:</b> siga a próxima tarefa da lista. Sem atalho fora da ordem.';
   $('#orient').innerHTML=orient;
 }
@@ -188,7 +188,7 @@ function rotuloEstadoTarefa(t){
   return 'aguardando';
 }
 
-/** Card Campanhas: layout Bruno — 2 linhas de resumo + status + Abrir. Sem escalar. */
+/** Card Campanhas: SÓ OLHAR — resumo + CPL BOM + Abrir. Sem escalar / sem executar. */
 function htmlCardCampanhas(t){
   const C=ST.campanhas||{};
   const link=C.link||'https://dashing-elf-41a723.netlify.app/';
@@ -196,7 +196,7 @@ function htmlCardCampanhas(t){
   const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
-  const pend=C.statusDecisao||'Decisão do dia: análises pendentes no painel de campanhas';
+  const pend=C.statusDecisao||'👁 Só olhar · execute no Painel de Campanhas';
   const pendCls=C.pendente===false?'pend ok':'pend';
   return `<div class="camp-card">
     <div class="metrica">${metrica}</div>
