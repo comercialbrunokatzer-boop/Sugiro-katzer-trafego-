@@ -136,21 +136,21 @@ Ver `PROTECAO-ERRO-DESPERDICIO.md`: decisão certa, verba, tokens e não culpar 
 
 O Copiloto **ensina** no fluxo. Spec: `PROFESSOR-EMBUTIDO-MICHEL.md` + campo no `TEMPLATE-CARTAO-COPILOTO.md`.
 
-**Obrigatório em cada recomendação:** `APRENDIZADO DO DIA` (1 frase no caso).  
-**Opcional (1 conceito/dia):** bloco `MICHEL, APRENDA ISTO`:
+**Obrigatório em cada recomendação:** `APRENDIZADO DO DIA` no formato abaixo:
 
 ```
-MICHEL, APRENDA ISTO:
-
-CTR: Mostra quantas pessoas clicaram após ver o anúncio.
-CPM: Mostra quanto estamos pagando por mil impressões.
-Frequência: Mostra quantas vezes, em média, cada pessoa viu o anúncio.
-CPL: Mostra o custo de cada cadastro.
-
-Mas nenhum deles sozinho mostra se estamos vendendo.
+APRENDIZADO DO DIA:
+Conceito:
+<1 conceito>
+O que significa:
+<definição simples>
+Como apareceu nesta campanha:
+<manifestação no caso real>
+Qual erro evitar:
+<erro de decisão que o Michel não deve cometer>
 ```
 
-(Usar **só um** desses quatro por dia no cartão; o bloco completo fica no guia do painel.)
+(Usar **só um** conceito por dia no cartão. Biblioteca de conceitos: `PROFESSOR-EMBUTIDO-MICHEL.md`.)
 
 **Regra:** um conceito por dia, numa campanha real — ver `ROTINA-DIARIA-COPILOTO.md`. Em ~60 dias Michel aprende na própria operação.
 

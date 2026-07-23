@@ -6,26 +6,32 @@
 | **Uso** | Cartão do Copiloto, guia do placar, onboarding do Michel |
 | **Tom** | Linguagem simples. Sem jargão de API. |
 
-O Copiloto não só recomenda: **ensina**. Em **toda** recomendação entra o bloco **APRENDIZADO DO DIA** (frase aplicada ao caso). O glossário abaixo (`MICHEL, APRENDA ISTO`) entra **um conceito por dia**, no cartão ou no guia do painel.
+O Copiloto não só recomenda: **ensina**. Em **toda** recomendação entra o bloco **APRENDIZADO DO DIA** no formato abaixo. Um conceito por dia, aplicado ao caso real.
 
 ### Formato mínimo do aprendizado (obrigatório no cartão)
 
 ```
 APRENDIZADO DO DIA:
-<1 frase ligada a esta campanha / este vazamento>
-
-Opcional no mesmo dia (1 só):
-MICHEL, APRENDA ISTO:
-<CTR | CPM | Frequência | CPL — definição em 1 linha + por que importa agora>
+Conceito:
+<CTR | CPM | Frequência | CPL | outro conceito do caso>
+O que significa:
+<definição simples, em português>
+Como apareceu nesta campanha:
+<como o conceito se manifestou aqui>
+Qual erro evitar:
+<decisão errada que o Michel não deve tomar>
 ```
 
-Regra: se não houver base (Lei do “sem base para sugerir”), o aprendizado pode ser só:
-“Hoje não dá para afirmar causa — falta cruzar qualidade/conversão.”
+Regra: se não houver base (Lei do “sem base para sugerir”), preencher assim:
+- **Conceito:** sem base suficiente
+- **O que significa:** ainda não dá para afirmar a causa
+- **Como apareceu nesta campanha:** faltam sinais de qualidade/conversão
+- **Qual erro evitar:** concluir só pelo CPL
 
 
 ---
 
-## MICHEL, APRENDA ISTO:
+## Biblioteca de conceitos para preencher o aprendizado
 
 **CTR:**  
 Mostra quantas pessoas clicaram após ver o anúncio.
@@ -63,6 +69,6 @@ Por isso o cartão traz **DADO COMERCIAL** e o roteiro da Meta IA **proíbe deci
 ## Como o Copiloto usa este professor
 
 1. **Um conceito por dia**, aplicado a **uma campanha real** (ver `ROTINA-DIARIA-COPILOTO.md`).  
-2. Em dias de dúvida (ex.: CPL subiu), usar o bloco **MICHEL, APRENDA ISTO** só no conceito do dia (não despejar CTR+CPM+frequência+CPL de uma vez, salvo revisão).  
+2. Em dias de dúvida (ex.: CPL subiu), escolher **só um conceito** para o bloco do dia (não despejar CTR+CPM+frequência+CPL de uma vez, salvo revisão).  
 3. Em ~60 dias, o histórico de aprendizados cobre a operação — sem curso teórico.  
 4. Nunca substituir o funil Katzer por uma métrica da Meta.
