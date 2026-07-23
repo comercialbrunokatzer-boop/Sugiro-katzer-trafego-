@@ -45,6 +45,8 @@
   .camp .metrica{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);line-height:1.4}
   .camp .bom{margin-top:8px;font-size:.8rem;color:var(--ok);font-weight:700;background:var(--ok-bg);border-radius:8px;padding:7px 10px;display:inline-block}
   .camp .bom.soft{color:var(--gold);background:rgba(168,121,42,.12)}
+  .camp .pend{margin-top:8px;font-size:.8rem;color:var(--sub);line-height:1.35}
+  .camp .pend.ok{color:var(--ok);font-weight:600}
   .camp .cta{margin-top:10px}
   .camp .cta a{display:inline-block;text-decoration:none;background:var(--sea);color:#fff;font-weight:800;font-size:.86rem;border-radius:9px;padding:9px 15px}
   .obsbox{margin-top:18px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:13px 15px}
@@ -139,12 +141,15 @@ function blocoCampanhas(l){
   const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
-  const link=C.link||'/campanhas';
+  const pend=C.statusDecisao||'Decisão do dia pendente no painel de campanhas';
+  const pendCls=C.pendente===false?'pend ok':'pend';
+  const link=C.link||'https://campanhas-katzer.netlify.app/';
   const cta=C.cta||'▶ Abrir Painel de Campanhas';
   return`<div class="camp">
     <div class="metrica">${metrica}</div>
     ${bom?`<div class="${bomCls}">[${bom}]</div>`:''}
-    <div class="cta"><a href="${link}">${cta}</a></div>
+    <div class="${pendCls}">${pend}</div>
+    <div class="cta"><a href="${link}" target="_blank" rel="noopener">${cta}</a></div>
   </div>`;
 }
 function render(){

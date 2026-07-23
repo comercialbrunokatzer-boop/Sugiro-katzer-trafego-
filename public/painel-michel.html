@@ -44,6 +44,8 @@
   .camp-card .metrica{font-size:.84rem;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600;line-height:1.4}
   .camp-card .bom{margin-top:8px;font-size:.8rem;color:var(--ok);font-weight:700;background:var(--ok-bg);border-radius:8px;padding:7px 10px;display:inline-block}
   .camp-card .bom.soft{color:var(--gold);background:rgba(168,121,42,.12)}
+  .camp-card .pend{margin-top:8px;font-size:.8rem;color:var(--sub);line-height:1.35}
+  .camp-card .pend.ok{color:var(--ok);font-weight:600}
   .camp-card .cta{margin-top:10px}
   .orient{background:var(--run-bg);border:1px solid var(--hair);border-radius:14px;padding:12px 14px;margin-top:12px;font-size:.85rem}
   .orient b{color:var(--run)}
@@ -186,21 +188,21 @@ function rotuloEstadoTarefa(t){
   return 'aguardando';
 }
 
-/** Card dentro da tarefa Campanhas: só resumo + link (layout Bruno). */
+/** Card Campanhas: só resumo + status da decisão + Abrir (app separado). Sem escalar. */
 function htmlCardCampanhas(t){
   const C=ST.campanhas||{};
-  const link=C.link||'/campanhas';
+  const link=C.link||'https://campanhas-katzer.netlify.app/';
   const cta=C.cta||'▶ Abrir Painel de Campanhas';
   const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
+  const pend=C.statusDecisao||'Decisão do dia pendente no painel de campanhas';
+  const pendCls=C.pendente===false?'pend ok':'pend';
   return `<div class="camp-card">
     <div class="metrica">${metrica}</div>
     ${bom?`<div class="${bomCls}">[${bom}]</div>`:''}
-    <div class="cta"><a class="btn" href="${link}">${cta}</a>
-      ${t.feito?'':`<button class="btn ghost" data-feito="${t.id}" style="margin-left:8px">Feito</button>`}
-      ${t.feito?`<button class="btn ghost" data-undo="${t.id}" style="margin-left:8px">desfazer</button>`:''}
-    </div>
+    <div class="${pendCls}">${pend}</div>
+    <div class="cta"><a class="btn" href="${link}" data-abrir-campanhas="1">${cta}</a></div>
   </div>`;
 }
 
@@ -245,6 +247,19 @@ function startTick(){
   upd();tickTimer=setInterval(upd,15000);
 }
 document.addEventListener('click',async(e)=>{
+  const abrir=e.target.closest('[data-abrir-campanhas]');
+  if(abrir){
+    e.preventDefault();
+    const href=abrir.getAttribute('href')||'https://campanhas-katzer.netlify.app/';
+    const camp=(ST.tarefas||[]).find(t=>t.id==='campanhas');
+    // Abrir o painel = "feito" na Rotina. Decisão real só no app Campanhas.
+    if(camp&&!camp.feito){
+      abrir.style.pointerEvents='none';
+      try{await api({acao:'feito',tarefa:'campanhas',nota:'Abriu Painel de Campanhas (app separado)'});}catch(err){}
+    }
+    window.location.href=href;
+    return;
+  }
   const f=e.target.closest('[data-feito]');const u=e.target.closest('[data-undo]');
   if(f){f.disabled=true;const id=f.dataset.feito;const nt=document.querySelector(`[data-note="${id}"]`);const nota=nt?nt.value:'';const r=await api({acao:'feito',tarefa:id,nota});if(r.ok){toast('✅ Registrado');load();}else{f.disabled=false;toast('Erro, tenta de novo');}}
   if(u){const r=await api({acao:'desfazer',tarefa:u.dataset.undo});if(r.ok)load();}

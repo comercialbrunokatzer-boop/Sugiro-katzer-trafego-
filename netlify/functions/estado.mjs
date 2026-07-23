@@ -1,8 +1,8 @@
-// ESTADO — Rotina + card Campanhas (resumo + link; NÃO embute o painel).
+// ESTADO — Rotina + card Campanhas (só resumo + link pro app separado).
 // GET /api/estado        → tarefas + obs + modo + campanhas{resumo}
 // GET /api/estado?ceo=1  → + pontualidade (% + saldo)
 //
-// Painel completo: /campanhas · /ranking-campanhas
+// Decisão / quadradinho NÃO vive aqui. App: https://campanhas-katzer.netlify.app
 import { createHash } from 'node:crypto';
 import { agoraBRT, pontualidade, TAREFAS, previstoMin, min2hm } from './_rotina.mjs';
 import { leEstado, json } from './_infra.mjs';
@@ -11,6 +11,8 @@ import { listaDecisoes } from './_placar-estado.mjs';
 import { resumoCplBom } from './_campanhas-regras.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
+const CAMPANHAS_APP_URL = (process.env.CAMPANHAS_APP_URL || 'https://campanhas-katzer.netlify.app').replace(/\/+$/, '');
+
 function senhaGestorOk(event, params) {
   const h = event.headers || {};
   const chave = h['x-gestor-key'] || h['X-Gestor-Key'] || params.k || '';
@@ -19,13 +21,16 @@ function senhaGestorOk(event, params) {
 }
 
 /**
- * Resumo do card Campanhas na Rotina:
- *   N campanhas | R$ X | Y leads | CPL méd R$ Z
- *   [CPL BOM médio: R$ A — B% bons]
- *   ▶ Abrir Painel de Campanhas
- * Leads = formulário (nunca clique).
+ * Card Campanhas na Rotina (Bruno):
+ *   N campanhas | R$ | leads form. | CPL méd
+ *   [CPL BOM médio…]
+ *   Decisão do dia pendente no painel de campanhas  (ou registrada)
+ *   ▶ Abrir Painel de Campanhas  → app separado
+ * Sem botão escalar / sem decisão aqui.
  */
 async function resumoCampanhas(data) {
+  const link = CAMPANHAS_APP_URL + '/';
+  const cta = '▶ Abrir Painel de Campanhas';
   try {
     const [{ placar, meta }, bruto] = await Promise.all([
       lePlacar({ preset: 'last_7d' }),
@@ -33,16 +38,21 @@ async function resumoCampanhas(data) {
     ]);
     const decisoes = listaDecisoes(bruto);
     const confiavel = meta?.confiavel !== false && meta?.status === 'ok';
+    const pendente = decisoes.length === 0;
+    const statusDecisao = pendente
+      ? 'Decisão do dia pendente no painel de campanhas'
+      : `Decisão registrada no painel (${decisoes.length}) — aplicar na Meta lá`;
+
     if (!confiavel) {
       return {
         confiavel: false,
         resumo: meta?.mensagemPainel || meta?.mensagem || 'Dados da Meta indisponíveis.',
         metrica: null,
         cplBom: null,
+        statusDecisao,
+        pendente,
         n: null, totalGasto: null, totalLeads: null, cplMedio: null,
-        decisoes: [],
-        link: '/campanhas',
-        cta: '▶ Abrir Painel de Campanhas',
+        link, cta,
       };
     }
     const n = (placar.campanhas || []).length;
@@ -58,18 +68,15 @@ async function resumoCampanhas(data) {
     ].join(' | ');
     return {
       confiavel: true,
-      n,
-      totalGasto,
-      totalLeads,
-      cplMedio,
+      n, totalGasto, totalLeads, cplMedio,
       metrica,
       cplBom: bom.texto,
       cplBomMedio: bom.cplBomMedio,
       pctBons: bom.pctBons,
+      statusDecisao,
+      pendente,
       resumo: metrica,
-      decisoes: decisoes.map((d) => ({ id: d.id, decisao: d.decisao, hora: d.hora })),
-      link: '/campanhas',
-      cta: '▶ Abrir Painel de Campanhas',
+      link, cta,
     };
   } catch {
     return {
@@ -77,10 +84,10 @@ async function resumoCampanhas(data) {
       resumo: 'Dados da Meta indisponíveis.',
       metrica: null,
       cplBom: null,
+      statusDecisao: 'Decisão do dia pendente no painel de campanhas',
+      pendente: true,
       n: null, totalGasto: null, totalLeads: null, cplMedio: null,
-      decisoes: [],
-      link: '/campanhas',
-      cta: '▶ Abrir Painel de Campanhas',
+      link, cta,
     };
   }
 }
@@ -111,10 +118,6 @@ export async function handler(event) {
   });
 
   const campanhas = await resumoCampanhas(now.data);
-  const campanhasIdx = tarefas.findIndex((t) => t.id === 'campanhas');
-  if (campanhasIdx >= 0 && !tarefas[campanhasIdx].feito && (campanhas.decisoes || []).length > 0 && !domingo) {
-    tarefas[campanhasIdx].estado = 'em_andamento';
-  }
 
   const base = {
     ok: true, data: now.data, agora: now.hm, modo: estado.modo,

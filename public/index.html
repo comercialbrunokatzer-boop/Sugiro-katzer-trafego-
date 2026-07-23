@@ -2,8 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Katzer OS · Tráfego</title>
+<title>Katzer OS</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link id="manifest" rel="manifest" href="/manifest-campanhas.webmanifest">
+<meta name="theme-color" content="#0f2a24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Campanhas">
+<link rel="apple-touch-icon" href="/icon-katzer.png">
 <style>
   :root{
     --ground:#eef1f0; --panel:#ffffff; --ink:#14252f; --sub:#5c6b74; --hair:#dbe2e0;
@@ -32,38 +37,42 @@
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <p class="eyebrow">Katzer OS · IA de Tráfego</p>
-    <h1>Painel de Campanhas</h1>
-    <p class="lede">Gasto · leads de formulário · CPL · ranking · decisão. Clique não conta.</p>
-
-    <a class="card" href="/campanhas">
-      <div class="ic">⬜</div>
-      <div><div class="t">Decisão do dia</div><div class="s">Aplicar · Ajustar · Agora não</div></div>
-      <div class="arw">▸</div>
-    </a>
-
-    <a class="card" href="/campanhas-decisao">
-      <div class="ic">📋</div>
-      <div><div class="t">Lista + quadradinho</div><div class="s">Por campanha · semáforo · base mínima 10</div></div>
-      <div class="arw">▸</div>
-    </a>
-
-    <a class="card" href="/ranking-campanhas">
-      <div class="ic">📈</div>
-      <div><div class="t">Ranking · CPL formulário</div><div class="s">Conta · 7d · 30d · nunca clique</div></div>
-      <div class="arw">▸</div>
-    </a>
-
-    <a class="card" href="/como-instalar-campanhas">
-      <div class="ic">📲</div>
-      <div><div class="t">Instalar app Campanhas</div><div class="s">Ícone próprio na tela do celular</div></div>
-      <div class="arw">▸</div>
-    </a>
-
-    <div class="status"><span class="dot"></span> Modo seguro · ranking ao vivo · app de tráfego</div>
-
-    <footer>Katzer OS · Tráfego</footer>
-  </div>
+  <div class="wrap" id="app"></div>
+<script>
+(function () {
+  var host = (location.hostname || '').toLowerCase();
+  var isCampanhas = host.indexOf('campanhas-katzer') >= 0;
+  var el = document.getElementById('app');
+  if (isCampanhas) {
+    document.title = 'Campanhas Katzer';
+    document.getElementById('manifest').href = '/manifest-campanhas.webmanifest';
+    el.innerHTML =
+      '<p class="eyebrow">Katzer OS · App Campanhas</p>' +
+      '<h1>Painel de Campanhas</h1>' +
+      '<p class="lede">Decisão de dinheiro · leads de formulário · CPL BOM. App separado da Rotina.</p>' +
+      '<a class="card" href="/campanhas"><div class="ic">⬜</div><div><div class="t">Decisão do dia</div><div class="s">Aplicar · Ajustar · Agora não · base mín. 10</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="/campanhas-decisao"><div class="ic">📋</div><div><div class="t">Lista + quadradinho</div><div class="s">Por campanha · semáforo</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="/ranking-campanhas"><div class="ic">📈</div><div><div class="t">Ranking · CPL formulário</div><div class="s">Conta · 7d · 30d</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="/como-instalar-campanhas"><div class="ic">📲</div><div><div class="t">Instalar este app</div><div class="s">Ícone Campanhas na tela inicial</div></div><div class="arw">▸</div></a>' +
+      '<div class="hint">Rotina do Michel é outro app: <a href="https://rotina-produtiva-michel.netlify.app/placar-michel">rotina-produtiva-michel</a></div>' +
+      '<div class="status"><span class="dot"></span> campanhas-katzer · decisão com Modo Seguro</div>' +
+      '<footer>Katzer OS · Campanhas</footer>';
+  } else {
+    document.title = 'Rotina · Katzer OS';
+    document.getElementById('manifest').href = '/manifest.webmanifest';
+    document.querySelector('meta[name="apple-mobile-web-app-title"]').setAttribute('content', 'Placar Michel');
+    el.innerHTML =
+      '<p class="eyebrow">Katzer OS · Rotina</p>' +
+      '<h1>Rotina do Michel</h1>' +
+      '<p class="lede">Tarefas do dia. Campanhas aqui é só resumo — decisão fica no app Campanhas.</p>' +
+      '<a class="card" href="/placar-michel"><div class="ic">🗂️</div><div><div class="t">Placar do Michel</div><div class="s">Tocar Feito em cada tarefa</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="/placar-gestor"><div class="ic">👀</div><div><div class="t">Placar do Gestor</div><div class="s">% ao vivo · Bruno</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="https://campanhas-katzer.netlify.app/"><div class="ic">📊</div><div><div class="t">Abrir Painel de Campanhas</div><div class="s">App separado · outro ícone</div></div><div class="arw">▸</div></a>' +
+      '<div class="hint">Não misture: Rotina = fazer. Campanhas = pensar (dinheiro).</div>' +
+      '<div class="status"><span class="dot"></span> rotina-produtiva-michel</div>' +
+      '<footer>Katzer OS · Rotina</footer>';
+  }
+})();
+</script>
 </body>
 </html>

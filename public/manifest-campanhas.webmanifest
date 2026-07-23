@@ -1,8 +1,8 @@
 {
   "name": "Campanhas Katzer",
   "short_name": "Campanhas",
-  "description": "Painel de Campanhas Katzer — CPL formulário, ranking e decisão. Sem rotina.",
-  "start_url": "/campanhas",
+  "description": "Painel de Campanhas Katzer — Meta, formulário, CPL BOM, decisão. App separado da Rotina.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0f2a24",

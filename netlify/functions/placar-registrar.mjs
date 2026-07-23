@@ -28,7 +28,7 @@ export async function handler(event) {
   await salvaDecisoes(decisoes);
 
   // Bruno fica ciente a CADA clique (painel ao vivo + WhatsApp).
-  const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
+  const url = (process.env.CAMPANHAS_APP_URL || process.env.SITE_URL || 'https://campanhas-katzer.netlify.app').replace(/\/+$/, '');
   const ceo = process.env.WHATSAPP_CEO || '';
   const msg = [
     `📊 *Campanhas — Michel decidiu* · ${now.hm}`,
