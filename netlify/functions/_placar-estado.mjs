@@ -95,7 +95,7 @@ export function registraDecisao(decisoes, { id, campanha, tipo, decisao, ajuste,
   decisoes.itens = decisoes.itens || {};
   decisoes.itens[id] = {
     id, campanha: campanha || '', tipo: tipo || '', decisao,
-    ajuste: (decisao === 'ajustar' || decisao === 'aumentar' || !!ajuste)
+    ajuste: (decisao === 'ajustar' || decisao === 'aumentar')
       ? String(ajuste || '').slice(0, 300) : '',
     hora: hora || '', min: Number.isFinite(min) ? min : null,
   };

@@ -34,12 +34,18 @@ test('registraDecisao: grava e o último toque vale', () => {
   assert.equal(Object.keys(dec.itens).length, 1);        // não duplica
 });
 
-test('registraDecisao: ajuste só guarda texto quando é "ajustar"; decisão inválida barra', () => {
+test('registraDecisao: ajuste só em ajustar/aumentar; desistir/manter limpos; inválida barra', () => {
   const dec = decisoesVazias('2026-07-21');
   registraDecisao(dec, { id: 'a', decisao: 'aplicar', ajuste: 'texto ignorado', hora: '09:00', min: 540 });
   assert.equal(dec.itens.a.ajuste, ''); // aplicar não guarda ajuste
   registraDecisao(dec, { id: 'b', decisao: 'ajustar', ajuste: 'mover R$50 p/ BR_SC', hora: '09:01', min: 541 });
   assert.equal(dec.itens.b.ajuste, 'mover R$50 p/ BR_SC');
+  registraDecisao(dec, { id: 'd', campanha: 'X', tipo: 'campanha', decisao: 'desistir', ajuste: 'ignorar', hora: '09:02', min: 542 });
+  assert.equal(dec.itens.d.ajuste, '');
+  registraDecisao(dec, { id: 'e', campanha: 'Y', tipo: 'campanha', decisao: 'manter', hora: '09:03', min: 543 });
+  assert.equal(dec.itens.e.decisao, 'manter');
+  registraDecisao(dec, { id: 'f', campanha: 'Z', tipo: 'campanha', decisao: 'aumentar', ajuste: 'R$ 80/dia', hora: '09:04', min: 544 });
+  assert.equal(dec.itens.f.ajuste, 'R$ 80/dia');
   assert.throws(() => registraDecisao(dec, { id: 'c', decisao: 'pausar', hora: '09:02', min: 542 }));
   assert.throws(() => registraDecisao(dec, { decisao: 'aplicar' })); // sem id
 });
@@ -57,6 +63,9 @@ test('rotuloDecisao: texto honesto pro WhatsApp/log', () => {
   assert.match(rotuloDecisao({ decisao: 'aplicar', tipo: 'escalar', campanha: 'PORTUGAL' }), /Aplicou.*escalar.*PORTUGAL/);
   assert.match(rotuloDecisao({ decisao: 'ajustar', tipo: 'revisar', campanha: 'ESPANHA', ajuste: 'cortar' }), /Ajustou.*ESPANHA.*cortar/);
   assert.match(rotuloDecisao({ decisao: 'agora-nao', tipo: 'escalar', campanha: 'BR_SC' }), /Agora n[ãa]o/);
+  assert.match(rotuloDecisao({ decisao: 'desistir', tipo: 'campanha', campanha: 'ESPANHA' }), /Desistiu.*ESPANHA/);
+  assert.match(rotuloDecisao({ decisao: 'manter', tipo: 'campanha', campanha: 'BR_SC' }), /Manteve.*BR_SC/);
+  assert.match(rotuloDecisao({ decisao: 'aumentar', tipo: 'campanha', campanha: 'PORTUGAL', ajuste: 'R$ 100/dia' }), /Aumentou.*PORTUGAL.*R\$ 100/);
 });
 
 test('agoraBRT: devolve data e hora coerentes de Brasília', () => {
