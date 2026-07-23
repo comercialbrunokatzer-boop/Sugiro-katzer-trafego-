@@ -144,9 +144,12 @@ async function telefonesPorContato(contactIds = []) {
 /** Fallback: Helena já tem BITRIX_WEBHOOK_READ — App Decisão puxa o funil por lá. */
 async function listaDealsViaHelena({ limit = 250 } = {}) {
   const base = (process.env.HELENA_FUNIL_URL || 'https://regal-chaja-662035.netlify.app').replace(/\/+$/, '');
+  // WHATSAPP_CEO vem do GitHub secret (valor real). BRUNO_PHONE copiado via API
+  // Netlify pode vir mascarado — só usar se tiver ≥10 dígitos.
+  const bruno = String(process.env.BRUNO_PHONE || '').replace(/\D+/g, '');
   const key = process.env.FUNIL_PROXY_KEY
-    || process.env.BRUNO_PHONE
     || process.env.WHATSAPP_CEO
+    || (bruno.length >= 10 ? process.env.BRUNO_PHONE : '')
     || process.env.WHATSAPP_MICHEL
     || '';
   if (!key) return { ok: false, deals: [], motivo: 'sem key p/ Helena funil' };
@@ -185,7 +188,9 @@ async function listaDealsViaHelena({ limit = 250 } = {}) {
  */
 export async function listaDealsFunil({ limit = 250 } = {}) {
   let localMotivo = null;
-  if (bitrixBase()) {
+  const baseNow = bitrixBase();
+  const baseOk = baseNow && /bitrix24\.com/i.test(baseNow);
+  if (baseOk) {
     const categoryId = Number(process.env.BITRIX_CATEGORY_ID || 1);
     const all = [];
     let start = 0;
@@ -232,7 +237,7 @@ export async function listaDealsFunil({ limit = 250 } = {}) {
     }
     localMotivo = localMotivo || 'webhook local respondeu vazio';
   } else {
-    localMotivo = 'BITRIX_WEBHOOK ausente no runtime';
+    localMotivo = baseNow ? 'BITRIX_WEBHOOK inválido (sem host bitrix24)' : 'BITRIX_WEBHOOK ausente no runtime';
   }
 
   const viaHelena = await listaDealsViaHelena({ limit });
