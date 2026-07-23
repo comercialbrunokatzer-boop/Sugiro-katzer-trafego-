@@ -191,8 +191,8 @@ function renderCampanhas(){
   const chips=[];
   chips.push(`<span class="chip">${C.n||0} campanhas</span>`);
   if(C.totalGasto!=null) chips.push(`<span class="chip">R$ ${Number(C.totalGasto).toFixed(0)}</span>`);
-  if(C.totalLeads!=null) chips.push(`<span class="chip">${C.totalLeads} leads</span>`);
-  if(C.cplMedio!=null) chips.push(`<span class="chip">CPL R$ ${Number(C.cplMedio).toFixed(0)}</span>`);
+  if(C.totalLeads!=null) chips.push(`<span class="chip">${C.totalLeads} form.</span>`);
+  if(C.cplMedio!=null) chips.push(`<span class="chip">CPL form. R$ ${Number(C.cplMedio).toFixed(0)}</span>`);
   const nDec=(C.decisoes||[]).length;
   chips.push(nDec?`<span class="chip">${nDec} decisão(ões)</span>`:`<span class="chip">decisão pendente</span>`);
   $('#campChips').innerHTML=chips.join('');

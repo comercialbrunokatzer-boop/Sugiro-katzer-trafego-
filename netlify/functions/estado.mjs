@@ -64,7 +64,7 @@ async function snapshotCampanhas(data) {
       ultimaLeitura: ts || null,
       resumo: !confiavel
         ? (meta?.mensagemPainel || 'Dados da Meta indisponíveis')
-        : `${n} camp. · R$ ${Number(placar.totalGasto || 0).toFixed(0)} · ${placar.totalLeads || 0} leads`,
+        : `${n} camp. · R$ ${Number(placar.totalGasto || 0).toFixed(0)} · ${placar.totalLeads || 0} form.`,
     };
   } catch {
     return {
@@ -123,7 +123,7 @@ export async function handler(event) {
       pendenteAplicar: camp.pendenteAplicar,
       // Michel só precisa do resumo + link; métricas detalhadas no gestor
       resumo: camp.ok
-        ? `${camp.n} camp. · R$ ${Number(camp.totalGasto || 0).toFixed(0)} · ${camp.totalLeads || 0} leads`
+        ? `${camp.n} camp. · R$ ${Number(camp.totalGasto || 0).toFixed(0)} · ${camp.totalLeads || 0} form.`
         : 'Meta indisponível',
     },
   };

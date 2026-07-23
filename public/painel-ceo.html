@@ -137,8 +137,8 @@ function blocoCampanhas(l){
   const chips=`<div class="m">
     <span class="chip">${C.n||0} campanhas</span>
     <span class="chip">R$ ${Number(C.totalGasto||0).toFixed(0)}</span>
-    <span class="chip">${C.totalLeads||0} leads</span>
-    <span class="chip">CPL méd. ${C.cplMedio!=null?'R$ '+Number(C.cplMedio).toFixed(0):'—'}</span>
+    <span class="chip">${C.totalLeads||0} form.</span>
+    <span class="chip">CPL form. ${C.cplMedio!=null?'R$ '+Number(C.cplMedio).toFixed(0):'—'}</span>
   </div>`;
   const decs=(C.decisoes||[]).slice(0,5).map(d=>`<div class="dec">${d.rotulo||d.decisao}${d.hora?' · '+d.hora:''}</div>`).join('');
   const pend=C.pendenteAplicar?`<div class="warn">Decisão do dia: ainda pendente no quadradinho</div>`:`<div class="warn" style="color:var(--ok)">Decisões registradas · Michel aplica na Meta (modo seguro)</div>`;

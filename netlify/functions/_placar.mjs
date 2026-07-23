@@ -1,30 +1,163 @@
 // Núcleo do PLACAR DE CAMPANHAS (arquivo "_" = NÃO vira função).
-// Recebe o `data` do Meta Ads Insights (nível campanha) e devolve: por campanha
-// gasto · leads · CPL, os totais, e a DECISÃO DO DIA (escalar / revisar).
-// Puro/testável — a função placar.mjs só busca a Meta e chama isto.
+// Métrica principal: LEAD DE FORMULÁRIO da Meta (cadastro no anúncio).
+// NÃO conta: clique, link_click, conversa WhatsApp, impressão, engajamento.
+// NÃO soma action_types sobrepostos (lead + lead_grouped) — escolhe 1 por prioridade.
 
-// Tipos de "resultado" que contam como LEAD (form de lead + clique-pro-WhatsApp).
-// Conserta o "s/ dado": muitas campanhas otimizam por conversa iniciada, não por 'lead'.
-const TIPOS_LEAD = new Set([
-  'lead',
-  'leadgen.other',
+/**
+ * Prioridade = o que o Gerenciador mostra como “Lead (formulário)”.
+ * Preferir onsite_conversion.lead_grouped; só cair pro próximo se o anterior não vier.
+ */
+export const PRIORIDADE_LEAD_FORMULARIO = [
   'onsite_conversion.lead_grouped',
+  'leadgen_grouped',
+  'onsite_conversion.lead',
+  'leadgen.other',
+  'lead',
+];
+
+export const TIPOS_LEAD_FORMULARIO = new Set(PRIORIDADE_LEAD_FORMULARIO);
+
+/** Explicitamente NÃO são lead de formulário (mesmo se a API mandar). */
+export const TIPOS_NAO_FORMULARIO = new Set([
+  'link_click',
+  'inline_link_click',
+  'landing_page_view',
+  'page_engagement',
+  'post_engagement',
+  'video_view',
+  'omni_landing_page_view',
   'onsite_conversion.messaging_conversation_started_7d',
   'onsite_conversion.messaging_first_reply',
   'onsite_conversion.total_messaging_connection',
+  'onsite_conversion.messaging_block',
+  'click_to_call_call_confirm',
+  'outbound_click',
 ]);
 
-/** Extrai a contagem de leads de uma campanha do Insights (robusto a formatos). */
-export function extraiLeads(c = {}) {
-  let n = 0;
+function indicadorEhFormulario(indicator = '') {
+  const s = String(indicator).toLowerCase();
+  if (!s) return false;
+  if (s.includes('messaging') || s.includes('click') || s.includes('view') || s.includes('engage')) {
+    return false;
+  }
+  return s.includes('lead');
+}
+
+function mapaAcoes(c = {}) {
+  const map = new Map();
   for (const a of (Array.isArray(c.actions) ? c.actions : [])) {
-    if (TIPOS_LEAD.has(a.action_type)) n += Number(a.value) || 0;
+    const t = a.action_type;
+    if (!t) continue;
+    map.set(t, (map.get(t) || 0) + (Number(a.value) || 0));
   }
-  // fallback: o campo 'results' (resultado da otimização da própria campanha)
-  if (n === 0 && Array.isArray(c.results) && c.results[0] && Array.isArray(c.results[0].values)) {
-    n = Number(c.results[0].values[0] && c.results[0].values[0].value) || 0;
+  return map;
+}
+
+function temSinalNaoFormulario(c = {}, mapa) {
+  for (const t of TIPOS_NAO_FORMULARIO) {
+    if ((mapa.get(t) || 0) > 0) return true;
   }
-  return n;
+  const clicks = Number(c.clicks) || 0;
+  if (clicks > 0) return true;
+  if (Array.isArray(c.results) && c.results[0]) {
+    const ind = String(c.results[0].indicator || '').toLowerCase();
+    if (ind && (ind.includes('click') || ind.includes('messaging') || ind.includes('view'))) return true;
+  }
+  return false;
+}
+
+/**
+ * Conta só cadastros de formulário Meta (1 action_type por campanha, por prioridade).
+ * @returns {{ leads:number, fonte:string|null, aviso:string|null, confirmado:boolean }}
+ */
+export function extraiLeadsFormulario(c = {}) {
+  const mapa = mapaAcoes(c);
+
+  for (const tipo of PRIORIDADE_LEAD_FORMULARIO) {
+    const v = mapa.get(tipo);
+    if (v != null && v > 0) {
+      return { leads: v, fonte: tipo, aviso: null, confirmado: true };
+    }
+  }
+
+  // Fallback results: só se o indicador for de lead/formulário (não messaging/clique).
+  if (Array.isArray(c.results) && c.results[0]) {
+    const r0 = c.results[0];
+    if (indicadorEhFormulario(r0.indicator) && Array.isArray(r0.values)) {
+      const n = Number(r0.values[0] && r0.values[0].value) || 0;
+      if (n > 0) {
+        return {
+          leads: n,
+          fonte: `results:${r0.indicator || 'lead'}`,
+          aviso: null,
+          confirmado: true,
+        };
+      }
+    }
+  }
+
+  // Tipo de formulário presente com zero, ou sem sinal de clique → 0 cadastros reais.
+  const temTipoFormZero = PRIORIDADE_LEAD_FORMULARIO.some((t) => mapa.has(t));
+  if (temTipoFormZero || !temSinalNaoFormulario(c, mapa)) {
+    return {
+      leads: 0,
+      fonte: null,
+      aviso: '0 cadastros de formulário.',
+      confirmado: true,
+    };
+  }
+
+  // API trouxe clique/mensagem, mas nenhum action_type de formulário confirmado.
+  return {
+    leads: 0,
+    fonte: null,
+    aviso: 'Não foi possível confirmar os leads de formulário desta campanha.',
+    confirmado: false,
+  };
+}
+
+/** @deprecated use extraiLeadsFormulario — mantido como número puro pra API interna. */
+export function extraiLeads(c = {}) {
+  return extraiLeadsFormulario(c).leads;
+}
+
+/**
+ * Inventário seguro dos action_types (pra confirmar o que a API manda).
+ * Não inclui token nem payload completo.
+ */
+export function inventariarAcoes(data = []) {
+  const totais = new Map();
+  const porCampanha = [];
+  for (const c of (Array.isArray(data) ? data : [])) {
+    const spend = Number(c.spend) || 0;
+    if (spend <= 0) continue;
+    const acts = [];
+    for (const a of (c.actions || [])) {
+      const t = a.action_type;
+      const v = Number(a.value) || 0;
+      acts.push({ action_type: t, value: v });
+      totais.set(t, (totais.get(t) || 0) + v);
+    }
+    const form = extraiLeadsFormulario(c);
+    porCampanha.push({
+      nome: c.campaign_name || '(sem nome)',
+      gasto: spend,
+      leadsFormulario: form.leads,
+      fonteLead: form.fonte,
+      confirmado: form.confirmado,
+      avisoLead: form.aviso,
+      actions: acts.filter((a) => /lead|messaging|click|form/i.test(a.action_type)),
+      resultsIndicator: c.results && c.results[0] ? c.results[0].indicator || null : null,
+    });
+  }
+  return {
+    totais: [...totais.entries()].sort((a, b) => b[1] - a[1]).map(([action_type, value]) => ({ action_type, value })),
+    formulariosNosTotais: [...totais.entries()]
+      .filter(([t]) => TIPOS_LEAD_FORMULARIO.has(t))
+      .map(([action_type, value]) => ({ action_type, value })),
+    fontesUsadas: [...new Set(porCampanha.map((c) => c.fonteLead).filter(Boolean))],
+    porCampanha,
+  };
 }
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -32,37 +165,55 @@ const round2 = (v) => Math.round(v * 100) / 100;
 
 /**
  * Monta o placar a partir do array `data` do Meta Insights.
- * @returns {{campanhas, totalGasto, totalLeads, cplMedio, decisao}}
+ * leads / CPL = somente formulário. CPL só se confirmado e leads > 0.
  */
 export function montaPlacar(data = []) {
   const campanhas = (Array.isArray(data) ? data : []).map((c) => {
     const gasto = round2(num(c.spend));
-    const leads = extraiLeads(c);
-    const cpl = leads > 0 ? round2(gasto / leads) : null;
-    return { nome: c.campaign_name || '(sem nome)', gasto, leads, cpl };
+    const { leads, fonte, aviso, confirmado } = extraiLeadsFormulario(c);
+    const cpl = (confirmado && leads > 0) ? round2(gasto / leads) : null;
+    return {
+      nome: c.campaign_name || '(sem nome)',
+      id: c.campaign_id || null,
+      gasto,
+      leads, // cadastros de formulário
+      cpl,   // custo por lead de formulário
+      fonteLead: fonte,
+      avisoLead: aviso,
+      leadConfirmado: confirmado,
+    };
   })
-    .filter((c) => c.gasto > 0)          // só campanha que GASTOU no período (tira inativa/ruído)
+    .filter((c) => c.gasto > 0)
     .sort((a, b) => b.gasto - a.gasto);
 
   const totalGasto = round2(campanhas.reduce((s, c) => s + c.gasto, 0));
-  const totalLeads = campanhas.reduce((s, c) => s + c.leads, 0);
+  const totalLeads = campanhas.reduce((s, c) => s + (c.leadConfirmado ? c.leads : 0), 0);
   const cplMedio = totalLeads > 0 ? round2(totalGasto / totalLeads) : null;
+  const inventario = inventariarAcoes(data);
 
-  return { campanhas, totalGasto, totalLeads, cplMedio, decisao: decideDoDia(campanhas, cplMedio) };
+  return {
+    campanhas,
+    totalGasto,
+    totalLeads,
+    cplMedio,
+    metrica: 'lead_formulario',
+    fontesLead: inventario.fontesUsadas,
+    decisao: decideDoDia(campanhas, cplMedio),
+  };
 }
 
 /**
- * Decisão do dia (liga anúncio à VENDA, não ao clique — regra da casa):
- *  - ESCALAR: tem lead e CPL <= média (custo bom).
- *  - REVISAR: gastou (>= R$50) e trouxe ZERO lead (queimando dinheiro).
+ * Decisão do dia com base em cadastros de formulário + CPL (não clique).
+ *  - ESCALAR: tem cadastro confirmado e CPL <= média.
+ *  - REVISAR: gastou (>= R$50) e ZERO cadastro de formulário confirmado.
  */
 export function decideDoDia(campanhas = [], cplMedio = null, { gastoMinRevisar = 50 } = {}) {
   const escalar = campanhas
-    .filter((c) => c.leads > 0 && (cplMedio == null || c.cpl <= cplMedio))
+    .filter((c) => c.leadConfirmado !== false && c.leads > 0 && (cplMedio == null || c.cpl <= cplMedio))
     .sort((a, b) => (a.cpl ?? Infinity) - (b.cpl ?? Infinity))
     .slice(0, 3);
   const revisar = campanhas
-    .filter((c) => c.leads === 0 && c.gasto >= gastoMinRevisar)
+    .filter((c) => c.leadConfirmado !== false && c.leads === 0 && c.gasto >= gastoMinRevisar)
     .sort((a, b) => b.gasto - a.gasto)
     .slice(0, 3);
   return { escalar, revisar };
@@ -70,22 +221,26 @@ export function decideDoDia(campanhas = [], cplMedio = null, { gastoMinRevisar =
 
 const brl = (v) => (v == null ? '—' : `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 
-/** Texto do Placar pro WhatsApp (preto no zap; enxuto e acionável). */
+/** Texto do Placar pro WhatsApp — cadastros de formulário, nunca clique. */
 export function resumoPlacarWhats(placar, { periodo = 'últimos 7 dias' } = {}) {
   const p = placar || {};
   const linhas = (p.campanhas || []).slice(0, 6).map((c) => {
-    const cpl = c.cpl != null ? `CPL ${brl(c.cpl)}` : (c.gasto >= 50 ? '⚠️ 0 lead' : 'sem lead ainda');
-    return `• *${c.nome}*\n   ${brl(c.gasto)} · ${c.leads} lead(s) · ${cpl}`;
+    let cpl;
+    if (c.cpl != null) cpl = `CPL form. ${brl(c.cpl)}`;
+    else if (c.leadConfirmado === false) cpl = '⚠️ form. não confirmado';
+    else if (c.gasto >= 50) cpl = '⚠️ 0 cadastro form.';
+    else cpl = 'sem cadastro form. ainda';
+    return `• *${c.nome}*\n   ${brl(c.gasto)} · ${c.leads} cadastro(s) form. · ${cpl}`;
   });
-  const esc = (p.decisao?.escalar || []).map((c) => `🟢 escalar *${c.nome}* (CPL ${brl(c.cpl)})`);
-  const rev = (p.decisao?.revisar || []).map((c) => `🔴 revisar *${c.nome}* (${brl(c.gasto)} · 0 lead)`);
+  const esc = (p.decisao?.escalar || []).map((c) => `🟢 escalar *${c.nome}* (CPL form. ${brl(c.cpl)})`);
+  const rev = (p.decisao?.revisar || []).map((c) => `🔴 revisar *${c.nome}* (${brl(c.gasto)} · 0 cadastro form.)`);
   return [
     '📊 *Placar de Campanhas — Michel*',
-    `_${periodo} · dados reais da Meta_`,
+    `_${periodo} · leads = cadastro de formulário Meta_`,
     '',
     linhas.join('\n'),
     '',
-    `*Total:* ${brl(p.totalGasto)} · ${p.totalLeads || 0} leads · CPL médio ${brl(p.cplMedio)}`,
+    `*Total:* ${brl(p.totalGasto)} · ${p.totalLeads || 0} cadastros form. · CPL form. médio ${brl(p.cplMedio)}`,
     '',
     '*Decisão do dia:*',
     ...(esc.length ? esc : ['— sem campanha clara pra escalar']),

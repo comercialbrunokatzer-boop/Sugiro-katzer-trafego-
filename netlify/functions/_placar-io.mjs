@@ -1,11 +1,12 @@
 // I/O do Placar-quadradinho (arquivo "_" = NÃO vira função): Blobs + Meta.
 // REGRA: erro de integração NUNCA vira gasto R$ 0 “de verdade”.
 import { getStore } from '@netlify/blobs';
-import { montaPlacar } from './_placar.mjs';
+import { montaPlacar, inventariarAcoes } from './_placar.mjs';
 import { decisoesVazias } from './_placar-estado.mjs';
 import { classificaMetaResultado, mensagemMeta } from './_meta-status.mjs';
 
 export { classificaMetaResultado, mensagemMeta } from './_meta-status.mjs';
+export { inventariarAcoes } from './_placar.mjs';
 
 const STORE = 'placar-michel';
 const PLACAR_TTL_MS = 10 * 60 * 1000;
@@ -36,6 +37,7 @@ async function buscaMetaPlacar(preset) {
     return {
       placar: montaPlacar([]),
       meta: classificaMetaResultado({ temToken: false, conta: acct, etapa: 'env' }),
+      inventario: null,
     };
   }
 
@@ -55,14 +57,16 @@ async function buscaMetaPlacar(preset) {
         meta: classificaMetaResultado({
           temToken: true, httpOk: false, bodyError: body.error, conta: acct, etapa: 'insights',
         }),
+        inventario: null,
       };
     }
     const data = (body && body.data) || [];
     const placar = montaPlacar(data);
+    const inventario = inventariarAcoes(data);
     const meta = classificaMetaResultado({
       temToken: true, httpOk: true, nBruto: data.length, nComGasto: placar.campanhas.length, conta: acct,
     });
-    return { placar, meta };
+    return { placar, meta, inventario };
   } catch {
     return {
       placar: montaPlacar([]),
@@ -70,6 +74,7 @@ async function buscaMetaPlacar(preset) {
         temToken: true, httpOk: false, bodyError: { code: 'FETCH', message: 'network' },
         conta: acct, etapa: 'fetch',
       }),
+      inventario: null,
     };
   }
 }
@@ -88,18 +93,19 @@ export async function lePlacar({ preset = 'last_7d', force = false } = {}) {
       ts: cache.ts,
       cacheHit: true,
       meta: { ...(cache.meta || { status: 'ok', confiavel: true }), cacheHit: true },
+      inventario: cache.inventario || null,
     };
   }
 
-  const { placar, meta } = await buscaMetaPlacar(preset);
+  const { placar, meta, inventario } = await buscaMetaPlacar(preset);
 
   if (meta.confiavel) {
     try {
       await store.setJSON(CACHE_KEY, {
-        ts: agora, preset, placar, meta, confiavel: true,
+        ts: agora, preset, placar, meta, inventario: inventario || null, confiavel: true,
       });
     } catch { /* ignore */ }
-    return { placar, ts: agora, cacheHit: false, meta };
+    return { placar, ts: agora, cacheHit: false, meta, inventario: inventario || null };
   }
 
   if (cache && cache.confiavel && cache.placar) {
@@ -110,6 +116,7 @@ export async function lePlacar({ preset = 'last_7d', force = false } = {}) {
       placar: cache.placar,
       ts: cache.ts,
       cacheHit: true,
+      inventario: cache.inventario || null,
       meta: {
         ...meta,
         status: 'erro_temporario',
@@ -126,5 +133,6 @@ export async function lePlacar({ preset = 'last_7d', force = false } = {}) {
     ts: null,
     cacheHit: false,
     meta,
+    inventario: null,
   };
 }

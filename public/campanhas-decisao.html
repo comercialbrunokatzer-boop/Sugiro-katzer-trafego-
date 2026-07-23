@@ -124,9 +124,10 @@ function corDot(c){
   return 'gray';
 }
 function linhaVal(c){
-  if(c.cpl!=null) return `${brl(c.cpl)}/lead · ${c.leads}`;
-  if((c.leads||0)===0) return `${brl(c.gasto)} · 0 lead`;
-  return `${brl(c.gasto)} · ${c.leads} lead`;
+  if(c.leadConfirmado===false) return c.avisoLead||'Form. não confirmado';
+  if(c.cpl!=null) return `${brl(c.cpl)}/form. · ${c.leads}`;
+  if((c.leads||0)===0) return `${brl(c.gasto)} · 0 form.`;
+  return `${brl(c.gasto)} · ${c.leads} form.`;
 }
 
 function slug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||'x';}

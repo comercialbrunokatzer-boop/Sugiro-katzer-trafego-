@@ -2,6 +2,7 @@
 // GET /api/placar-estado
 // GET /api/placar-estado?ceo=1  (senha gestor)
 // GET /api/placar-estado?refresh=1  (força Meta, ignora cache curto)
+// GET /api/placar-estado?diag=1     (inventário de action_types — sem token)
 import { createHash } from 'node:crypto';
 import { agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes } from './_placar-estado.mjs';
 import { lePlacar, leDecisoes, mensagemMeta } from './_placar-io.mjs';
@@ -23,7 +24,7 @@ export async function handler(event) {
   }
 
   const now = agoraBRT();
-  const [{ placar, ts, cacheHit, meta }, decisoes] = await Promise.all([
+  const [{ placar, ts, cacheHit, meta, inventario }, decisoes] = await Promise.all([
     lePlacar({ preset: 'last_7d', force: params.refresh === '1' }),
     leDecisoes(now.data),
   ]);
@@ -44,8 +45,9 @@ export async function handler(event) {
     ? montaSugestaoPrincipal(placar)
     : null;
 
-  return json(200, {
+  const body = {
     ok: true,
+    metricaPrincipal: 'lead_formulario',
     data: now.data,
     agora: now.hm,
     ultimaLeitura: ts ? agoraBRT(new Date(ts)).hm : null,
@@ -58,5 +60,23 @@ export async function handler(event) {
     // Atalhos pro front distinguir cenários
     dadosConfiaveis: metaOut.confiavel && (metaOut.status === 'ok' || metaOut.status === 'sem_gasto' || metaOut.status === 'sem_campanha'),
     integracaoOk: metaOut.confiavel || !!meta?.usandoCache,
-  });
+  };
+
+  if (params.diag === '1') {
+    body.diagnostico = {
+      metrica: 'lead_formulario',
+      fontesLead: placar?.fontesLead || [],
+      prioridade: [
+        'onsite_conversion.lead_grouped',
+        'leadgen_grouped',
+        'onsite_conversion.lead',
+        'leadgen.other',
+        'lead',
+      ],
+      inventario: inventario || null,
+      aviso: 'Inventário sem token. Clique/messaging nunca entram como lead.',
+    };
+  }
+
+  return json(200, body);
 }
