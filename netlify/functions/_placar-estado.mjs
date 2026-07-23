@@ -6,6 +6,7 @@
 const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao', 'desistir', 'manter', 'aumentar']);
 const slug = (s) => String(s || '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'x';
+const brl0 = (v) => `R$ ${Number(v || 0).toFixed(0)}`;
 
 /** Data/hora de Brasília — próprio (o Placar não importa nada da rotina). */
 export function agoraBRT(d = new Date()) {
@@ -44,7 +45,7 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       destino: destino.nome,
       valorDia,
       titulo: `Mover R$ ${valorDia}/dia de ${origem.nome} → ${destino.nome}`,
-      motivo: `${origem.nome}: R$ ${Number(origem.gasto || 0).toFixed(0)} gastos, ${origem.leads || 0} lead. ${destino.nome} tem melhor CPL (${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}/lead` : 'abaixo da média'}).`,
+      motivo: `${origem.nome}: ${brl0(origem.gasto)} gastos, ${origem.leads || 0} lead. ${destino.nome} tem melhor CPL (${destino.cpl != null ? `${brl0(destino.cpl)}/lead` : 'abaixo da média'}).`,
       campanha: `${origem.nome} → ${destino.nome}`,
       gasto: origem.gasto ?? 0,
       leads: origem.leads ?? 0,
@@ -53,13 +54,13 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   }
   if (origem) {
     return {
-      id: 'rev-' + slug(origem.nome),
+      id: `rev-${slug(origem.nome)}`,
       tipo: 'revisar',
       origem: origem.nome,
       destino: null,
       valorDia: null,
       titulo: `Revisar / cortar ${origem.nome}`,
-      motivo: `R$ ${Number(origem.gasto || 0).toFixed(0)} gastos · ${origem.leads || 0} lead — queimando verba.`,
+      motivo: `${brl0(origem.gasto)} gastos · ${origem.leads || 0} lead — queimando verba.`,
       campanha: origem.nome,
       gasto: origem.gasto ?? 0,
       leads: origem.leads ?? 0,
@@ -68,13 +69,13 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   }
   if (destino) {
     return {
-      id: 'esc-' + slug(destino.nome),
+      id: `esc-${slug(destino.nome)}`,
       tipo: 'escalar',
       origem: null,
       destino: destino.nome,
       valorDia,
       titulo: `Escalar ${destino.nome} (+R$ ${valorDia}/dia)`,
-      motivo: `CPL ${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}` : 'bom'} — abaixo da média. Vale mais verba.`,
+      motivo: `CPL ${destino.cpl != null ? brl0(destino.cpl) : 'bom'} — abaixo da média. Vale mais verba.`,
       campanha: destino.nome,
       gasto: destino.gasto ?? 0,
       leads: destino.leads ?? 0,
@@ -129,11 +130,11 @@ export function rotuloDecisao(item = {}) {
     aumentar: '⬆ Aumentou',
   };
   const acao = map[item.decisao] || `· ${item.decisao || 'Decisão'}`;
-  const alvo = item.tipo === 'mover' ? 'mover'
-    : item.tipo === 'escalar' ? 'escalar'
-      : item.tipo === 'revisar' ? 'revisar'
-        : item.tipo === 'campanha' ? 'campanha'
-          : (item.tipo || '');
+  let alvo = item.tipo || '';
+  if (item.tipo === 'mover') alvo = 'mover';
+  else if (item.tipo === 'escalar') alvo = 'escalar';
+  else if (item.tipo === 'revisar') alvo = 'revisar';
+  else if (item.tipo === 'campanha') alvo = 'campanha';
   const aj = item.ajuste ? ` — ${item.ajuste}` : '';
   const camp = item.campanha ? ` *${item.campanha}*` : '';
   return `${acao}${alvo ? ` · ${alvo}` : ''}${camp}${aj}`;
