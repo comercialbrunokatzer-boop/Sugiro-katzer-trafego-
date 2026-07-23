@@ -2,7 +2,7 @@
 // GET /api/placar-estado          -> placar (campanhas + decisão do dia) + sugestões + decisões do Michel.
 // GET /api/placar-estado?ceo=1    -> mesma coisa, mas EXIGE a senha do Gestor (trava "só pra mim").
 import { createHash } from 'node:crypto';
-import { agoraBRT, montaSugestoes, listaDecisoes } from './_placar-estado.mjs';
+import { agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes } from './_placar-estado.mjs';
 import { lePlacar, leDecisoes } from './_placar-io.mjs';
 import { json } from './_infra.mjs';
 
@@ -35,6 +35,7 @@ export async function handler(event) {
     ultimaLeitura: ts ? agoraBRT(new Date(ts)).hm : now.hm,
     placar,                        // { campanhas, totalGasto, totalLeads, cplMedio, decisao }
     sugestoes: montaSugestoes(placar),
+    sugestaoPrincipal: montaSugestaoPrincipal(placar),
     decisoes: listaDecisoes(decisoes),
   });
 }

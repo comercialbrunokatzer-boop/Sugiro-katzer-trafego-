@@ -61,7 +61,7 @@
 </div>
 <div class="wrap">
   <p class="eyebrow">Katzer OS · Placar do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
-  <h1>Campanhas do Michel</h1>
+  <h1>Seu relatório — Campanhas</h1>
   <p class="date" id="date">carregando…</p>
 
   <div class="hero">
@@ -120,12 +120,13 @@ function render(st){
   (st.decisoes||[]).forEach(d=>{
     const cls=d.decisao==='aplicar'?'ap':d.decisao==='ajustar'?'aj':'no';
     const ic=d.decisao==='aplicar'?'✓':d.decisao==='ajustar'?'✎':'⏸';
-    const rot=d.decisao==='aplicar'?'Aplicou':d.decisao==='ajustar'?'Ajustou':'Agora não';
+    const rot=d.decisao==='aplicar'?'Michel aplicou':d.decisao==='ajustar'?'Michel ajustou':'Michel — agora não';
+    const detalhe=d.ajuste||((d.tipo==='mover'||d.tipo==='escalar'||d.tipo==='revisar')?(d.tipo+' · '+d.campanha):d.campanha);
     const el=document.createElement('div');el.className='dec';
-    el.innerHTML=`<div class="mk ${cls}">${ic}</div><div class="tx"><b>${rot}</b> · ${d.tipo==='escalar'?'escalar':'revisar'} <b>${d.campanha}</b>${d.ajuste?` — ${d.ajuste}`:''}<div class="meta">${d.hora}</div></div>`;
+    el.innerHTML=`<div class="mk ${cls}">${ic}</div><div class="tx"><b>${rot}</b> — ${detalhe}<div class="meta">decisão · ${d.hora||''} · confere na Meta</div></div>`;
     db.appendChild(el);
   });
-  if(!(st.decisoes||[]).length)db.innerHTML='<div class="empty">Nada ainda hoje. Quando o Michel tocar uma decisão, aparece aqui na hora.</div>';
+  if(!(st.decisoes||[]).length)db.innerHTML='<div class="empty">Nada ainda hoje. Quando o Michel tocar um botão, aparece aqui na hora.</div>';
   // Campanhas
   const cb=$('#camps');cb.innerHTML='';
   (p.campanhas||[]).slice(0,10).forEach(c=>{

@@ -2,9 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Placar de Campanhas — Michel</title>
+<title>O quadradinho do Michel — Campanhas</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Mesmo padrão visual/PWA da Rotina — conteúdo = campanhas (não tarefas) -->
 <link rel="manifest" href="/manifest-placar.webmanifest">
 <meta name="theme-color" content="#0d1820">
 <meta name="mobile-web-app-capable" content="yes">
@@ -15,189 +14,204 @@
 <link rel="icon" type="image/png" href="/icon-katzer.png">
 <style>
   :root{
-    --ground:#eef1f0;--panel:#fff;--ink:#14252f;--sub:#5c6b74;--hair:#dbe2e0;--gold:#a8792a;--sea:#1f6f66;
-    --ok:#1f9d57;--ok-bg:#e4f2ea;--late:#c0492f;--late-bg:#f7e7e2;--warn:#b8860b;--warn-bg:#f5eeda;
-    --shadow:0 1px 2px rgba(18,34,44,.06),0 8px 24px rgba(18,34,44,.08);
+    --ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;
+    --gold:#d4ac60;--sea:#1f6f66;--sea2:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;
+    --late:#e0765c;--late-bg:#331f1a;--warn:#e0ab3f;--warn-bg:#33290f;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
-  @media (prefers-color-scheme:dark){:root{--ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;--gold:#d4ac60;--sea:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;--late:#e0765c;--late-bg:#331f1a;--warn:#e0ab3f;--warn-bg:#33290f;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:640px;margin:0 auto;padding:clamp(16px,4vw,28px)}
-  .eyebrow{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0}
-  h1{font-size:clamp(1.3rem,4vw,1.7rem);font-weight:800;letter-spacing:-.02em;margin:.3rem 0 .2rem}
-  .date{color:var(--sub);font-size:.9rem;margin:0 0 14px}
-  .resumo{display:flex;gap:8px;background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:10px;box-shadow:var(--shadow);margin-bottom:4px}
-  .resumo .b{flex:1;text-align:center;padding:6px 4px}
-  .resumo .v{font-weight:800;font-size:1.05rem;font-variant-numeric:tabular-nums}
-  .resumo .k{font-size:.68rem;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
-  .sec{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);margin:18px 0 2px}
-  /* Mesmo “quadrado” da Rotina (.task) */
-  .task{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:11px}
-  .task .top{display:flex;align-items:center;gap:11px}
-  .tk{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:.78rem;flex:none;background:var(--ground);color:var(--sub)}
-  .tk.ok{background:var(--ok-bg);color:var(--ok)} .tk.late{background:var(--late-bg);color:var(--late)}
-  .task .nm{flex:1;min-width:0}
-  .task .nm b{font-weight:700;font-size:.95rem;display:block;line-height:1.25}
-  .task .nm small{display:block;color:var(--sub);font-size:.76rem;font-variant-numeric:tabular-nums;margin-top:2px}
-  .why{font-size:.8rem;color:var(--sub);margin:8px 0 0}
-  .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-  .btn{border:0;border-radius:9px;padding:9px 12px;font-weight:800;font-size:.82rem;font-family:inherit;cursor:pointer;background:var(--sea);color:#fff;white-space:nowrap}
-  .btn.ghost{background:transparent;color:var(--sub);border:1px solid var(--hair)}
-  .btn.warn{background:var(--warn);color:#fff}
-  .btn.late{background:var(--late);color:#fff}
-  .btn[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
-  .note{margin-top:9px;width:100%;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:9px;padding:8px 10px;font-size:.85rem;font-family:inherit;display:none}
-  .note.show{display:block}
-  .conf{margin-top:9px;display:none;background:var(--late-bg);border:1px solid var(--late);border-radius:10px;padding:10px 12px;font-size:.85rem}
-  .conf.show{display:block}
-  .conf .row{display:flex;gap:8px;margin-top:8px}
-  .done{margin-top:8px;font-size:.78rem;color:var(--ok);font-weight:700}
-  .empty{color:var(--sub);font-size:.86rem;text-align:center;padding:16px;border:1px dashed var(--hair);border-radius:12px;margin-top:9px}
-  .honesty{margin-top:18px;font-size:.76rem;color:var(--sub);background:var(--warn-bg);border:1px solid var(--hair);border-radius:12px;padding:11px 13px}
-  footer{margin-top:18px;color:var(--sub);font-size:.72rem;text-align:center}
-  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+  .wrap{max-width:420px;margin:0 auto;padding:18px 16px 40px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .k{width:36px;height:36px;border-radius:50%;background:linear-gradient(150deg,var(--sea),#134f49);display:grid;place-items:center;font-weight:800;color:#fff}
+  .brand .t{font-weight:800;font-size:.95rem}.brand .s{font-size:.72rem;color:var(--sub)}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--shadow);padding:16px;margin-top:12px}
+  .card h2{margin:0 0 10px;font-size:1.05rem;font-weight:800}
+  .badge{float:right;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sea2);border:1px solid var(--hair);border-radius:999px;padding:3px 8px}
+  .row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--hair)}
+  .row:last-child{border-bottom:0}
+  .row .nm{flex:1;min-width:0;font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .val{font-size:.82rem;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .dot.red{background:var(--late)}.dot.green{background:var(--ok)}.dot.gray{background:var(--sub)}
+  .hm{text-align:right;color:var(--sub);font-size:.72rem;margin-top:8px;font-variant-numeric:tabular-nums}
+  .btn-open{display:block;width:100%;margin-top:12px;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:.95rem;font-family:inherit;cursor:pointer;background:linear-gradient(150deg,var(--sea),#134f49);color:#fff}
+  .sug{background:rgba(67,192,125,.12);border:1px solid rgba(67,192,125,.35);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .sug .lab{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+  .sug .tit{font-weight:800;font-size:.95rem}
+  .sug .mot{font-size:.8rem;color:var(--sub);margin-top:6px}
+  .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+  .act{border:1px solid var(--hair);background:var(--ground);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .act .ic{font-size:1.2rem;display:block;margin-bottom:4px}
+  .act b{display:block;font-size:.78rem}
+  .act small{display:block;font-size:.62rem;color:var(--sub);margin-top:3px;line-height:1.2}
+  .act.ok{border-color:rgba(67,192,125,.5)}.act.warn{border-color:rgba(224,171,63,.5)}.act.no{border-color:rgba(224,118,92,.5)}
+  .valor{margin-top:12px}
+  .valor label{display:block;font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:6px}
+  .valor input{width:100%;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:12px;font-size:.95rem;font-family:inherit}
+  .okbox{text-align:center;padding:18px 8px}
+  .okbox .big{font-size:2.2rem;margin-bottom:6px}
+  .okbox b{font-size:1.1rem}
+  .okbox p{color:var(--sub);font-size:.85rem;margin:8px 0 0}
+  .mini{margin-top:14px;background:var(--ground);border:1px solid var(--hair);border-radius:12px;padding:12px;font-size:.8rem;color:var(--sub);text-align:left}
+  .mini b{color:var(--ink)}
+  .ghost{margin-top:12px;border:1px solid var(--hair);background:transparent;color:var(--sub);border-radius:10px;padding:10px;width:100%;font-weight:700;font-family:inherit;cursor:pointer}
+  .empty{color:var(--sub);font-size:.85rem;text-align:center;padding:12px}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#e8edeb;color:#0d1820;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
   .toast.show{opacity:1}
+  footer{margin-top:18px;color:var(--sub);font-size:.7rem;text-align:center}
+  .hide{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div id="a2hs" style="display:none;background:linear-gradient(150deg,#1f6f66,#134f49);color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.9rem;line-height:1.4">
-    📲 <b>Deixa o Placar como app:</b>
-    <span id="a2hs-ios">toque em <b>Compartilhar</b> (⬆️) e depois <b>“Adicionar à Tela de Início”</b>.</span>
-    <span id="a2hs-and" style="display:none">toque no <b>⋮</b> e depois <b>“Adicionar à tela inicial”</b>.</span>
-    <br>Ícone próprio · separado da Rotina.
-    <button onclick="document.getElementById('a2hs').style.display='none';localStorage.setItem('a2hs-placar','1')" style="margin-top:8px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:700;border-radius:8px;padding:6px 12px;font-family:inherit;cursor:pointer">ok, entendi</button>
+  <div class="brand">
+    <div class="k">K</div>
+    <div><div class="t">Katzer OS</div><div class="s">Analista de Campanha</div></div>
   </div>
 
-  <p class="eyebrow">Katzer OS · Placar de Campanhas</p>
-  <h1>Bom dia, Michel 👋</h1>
-  <p class="date" id="date">carregando…</p>
-
-  <div class="resumo" id="resumo">
-    <div class="b"><div class="v" id="hGasto">—</div><div class="k">gasto 7d</div></div>
-    <div class="b"><div class="v" id="hLeads">—</div><div class="k">leads</div></div>
-    <div class="b"><div class="v" id="hCpl">—</div><div class="k">CPL médio</div></div>
+  <!-- QUADRADO 1: Campanhas — hoje -->
+  <div class="card" id="cardCamp">
+    <h2>📊 Campanhas — hoje</h2>
+    <div id="lista"></div>
+    <div class="hm" id="hm">—</div>
+    <button class="btn-open" id="btnAbrir">▶ Abrir decisão do dia</button>
   </div>
 
-  <div class="sec">Decisão do dia</div>
-  <div id="sugs"></div>
+  <!-- QUADRADO 2: Decisão do dia -->
+  <div class="card hide" id="cardDec">
+    <span class="badge">1 toque</span>
+    <h2>Decisão do dia</h2>
+    <div id="decBody"></div>
+  </div>
 
-  <div class="sec">Campanhas (valores)</div>
-  <div id="camps"></div>
-
-  <div class="honesty">🔎 <b>CPL = custo por lead</b>, não por venda. Você decide e aplica na Meta na mão — a IA só sugere e registra.</div>
-  <footer>Katzer OS · Placar de Campanhas · mesmo formato da Rotina · dados da Meta</footer>
+  <footer>Modo seguro: registra a decisão · você aplica na Meta</footer>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
 const $=(s)=>document.querySelector(s);
-let DEC={};
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1900);}
-const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const intBR=(v)=>Number(v||0).toLocaleString('pt-BR');
-async function post(body){const r=await fetch('/api/placar-registrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
-async function load(){try{const r=await fetch('/api/placar-estado');render(await r.json());}catch(e){}}
-function diaSemana(d){const[y,m,dd]=d.split('-').map(Number);return['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][new Date(Date.UTC(y,m-1,dd)).getUTCDay()];}
-function fmtData(d){const[y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return`${diaSemana(d)}, ${+dd} de ${mes} de ${y}`;}
+let ST=null, VIEW='lista'; // lista | decisao | feito
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:0});
+const brl2=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-function render(st){
-  if(!st||!st.ok)return;
-  $('#date').textContent=fmtData(st.data)+' · leitura '+(st.ultimaLeitura||st.agora||'');
-  const p=st.placar||{};
-  $('#hGasto').textContent=brl(p.totalGasto);
-  $('#hLeads').textContent=intBR(p.totalLeads);
-  $('#hCpl').textContent=brl(p.cplMedio);
-  DEC={};(st.decisoes||[]).forEach(d=>DEC[d.id]=d);
-
-  // Decisões = cards no formato da Rotina (não lista de tarefas)
-  const sb=$('#sugs');sb.innerHTML='';
-  (st.sugestoes||[]).forEach(s=>{
-    const d=DEC[s.id];
-    const escalar=s.tipo==='escalar';
-    const why=escalar
-      ? `CPL ${brl(s.cpl)} — abaixo da média. Vale mais verba.`
-      : `${brl(s.gasto)} · ${intBR(s.leads)} lead — revisando (corte ou criativo).`;
-    const el=document.createElement('div');
-    el.className='task';
-    el.dataset.id=s.id;el.dataset.campanha=s.campanha;el.dataset.tipo=s.tipo;
-    const okLabel=escalar?'Escalar':'Cortar';
-    const tk=escalar?'▲':'!';
-    const tkCls=escalar?'ok':'late';
-    const doneTxt=d?(d.decisao==='aplicar'?(escalar?'Escalou':'Cortou'):d.decisao==='ajustar'?'Ajustou':'Agora não'):'';
-    el.innerHTML=`
-      <div class="top">
-        <div class="tk ${tkCls}">${tk}</div>
-        <div class="nm">
-          <b>${s.campanha}</b>
-          <small>${escalar?'🟢 escalar':'🔴 revisar'} · ${brl(s.gasto)} · ${intBR(s.leads)} lead(s)${s.cpl!=null?' · CPL '+brl(s.cpl):''}</small>
-        </div>
-      </div>
-      <div class="why">${why}</div>
-      <div class="btns">
-        <button class="btn" data-dec="aplicar" aria-pressed="${d&&d.decisao==='aplicar'}">${okLabel}</button>
-        <button class="btn warn" data-dec="ajustar" aria-pressed="${d&&d.decisao==='ajustar'}">Ajustar</button>
-        <button class="btn ghost" data-dec="agora-nao" aria-pressed="${d&&d.decisao==='agora-nao'}">Agora não</button>
-      </div>
-      <input class="note" placeholder="O que ajustar? ex.: mover R$50/dia">
-      <div class="conf">Cortar <b>${s.campanha}</b> — tem certeza?
-        <div class="row">
-          <button class="btn late" data-yescut>Sim, cortar</button>
-          <button class="btn ghost" data-nocut>Não</button>
-        </div>
-      </div>
-      ${d?`<div class="done">Sua decisão: ${doneTxt} · ${d.hora||''}${d.ajuste?' — '+d.ajuste:''}</div>`:''}`;
-    if(d&&d.decisao==='ajustar'&&d.ajuste){el.querySelector('.note').value=d.ajuste;}
-    sb.appendChild(el);
-  });
-  if(!(st.sugestoes||[]).length)sb.innerHTML='<div class="empty">Sem decisão clara hoje — nenhuma campanha pra escalar ou cortar.</div>';
-
-  // Lista de valores (sem botões) — mesmo card
-  const cb=$('#camps');cb.innerHTML='';
-  (p.campanhas||[]).slice(0,12).forEach(c=>{
-    const el=document.createElement('div');el.className='task';
-    const cpl=c.cpl!=null?('CPL '+brl(c.cpl)):(c.gasto>=50?'⚠️ 0 lead':'sem lead');
-    const mark=c.leads>0?'✓':(c.gasto>=50?'!':'·');
-    const cls=c.leads>0?'ok':(c.gasto>=50?'late':'');
-    el.innerHTML=`<div class="top">
-      <div class="tk ${cls}">${mark}</div>
-      <div class="nm"><b>${c.nome}</b><small>${brl(c.gasto)} · ${intBR(c.leads)} lead(s) · ${cpl}</small></div>
-    </div>`;
-    cb.appendChild(el);
-  });
-  if(!(p.campanhas||[]).length)cb.innerHTML='<div class="empty">Sem campanha com gasto no período.</div>';
+async function load(){
+  try{
+    const r=await fetch('/api/placar-estado');
+    ST=await r.json();
+    render();
+  }catch(e){toast('Sem conexão');}
 }
 
-document.addEventListener('click',async(e)=>{
-  const b=e.target.closest('[data-dec]');
-  const yc=e.target.closest('[data-yescut]');
-  const nc=e.target.closest('[data-nocut]');
-  if(b){
-    const card=b.closest('.task');const dec=b.dataset.dec;
-    card.querySelectorAll('.note,.conf').forEach(x=>x.classList.remove('show'));
-    if(dec==='ajustar'){card.querySelector('.note').classList.add('show');card.querySelector('.note').focus();
-      // confirma no blur/enter via botão Ajustar de novo com texto
-      const inp=card.querySelector('.note');
-      const once=async(ev)=>{if(ev.key&&ev.key!=='Enter')return;inp.removeEventListener('keydown',once);
-        const val=inp.value.trim();if(!val){toast('Escreve o que ajustar');return;}await enviar(card,'ajustar',val);};
-      inp.addEventListener('keydown',once);return;
-    }
-    if(dec==='aplicar'&&card.dataset.tipo==='revisar'){card.querySelector('.conf').classList.add('show');return;}
-    await enviar(card,dec,'');
+function corDot(c){
+  if((c.leads||0)===0 && (c.gasto||0)>=50) return 'red';
+  if((c.leads||0)>0) return 'green';
+  return 'gray';
+}
+function linhaVal(c){
+  if(c.cpl!=null) return `${brl(c.cpl)}/lead · ${c.leads}`;
+  if((c.leads||0)===0) return `${brl(c.gasto)} · 0 lead`;
+  return `${brl(c.gasto)} · ${c.leads} lead`;
+}
+
+function renderLista(){
+  const box=$('#lista');box.innerHTML='';
+  const camps=(ST.placar&&ST.placar.campanhas)||[];
+  if(!camps.length){box.innerHTML='<div class="empty">Sem campanha com gasto no período.</div>';}
+  else camps.slice(0,8).forEach(c=>{
+    const el=document.createElement('div');el.className='row';
+    el.innerHTML=`<div class="nm">${c.nome}</div><div class="val">${linhaVal(c)}</div><div class="dot ${corDot(c)}"></div>`;
+    box.appendChild(el);
+  });
+  $('#hm').textContent=ST.ultimaLeitura||ST.agora||'';
+}
+
+function jaDecidiuPrincipal(){
+  const s=ST.sugestaoPrincipal;if(!s)return null;
+  return (ST.decisoes||[]).find(d=>d.id===s.id)||null;
+}
+
+function renderDecisao(){
+  const body=$('#decBody');
+  const s=ST.sugestaoPrincipal;
+  const done=jaDecidiuPrincipal();
+
+  if(done){
+    const rot=done.decisao==='aplicar'?'Aplicou':done.decisao==='ajustar'?'Ajustou':'Agora não';
+    body.innerHTML=`
+      <div class="okbox">
+        <div class="big">✅</div>
+        <b>Registrado ✅</b>
+        <p>Sua decisão ficou anotada. Agora é só aplicar na Meta.</p>
+      </div>
+      <div class="mini">No seu relatório: <b>Michel ${rot.toLowerCase()} · ${done.hora||''}</b><br>O sistema registra o fato (modo seguro). Conferência na Meta vem depois.</div>
+      <button class="ghost" id="btnRedo">↺ Ver de novo</button>`;
+    $('#btnRedo').onclick=()=>{VIEW='lista';render();};
+    return;
   }
-  if(yc){const card=yc.closest('.task');card.querySelector('.conf').classList.remove('show');await enviar(card,'aplicar','');}
-  if(nc){nc.closest('.task').querySelector('.conf').classList.remove('show');toast('Ok, não cortei');}
-});
 
-async function enviar(card,decisao,ajuste){
-  const r=await post({acao:'decisao',id:card.dataset.id,campanha:card.dataset.campanha,tipo:card.dataset.tipo,decisao,ajuste});
-  if(r.ok){toast(decisao==='agora-nao'?'⏸ Registrado':'✅ Registrado');load();}
-  else toast(r.erro||'não deu, tenta de novo');
+  if(!s){
+    body.innerHTML=`<div class="empty">Sem base clara pra sugerir hoje.<br>Olhe as campanhas e volte amanhã.</div>
+      <button class="ghost" id="btnVoltar">← Voltar</button>`;
+    $('#btnVoltar').onclick=()=>{VIEW='lista';render();};
+    return;
+  }
+
+  body.innerHTML=`
+    <div class="sug">
+      <div class="lab">Sugestão da IA</div>
+      <div class="tit">${s.titulo}</div>
+      <div class="mot">Motivo: ${s.motivo}</div>
+    </div>
+    <div class="actions">
+      <button class="act ok" data-dec="aplicar"><span class="ic">✅</span><b>Aplicar</b><small>Registra — você aplica na Meta</small></button>
+      <button class="act warn" data-dec="ajustar"><span class="ic">✎</span><b>Ajustar</b><small>Você decide o valor</small></button>
+      <button class="act no" data-dec="agora-nao"><span class="ic">✕</span><b>Agora não</b><small>Registra que esperou</small></button>
+    </div>
+    <div class="valor">
+      <label>Valor por dia — você decide</label>
+      <input id="valDia" type="text" inputmode="numeric" placeholder="Digite quanto quiser · ex: R$ 80" value="${s.valorDia!=null?('R$ '+s.valorDia):''}">
+    </div>
+    <button class="ghost" id="btnVoltar2">← Voltar às campanhas</button>`;
+
+  body.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>decidir(b.dataset.dec)));
+  $('#btnVoltar2').onclick=()=>{VIEW='lista';render();};
 }
 
-load();setInterval(load,20000);
-(function(){var standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;var box=document.getElementById('a2hs');if(!box)return;if(standalone){box.style.display='none';return;}var isAndroid=/Android/i.test(navigator.userAgent);document.getElementById('a2hs-ios').style.display=isAndroid?'none':'inline';document.getElementById('a2hs-and').style.display=isAndroid?'inline':'none';if(localStorage.getItem('a2hs-placar')!=='1')box.style.display='block';})();
+async function decidir(decisao){
+  const s=ST.sugestaoPrincipal;if(!s)return;
+  let ajuste='';
+  if(decisao==='ajustar'){
+    ajuste=($('#valDia')&&$('#valDia').value||'').trim();
+    if(!ajuste){toast('Digite o valor / o que ajustar');return;}
+  } else if(decisao==='aplicar' && s.tipo==='mover' && s.valorDia!=null){
+    ajuste=`mover R$${s.valorDia}/dia ${s.origem} → ${s.destino}`;
+  }
+  const r=await fetch('/api/placar-registrar',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({acao:'decisao',id:s.id,campanha:s.campanha,tipo:s.tipo||'mover',decisao,ajuste})
+  }).then(x=>x.json()).catch(()=>({ok:false}));
+  if(r.ok){toast('Registrado');VIEW='decisao';await load();}
+  else toast(r.erro||'Não deu — tenta de novo');
+}
+
+function render(){
+  if(!ST||!ST.ok)return;
+  if(VIEW==='lista'){
+    $('#cardCamp').classList.remove('hide');
+    $('#cardDec').classList.add('hide');
+    renderLista();
+  } else {
+    $('#cardCamp').classList.add('hide');
+    $('#cardDec').classList.remove('hide');
+    renderDecisao();
+  }
+}
+
+$('#btnAbrir').addEventListener('click',()=>{VIEW='decisao';render();});
+load();setInterval(()=>{if(VIEW==='lista')load();},20000);
 </script>
 </body>
 </html>
