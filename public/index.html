@@ -41,7 +41,7 @@
 <script>
 (function () {
   var host = (location.hostname || '').toLowerCase();
-  var isCampanhas = host.indexOf('campanhas-katzer') >= 0;
+  var isCampanhas = /campanhas-katzer|dashing-elf-41a723/.test(host);
   var el = document.getElementById('app');
   if (isCampanhas) {
     document.title = 'Campanhas Katzer';
@@ -67,7 +67,7 @@
       '<p class="lede">Tarefas do dia. Campanhas aqui é só resumo — decisão fica no app Campanhas.</p>' +
       '<a class="card" href="/placar-michel"><div class="ic">🗂️</div><div><div class="t">Placar do Michel</div><div class="s">Tocar Feito em cada tarefa</div></div><div class="arw">▸</div></a>' +
       '<a class="card" href="/placar-gestor"><div class="ic">👀</div><div><div class="t">Placar do Gestor</div><div class="s">% ao vivo · Bruno</div></div><div class="arw">▸</div></a>' +
-      '<a class="card" href="https://campanhas-katzer.netlify.app/"><div class="ic">📊</div><div><div class="t">Abrir Painel de Campanhas</div><div class="s">App separado · outro ícone</div></div><div class="arw">▸</div></a>' +
+      '<a class="card" href="https://dashing-elf-41a723.netlify.app/"><div class="ic">📊</div><div><div class="t">Abrir Painel de Campanhas</div><div class="s">App separado · outro ícone</div></div><div class="arw">▸</div></a>' +
       '<div class="hint">Não misture: Rotina = fazer. Campanhas = pensar (dinheiro).</div>' +
       '<div class="status"><span class="dot"></span> rotina-produtiva-michel</div>' +
       '<footer>Katzer OS · Rotina</footer>';

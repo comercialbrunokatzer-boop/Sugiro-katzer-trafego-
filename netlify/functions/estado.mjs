@@ -2,7 +2,7 @@
 // GET /api/estado        → tarefas + obs + modo + campanhas{resumo}
 // GET /api/estado?ceo=1  → + pontualidade (% + saldo)
 //
-// Decisão / quadradinho NÃO vive aqui. App: https://campanhas-katzer.netlify.app
+// Decisão / quadradinho NÃO vive aqui. App: https://dashing-elf-41a723.netlify.app
 import { createHash } from 'node:crypto';
 import { agoraBRT, pontualidade, TAREFAS, previstoMin, min2hm } from './_rotina.mjs';
 import { leEstado, json } from './_infra.mjs';
@@ -11,7 +11,7 @@ import { listaDecisoes } from './_placar-estado.mjs';
 import { resumoCplBom } from './_campanhas-regras.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
-const CAMPANHAS_APP_URL = (process.env.CAMPANHAS_APP_URL || 'https://campanhas-katzer.netlify.app').replace(/\/+$/, '');
+const CAMPANHAS_APP_URL = (process.env.CAMPANHAS_APP_URL || 'https://dashing-elf-41a723.netlify.app').replace(/\/+$/, '');
 
 function senhaGestorOk(event, params) {
   const h = event.headers || {};

@@ -191,7 +191,7 @@ function rotuloEstadoTarefa(t){
 /** Card Campanhas: só resumo + status da decisão + Abrir (app separado). Sem escalar. */
 function htmlCardCampanhas(t){
   const C=ST.campanhas||{};
-  const link=C.link||'https://campanhas-katzer.netlify.app/';
+  const link=C.link||'https://dashing-elf-41a723.netlify.app/';
   const cta=C.cta||'▶ Abrir Painel de Campanhas';
   const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
   const bom=C.cplBom||'';
@@ -250,7 +250,7 @@ document.addEventListener('click',async(e)=>{
   const abrir=e.target.closest('[data-abrir-campanhas]');
   if(abrir){
     e.preventDefault();
-    const href=abrir.getAttribute('href')||'https://campanhas-katzer.netlify.app/';
+    const href=abrir.getAttribute('href')||'https://dashing-elf-41a723.netlify.app/';
     const camp=(ST.tarefas||[]).find(t=>t.id==='campanhas');
     // Abrir o painel = "feito" na Rotina. Decisão real só no app Campanhas.
     if(camp&&!camp.feito){

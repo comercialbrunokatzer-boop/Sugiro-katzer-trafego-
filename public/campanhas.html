@@ -118,7 +118,7 @@ function render(){
   });
 }
 
-const API_BASE=/campanhas-katzer/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
+const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
 const api=(path)=>API_BASE+path;
 
 async function post(r,decisao,ajuste){

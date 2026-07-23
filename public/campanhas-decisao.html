@@ -106,7 +106,7 @@
 <script>
 const $=(s)=>document.querySelector(s);
 // App Campanhas em campanhas-katzer usa as APIs da Rotina (Meta + Blobs já ligados lá).
-const API_BASE=/campanhas-katzer/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
+const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
 const api=(path)=>API_BASE+path;
 let ST=null, VIEW='lista'; // lista | decisao | feito
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
