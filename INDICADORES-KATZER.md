@@ -64,6 +64,17 @@ O que importa para o caixa da Katzer.
 
 ## Como diagnosticar (Michel)
 
+Assim Michel aprende a **diagnosticar corretamente**:
+
+| Sintoma | Problema provável |
+|---------|-------------------|
+| **Muitos cliques e poucos leads** | Formulário ou promessa do anúncio |
+| **Muitos leads e poucas respostas** | Qualidade do lead ou abordagem |
+| **Muitos qualificados e poucos agendamentos** | Condução comercial |
+| **Muitos agendamentos e poucos comparecimentos** | Confirmação e percepção de valor |
+| **Muitas reuniões e poucas negociações** | Produto, apresentação, preço ou aderência |
+| **Boas negociações e nenhuma venda** | Fechamento, condição ou maturação |
+
 | Se estiver ruim em… | Não faça primeiro… | Olhe antes… |
 |---------------------|--------------------|-------------|
 | **Mídia** | Culpar o corretor | Criativo, frequência, público, CPL |
@@ -71,7 +82,7 @@ O que importa para o caixa da Katzer.
 | **Comercial** | Subir verba | Comparecimento, negociação, proposta |
 | **Financeiro** | Otimizar só CTR/CPL | Venda, VGV, comissão, ROI |
 
-**Frase de ouro:** métrica de mídia sem fase 2–4 é incompleta; venda sem olhar mídia/atendimento também.
+**Frase de ouro:** métrica de mídia sem fase 2–4 é incompleta; venda sem olhar mídia/atendimento também. O Copiloto deve apontar o **sintoma → hipótese** acima antes de sugerir pausar ou escalar.
 
 ---
 
