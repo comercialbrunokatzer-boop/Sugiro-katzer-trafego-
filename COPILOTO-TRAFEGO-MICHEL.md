@@ -103,6 +103,10 @@ Modo seguro: a mão que pausa/escala é do **Michel**. O Copiloto **sugere**.
 
 ---
 
+## 5.1. Proteção contra erro e desperdício
+
+Ver `PROTECAO-ERRO-DESPERDICIO.md`: decisão certa, verba, tokens e não culpar a fase errada.
+
 ## 6. Relação com o que já existe
 
 | Artefato | Papel |
