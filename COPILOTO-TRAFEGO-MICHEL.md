@@ -134,7 +134,10 @@ Ver `PROTECAO-ERRO-DESPERDICIO.md`: decisão certa, verba, tokens e não culpar 
 
 ## 8. Aprendizado do dia (professor embutido)
 
-O Copiloto **ensina** no fluxo. Bloco fixo oficial: `PROFESSOR-EMBUTIDO-MICHEL.md`
+O Copiloto **ensina** no fluxo. Spec: `PROFESSOR-EMBUTIDO-MICHEL.md` + campo no `TEMPLATE-CARTAO-COPILOTO.md`.
+
+**Obrigatório em cada recomendação:** `APRENDIZADO DO DIA` (1 frase no caso).  
+**Opcional (1 conceito/dia):** bloco `MICHEL, APRENDA ISTO`:
 
 ```
 MICHEL, APRENDA ISTO:
@@ -147,16 +150,24 @@ CPL: Mostra o custo de cada cadastro.
 Mas nenhum deles sozinho mostra se estamos vendendo.
 ```
 
-Usar no guia do painel e, quando fizer sentido, no cartão do dia.
+(Usar **só um** desses quatro por dia no cartão; o bloco completo fica no guia do painel.)
 
-**Regra:** um conceito por dia, numa campanha real — ver `ROTINA-DIARIA-COPILOTO.md` (manhã 15 min · meio-dia comercial · fechamento). Em ~60 dias Michel aprende na própria operação.
+**Regra:** um conceito por dia, numa campanha real — ver `ROTINA-DIARIA-COPILOTO.md`. Em ~60 dias Michel aprende na própria operação.
 
 ---
 
-## 9. Próximo passo recomendado (Bruno)
+## 9. Auditoria GitHub (não reinventar)
+
+Checklist dos 12 pontos + política de notificação: `AUDITORIA-GITHUB-CHECKLIST.md`.
+
+Missão ao Executor: **auditar → validar → completar só o ausente.**
+
+---
+
+## 10. Próximo passo recomendado (Bruno)
 
 **Recomendação prática (oficial):** ver `RECOMENDACAO-PRATICA-FASE1.md`
 
 Começar **sem** ferramenta grande. Primeira fase: Michel manda dados Meta → IA diagnostica → Michel executa baixo risco → Bruno só exceções → registra resultado → em **30 dias** automatiza só o repetitivo/confiável.
 
-Docs: mergear esta PR **#10**. Código do placar (#7) entra quando a rotina manual/semi já estiver rodando.
+Docs: mergear esta PR **#10**. Código do placar (#7) entra quando a rotina manual/semi já estiver rodando. Ajustar notificação Bruno na #7 conforme política do checklist.

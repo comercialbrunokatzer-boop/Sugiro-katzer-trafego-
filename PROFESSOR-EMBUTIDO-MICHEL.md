@@ -6,7 +6,22 @@
 | **Uso** | Cartão do Copiloto, guia do placar, onboarding do Michel |
 | **Tom** | Linguagem simples. Sem jargão de API. |
 
-O Copiloto não só recomenda: **ensina**. Este bloco pode ir no cartão (“APRENDIZADO”) ou no guia fixo do painel.
+O Copiloto não só recomenda: **ensina**. Em **toda** recomendação entra o bloco **APRENDIZADO DO DIA** (frase aplicada ao caso). O glossário abaixo (`MICHEL, APRENDA ISTO`) entra **um conceito por dia**, no cartão ou no guia do painel.
+
+### Formato mínimo do aprendizado (obrigatório no cartão)
+
+```
+APRENDIZADO DO DIA:
+<1 frase ligada a esta campanha / este vazamento>
+
+Opcional no mesmo dia (1 só):
+MICHEL, APRENDA ISTO:
+<CTR | CPM | Frequência | CPL — definição em 1 linha + por que importa agora>
+```
+
+Regra: se não houver base (Lei do “sem base para sugerir”), o aprendizado pode ser só:
+“Hoje não dá para afirmar causa — falta cruzar qualidade/conversão.”
+
 
 ---
 

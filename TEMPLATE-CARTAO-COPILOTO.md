@@ -42,6 +42,10 @@ APRENDIZADO DO DIA:
 CPL isolado não define campanha boa ou ruim. O que importa é o
 caminho até reunião, negociação e venda.
 
+(MICHEL, APRENDA ISTO — opcional no mesmo cartão, 1 conceito:)
+Frequência: quantas vezes, em média, a mesma pessoa viu o anúncio.
+Se passou de ~3, o criativo cansa antes do CPL “provar” algo.
+
 PRECISA DE APROVAÇÃO DO BRUNO?
 Não, porque hoje haverá apenas análise e preparação de criativo.
 (Nível 1 — Michel executa sozinho.)
@@ -65,7 +69,8 @@ Trocar o criativo no ar ou redistribuir verba → sobe para **Nível 2** (recome
 | **RECOMENDAÇÃO** | Uma linha: pausar / não pausar / escalar / manter |
 | **AÇÃO PARA O MICHEL** | Lista numerada, clicável na prática (conjunto, frequência, orçamento, criativo) |
 | **POR QUE** | Liga mídia ≠ qualidade ≠ conversão |
-| **APRENDIZADO DO DIA** | 1 frase que ensina o Michel |
+| **APRENDIZADO DO DIA** | **Obrigatório.** 1 frase que ensina o Michel *neste* caso. Preferir ligar ao tipo de problema (mídia / qualidade / conversão) e a **custo por venda**, não só CPL. Sem base → não inventar aprendizado falso. |
+| **MICHEL, APRENDA ISTO** | **Opcional no cartão** (1 conceito/dia): CTR **ou** CPM **ou** frequência **ou** CPL — ver `PROFESSOR-EMBUTIDO-MICHEL.md`. Nunca despejar os quatro no mesmo dia. |
 | **PRECISA DE APROVAÇÃO DO BRUNO?** | Sim/Não + motivo. Ligado ao **nível de autonomia** (`AUTONOMIA-MICHEL-TRAFEGO.md`): Nível 1 = Não; Nível 2 = Não, se recomendação registrada; Nível 3 = Sim |
 
 ---

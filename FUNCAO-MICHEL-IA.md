@@ -59,7 +59,7 @@ Só isso. Nada de criar, preencher ou manter planilha — o placar se refaz sozi
 ---
 
 ## 5. O QUE PRECISO DA PARTE DO MICHEL (só isto)
-1. **Número de WhatsApp** onde ele recebe o placar todo dia.
-2. **OK no fluxo dos 2 toques** de qualidade do lead no Bitrix.
+1. ~~Número de WhatsApp~~ — destino via secret `WHATSAPP_MICHEL` (confirmar setado no Netlify/Actions; **não** escrever o número em docs/logs).
+2. **OK no fluxo dos 2 toques** de qualidade do lead no Bitrix (curioso / número errado / comprador) — ainda a comprovar no código.
 
-> O Michel **não coleta nada da Meta** — isso é com a Carol. A parte dele é receber e marcar.
+> O Michel **não coleta nada da Meta** — isso é com a Carol. A parte dele é receber, decidir no quadradinho, executar na Meta e marcar qualidade.
