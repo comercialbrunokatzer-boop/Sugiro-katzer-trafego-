@@ -167,6 +167,7 @@ async function listaDealsViaHelena({ limit = 250 } = {}) {
  * 1) webhook local  2) proxy Helena (regal-chaja)
  */
 export async function listaDealsFunil({ limit = 250 } = {}) {
+  let localMotivo = null;
   if (bitrixBase()) {
     const categoryId = Number(process.env.BITRIX_CATEGORY_ID || 1);
     const all = [];
@@ -181,7 +182,7 @@ export async function listaDealsFunil({ limit = 250 } = {}) {
         order: { DATE_MODIFY: 'DESC' },
         start,
       });
-      if (!page.ok) break;
+      if (!page.ok) { localMotivo = page.motivo || 'crm.deal.list falhou'; break; }
       const batch = Array.isArray(page.result) ? page.result : [];
       if (!batch.length) break;
       for (const d of batch) {
@@ -212,6 +213,9 @@ export async function listaDealsFunil({ limit = 250 } = {}) {
       }
       return { ok: true, deals: all, fonte: 'webhook-local' };
     }
+    localMotivo = localMotivo || 'webhook local respondeu vazio';
+  } else {
+    localMotivo = 'BITRIX_WEBHOOK ausente no runtime';
   }
 
   const viaHelena = await listaDealsViaHelena({ limit });
@@ -219,7 +223,7 @@ export async function listaDealsFunil({ limit = 250 } = {}) {
   return {
     ok: false,
     deals: [],
-    motivo: viaHelena.motivo || 'BITRIX_WEBHOOK ausente e Helena funil indisponível',
+    motivo: [localMotivo, viaHelena.motivo].filter(Boolean).join(' | ') || 'funil indisponível',
   };
 }
 

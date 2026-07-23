@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { json } from './_infra.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
-const SCOPES = ['builds', 'functions', 'runtime', 'post_processing'];
+const SCOPES = ['builds', 'functions', 'runtime', 'post-processing'];
 
 function senhaOk(event, body) {
   const h = event.headers || {};
@@ -146,6 +146,8 @@ export async function handler(event) {
       keysNaOrigem: keysDisponiveis.filter((k) => /BITRIX|BRUNO_PHONE|WHATSAPP_CEO/i.test(k)),
       copiados,
       erros,
+      destinoTemBitrix: !!(pickEnv(await netlify(`/accounts/${accountSlug}/env?site_id=${dst.id}`), 'BITRIX_WEBHOOK_READ')
+        || pickEnv(await netlify(`/accounts/${accountSlug}/env?site_id=${dst.id}`), 'BITRIX_WEBHOOK_URL')),
       dica: 'Redeploy pra functions pegarem as novas env vars',
     });
   } catch (e) {
