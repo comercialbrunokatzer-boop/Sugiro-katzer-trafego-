@@ -1,0 +1,86 @@
+PROMPT FINAL V6.0 — BLINDADO PRO EXECUTOR
+Katzer OS · Tráfego · Rotina + Painel + Gestor
+================================================
+NÃO inventar. NÃO usar link embed.fbsbx.com/playables (não é ZIP).
+NÃO criar site Netlify aleatório. NÃO queimar token em chat.
+
+────────────────────────────────────────
+1. ESTRUTURA DO ZIP (pastas)
+────────────────────────────────────────
+
+PASTA MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/
+  → index.html
+  DESTINO: raiz do site Netlify rotina-produtiva-michel.netlify.app
+  (arrasta / publica como publish root ou sobrescreve public/index.html + redirect)
+  CONTEÚDO:
+    1. Rotina diária do Michel (sem buraco; Garimpo 10:15)
+    2. Quadradinho 1 da campanha = SÓ OLHAR → abre Painel 2
+
+PASTA MICHEL-PAINEL-2-E-3/
+  → painel.html
+  DESTINO: campanhas-katzer / dashing-elf-41a723  em /painel.html (e /campanhas)
+  CONTEÚDO:
+    Painel 2 Execução: filtros Total | Julho | Ativas + insights + decisão
+    Painel 3 Caçador flutuante com som (pling/bipe) até marcar qualidade
+
+PASTA BRUNO-GESTOR/
+  → gestor.html
+  DESTINO: rotina-produtiva-michel.netlify.app/gestor.html
+  CONTEÚDO:
+    - Ao vivo Michel agora
+    - Rotina do Michel (acompanhar / modificar)
+    - Gestor de tráfego: o que fez / não fez + botão Modificar como Gestor
+    - Relatório de tarde auto-atualizando (só clicar e olhar)
+
+PROMPT-FINAL-V6-EXECUTOR.txt = este arquivo
+
+────────────────────────────────────────
+2. DEPLOY (ordem fixa)
+────────────────────────────────────────
+
+Repo: comercialbrunokatzer-boop/Sugiro-katzer-trafego-
+Branch: cursor/ranking-cpl-formulario-f7d6  (ou a que Bruno apontar)
+
+1) Copiar/alinhar arquivos do ZIP em public/ do repo:
+   - MICHEL-ROTINA…/index.html  →  public/index.html (hub Rotina) + manter /placar-michel
+   - MICHEL-PAINEL…/painel.html →  public/painel.html (+ redirect /painel)
+   - BRUNO-GESTOR/gestor.html   →  public/gestor.html (+ redirect /gestor)
+
+2) Deploy DOS DOIS sites (não inventar slug):
+   gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=rotina-produtiva-michel
+   gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=dashing-elf-41a723
+
+3) Testar (tem que ser HTTP 200, NÃO Page Not Found):
+   https://rotina-produtiva-michel.netlify.app/
+   https://rotina-produtiva-michel.netlify.app/placar-michel
+   https://rotina-produtiva-michel.netlify.app/gestor.html
+   https://dashing-elf-41a723.netlify.app/painel.html
+   https://dashing-elf-41a723.netlify.app/campanhas
+
+────────────────────────────────────────
+3. REGRAS DE PRODUTO (não negociar)
+────────────────────────────────────────
+
+Rotina = DISCIPLINA · visualizar (sem Aplicar / sem escalar / sem Caçador)
+Painel isolado = EXECUTAR (2+3: decisão + caçador flutuante)
+Lead = formulário Meta OU WhatsApp (cliente chamou). Clique NUNCA.
+CPL BOM = gasto ÷ (Bom + Comprador). Sem caça = volume vazio.
+TRAVA SEM BASE: <10 leads não escala.
+PUBLICO EXTERNO: EUA/MIAMI/PORTUGAL não escala.
+Sem estrutura EN → lead EN = Curioso.
+Nome campanha: [PRODUTO]_[CIDADE]_[CONSTRUTORA]_[PÚBLICO]_[DATA]_[TIPO]
+Fort Myers = Penha · Amanay = Itapoá · Barra View = Santer · Grant Home = Barra Velha/Rogga
+Mix 80%: Amanay 30 · FortMyers 20 · BarraView 15 · GrantHome 15
+
+────────────────────────────────────────
+4. CHECKLIST ANTES DE AVISAR BRUNO
+────────────────────────────────────────
+
+[ ] / na Rotina não dá 404
+[ ] Placar Michel: 8 tarefas, Garimpo 10:15, Campanhas = só olhar
+[ ] Painel: Total|Julho|Ativas + Decisão + Caçador float com som
+[ ] /gestor.html: ao vivo + relatório tarde + modificar
+[ ] npm test passa
+[ ] Status final: PRONTO PARA TESTE DO BRUNO
+
+FIM.

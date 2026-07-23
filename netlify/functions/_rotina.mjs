@@ -4,6 +4,7 @@
 export const TZ = 'America/Sao_Paulo';
 
 // 8 tarefas da manhã (horário base = modo CASA). Katzer = tudo +45 min.
+// V6: Garimpo 10:15 (antes do buraco do meio-dia) — sem furo na manhã.
 export const TAREFAS = [
   { id: 'reunioes',  nome: 'Reuniões',            base: '08:00' },
   { id: 'agend',     nome: 'Agendamentos/Atend.', base: '08:10' },
@@ -11,7 +12,7 @@ export const TAREFAS = [
   { id: 'instagram', nome: 'Instagram',           base: '08:35' },
   { id: 'campanhas', nome: 'Campanhas',           base: '08:55' },
   { id: 'discadora', nome: 'Discadora',           base: '09:15' },
-  { id: 'garimpo',   nome: 'Garimpo',             base: '09:35' },
+  { id: 'garimpo',   nome: 'Garimpo',             base: '10:15' },
   { id: 'auditor',   nome: 'Lista do Auditor',    base: '12:00' },
 ];
 

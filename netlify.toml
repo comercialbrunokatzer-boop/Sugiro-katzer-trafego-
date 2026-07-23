@@ -52,17 +52,25 @@
   to = "/painel-michel.html"
   status = 200
 [[redirects]]
+  from = "/painel"
+  to = "/painel.html"
+  status = 200
+[[redirects]]
+  from = "/gestor"
+  to = "/gestor.html"
+  status = 200
+[[redirects]]
   from = "/placar-gestor"
-  to = "/painel-ceo.html"
+  to = "/gestor.html"
   status = 200
   force = true
 [[redirects]]
   from = "/painel-gestor"
-  to = "/painel-ceo.html"
+  to = "/gestor.html"
   status = 200
 [[redirects]]
   from = "/placar-gestor.html"
-  to = "/painel-ceo.html"
+  to = "/gestor.html"
   status = 200
   force = true
 [[redirects]]
