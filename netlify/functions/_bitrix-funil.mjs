@@ -142,7 +142,7 @@ async function telefonesPorContato(contactIds = []) {
 }
 
 /** Fallback: Helena já tem BITRIX_WEBHOOK_READ — App Decisão puxa o funil por lá. */
-async function listaDealsViaHelena({ limit = 500 } = {}) {
+async function listaDealsViaHelena({ limit = 400, produtos = [] } = {}) {
   const base = (process.env.HELENA_FUNIL_URL || 'https://regal-chaja-662035.netlify.app').replace(/\/+$/, '');
   // WHATSAPP_CEO vem do GitHub secret (valor real). BRUNO_PHONE copiado via API
   // Netlify pode vir mascarado — só usar se tiver ≥10 dígitos.
@@ -154,7 +154,13 @@ async function listaDealsViaHelena({ limit = 500 } = {}) {
     || '';
   if (!key) return { ok: false, deals: [], motivo: 'sem key p/ Helena funil' };
   try {
-    const url = `${base}/api/funil-katzer?limit=${limit}&key=${encodeURIComponent(key)}`;
+    const prod = [...new Set((produtos || []).filter(Boolean))].slice(0, 8).join(',');
+    const qs = new URLSearchParams({
+      limit: String(limit),
+      key,
+    });
+    if (prod) qs.set('produtos', prod);
+    const url = `${base}/api/funil-katzer?${qs}`;
     const r = await fetch(url, {
       headers: { 'x-funil-key': key },
     });
@@ -188,7 +194,10 @@ async function listaDealsViaHelena({ limit = 500 } = {}) {
  * Lista negócios do funil Katzer com etapa + WhatsApp.
  * 1) webhook local  2) proxy Helena (regal-chaja)
  */
-export async function listaDealsFunil({ limit = 250 } = {}) {
+export async function listaDealsFunil({
+  limit = 300,
+  produtos = ['ALICERCE', 'PUNTA', 'GRANT', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'FORT MYERS', 'AMANAY'],
+} = {}) {
   let localMotivo = null;
   const baseNow = bitrixBase();
   const baseOk = baseNow && /bitrix24\.com/i.test(baseNow);
@@ -242,7 +251,7 @@ export async function listaDealsFunil({ limit = 250 } = {}) {
     localMotivo = baseNow ? 'BITRIX_WEBHOOK inválido (sem host bitrix24)' : 'BITRIX_WEBHOOK ausente no runtime';
   }
 
-  const viaHelena = await listaDealsViaHelena({ limit });
+  const viaHelena = await listaDealsViaHelena({ limit, produtos });
   if (viaHelena.ok) return viaHelena;
   return {
     ok: false,

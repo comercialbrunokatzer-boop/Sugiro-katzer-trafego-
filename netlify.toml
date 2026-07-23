@@ -126,10 +126,14 @@
   to = "/.netlify/functions/helena-auditora"
   status = 200
   force = true
+[functions.decisao-app]
+  timeout = 26
+
 [[redirects]]
   from = "/api/decisao-app"
   to = "/.netlify/functions/decisao-app"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/api/sync-bitrix-env"

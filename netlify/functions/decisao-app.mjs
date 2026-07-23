@@ -209,7 +209,10 @@ async function payloadApp({ incluirGestor = false } = {}) {
     leCicloCampanhas().catch(() => ({ mapa: {} })),
     leLeadsHoje().catch(() => ({ leads: [] })),
     leFeedDecisao(),
-    listaDealsFunil({ limit: 500 }).catch(() => ({ ok: false, deals: [] })),
+    listaDealsFunil({
+      limit: 300,
+      produtos: ['ALICERCE', 'PUNTA', 'GRANT', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'FORT MYERS', 'AMANAY'],
+    }).catch(() => ({ ok: false, deals: [] })),
     metaInsightsPeriodo({ since: '2025-07-12' }).catch(() => ({ ok: false, data: [] })),
   ]);
 
