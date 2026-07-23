@@ -33,6 +33,39 @@ async function netlify(path, { method = 'GET', body } = {}) {
   return data;
 }
 
+
+function shapeUrl(raw) {
+  const v = String(raw || '').trim().replace(/^["']|["']$/g, '');
+  if (!v) return { empty: true };
+  let u = v;
+  if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
+  try {
+    const parsed = new URL(u.replace(/\/+$/, '') + '/');
+    return {
+      len: v.length,
+      protocol: parsed.protocol,
+      host: parsed.host,
+      pathParts: parsed.pathname.split('/').filter(Boolean).length,
+      looksBitrix: /bitrix24/i.test(parsed.host),
+      startsHttps: /^https:\/\//i.test(v),
+    };
+  } catch (e) {
+    return { len: v.length, invalid: true, err: String(e.message || e) };
+  }
+}
+
+function ensureBitrixUrl(raw) {
+  let v = String(raw || '').trim().replace(/^["']|["']$/g, '');
+  if (!v) return v;
+  if (!/^https?:\/\//i.test(v)) {
+    // token solto ou path sem host → assume portal Katzer
+    if (/^rest\//i.test(v) || /^\d+\//.test(v)) v = `https://katzer.bitrix24.com.br/${v.replace(/^\/+/, '')}`;
+    else if (/bitrix24\.com/i.test(v)) v = `https://${v}`;
+    else v = `https://katzer.bitrix24.com.br/rest/${v.replace(/^\/+/, '')}`;
+  }
+  return v.replace(/\/+$/, '') + '/';
+}
+
 function pickEnv(vars, key) {
   const hit = (vars || []).find((v) => (v.key || v.Key || v.name) === key);
   if (!hit) return null;
@@ -117,8 +150,9 @@ export async function handler(event) {
     const copiados = [];
     const erros = [];
     for (const K of keys) {
-      const V = pickEnv(envSrc, K);
+      let V = pickEnv(envSrc, K);
       if (!V) continue;
+      if (/BITRIX_WEBHOOK/i.test(K)) V = ensureBitrixUrl(V);
       try {
         const how = await setEnv(accountSlug, dst.id, K, V);
         copiados.push(`${K}:${how}`);
@@ -146,6 +180,10 @@ export async function handler(event) {
       keysNaOrigem: keysDisponiveis.filter((k) => /BITRIX|BRUNO_PHONE|WHATSAPP_CEO/i.test(k)),
       copiados,
       erros,
+      shapes: {
+        read: shapeUrl(pickEnv(envSrc, 'BITRIX_WEBHOOK_READ')),
+        write: shapeUrl(pickEnv(envSrc, 'BITRIX_WEBHOOK_WRITE')),
+      },
       destinoTemBitrix: !!(pickEnv(await netlify(`/accounts/${accountSlug}/env?site_id=${dst.id}`), 'BITRIX_WEBHOOK_READ')
         || pickEnv(await netlify(`/accounts/${accountSlug}/env?site_id=${dst.id}`), 'BITRIX_WEBHOOK_URL')),
       dica: 'Redeploy pra functions pegarem as novas env vars',

@@ -63,13 +63,22 @@ export function normalizaNomeFase(raw) {
 }
 
 function bitrixBase() {
-  return (
+  let u = (
     process.env.BITRIX_WEBHOOK_READ
     || process.env.BITRIX_WEBHOOK_URL
     || process.env.BITRIX24_WEBHOOK
     || process.env.BITRIX_WEBHOOK_WRITE
     || ''
-  ).replace(/\/+$/, '');
+  ).trim();
+  if (!u) return '';
+  u = u.replace(/^["']|["']$/g, '');
+  u = u.replace(/\/(?:[a-z][a-z0-9_]*\.)+[a-z0-9_]+(?:\.json)?\/?$/i, '/');
+  if (!/^https?:\/\//i.test(u)) {
+    if (/^rest\//i.test(u) || /^\d+\//.test(u)) u = `https://katzer.bitrix24.com.br/${u.replace(/^\/+/, '')}`;
+    else if (/bitrix24\.com/i.test(u)) u = `https://${u}`;
+    else u = `https://katzer.bitrix24.com.br/rest/${u.replace(/^\/+/, '')}`;
+  }
+  return u.replace(/\/+$/, '');
 }
 
 function portalBase() {
@@ -86,15 +95,23 @@ function linkWhatsApp(telefone) {
 async function bitrixCall(metodo, params = {}) {
   const base = bitrixBase();
   if (!base) return { ok: false, result: [], motivo: 'BITRIX_WEBHOOK ausente' };
-  const url = `${base}/${metodo}.json`;
   try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    });
+    // Bitrix REST aceita GET com query (igual Helena) — mais compatível com webhooks
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(params || {})) {
+      if (Array.isArray(v)) v.forEach((it, i) => qs.append(`${k}[${i}]`, String(it)));
+      else if (v && typeof v === 'object') {
+        for (const [k2, v2] of Object.entries(v)) qs.append(`${k}[${k2}]`, String(v2));
+      } else if (v != null) qs.append(k, String(v));
+    }
+    const url = `${base}/${metodo}.json${qs.toString() ? `?${qs}` : ''}`;
+    // valida URL antes do fetch
+    // eslint-disable-next-line no-new
+    new URL(url);
+    const r = await fetch(url);
     const j = await r.json().catch(() => ({}));
     if (j.error) return { ok: false, result: [], motivo: j.error_description || j.error };
+    if (!r.ok) return { ok: false, result: [], motivo: `HTTP ${r.status}` };
     return { ok: true, result: j.result || [], total: j.total };
   } catch (e) {
     return { ok: false, result: [], motivo: String(e.message || e) };
