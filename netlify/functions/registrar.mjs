@@ -12,6 +12,8 @@ import { agoraBRT, previstoMin, min2hm, hm2min, TAREFAS } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, json } from './_infra.mjs';
 import { registraDecisao, rotuloDecisao } from './_placar-estado.mjs';
 import { leDecisoes, salvaDecisoes } from './_placar-io.mjs';
+import { validaGarimpo, mensagemAlertaGarimpo } from './_garimpo.mjs';
+import { persisteGarimpo } from './_garimpo-sheets.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 
@@ -177,58 +179,98 @@ export async function handler(event) {
     const t = TAREFAS.find((x) => x.id === body.tarefa);
     if (!t) return json(400, { ok: false, erro: 'tarefa desconhecida' });
     let nota = (body.nota || '').toString().slice(0, 400);
-    let garimpoMeta = null;
 
-    // V6 FINAL: formulário Garimpo — qtd 0–5+ · nome · telefone opcional
+    // Auditoria Parte 1: qtd 0 sem nome · multi-leads · Sheets · alerta 0/5+
     if (t.id === 'garimpo') {
-      const qtdRaw = body.qtd != null ? String(body.qtd).trim() : '';
-      const qtdOk = ['0', '1', '2', '3', '4', '5', '5+'].includes(qtdRaw);
-      const qtd = qtdOk ? (qtdRaw === '5' ? '5' : qtdRaw) : null;
-      const nome = String(body.nome || '').trim() || (nota.match(/^[^|]+/) || [''])[0].trim();
-      const telefone = String(body.telefone || body.fone || '').trim();
-      if (!qtd) {
-        return json(400, { ok: false, erro: 'Garimpo: selecione a quantidade (0 a 5+).' });
+      const v = validaGarimpo(body);
+      if (!v.ok) return json(400, { ok: false, erro: v.erro });
+      const garimpoMeta = v.meta;
+      const dataBR = now.data.split('-').reverse().join('/');
+      const dataHm = `${dataBR.slice(0, 5)} ${now.hm}`;
+      const persist = await persisteGarimpo({
+        data: now.data,
+        dataBR,
+        hora: now.hm,
+        responsavel: 'Michel',
+        qtd: garimpoMeta.qtd,
+        nome: garimpoMeta.nome,
+        telefone: garimpoMeta.telefone,
+        leads: garimpoMeta.leads,
+        alertaGestor: garimpoMeta.alertaGestor,
+      });
+      if (!persist.ok) {
+        return json(502, {
+          ok: false,
+          erro: `Planilha Garimpo falhou: ${persist.sheets?.motivo || 'erro'}`,
+          sheets: persist.sheets,
+        });
       }
-      if (qtd !== '0' && nome.length < 3) {
-        return json(400, { ok: false, erro: 'Garimpo: nome completo do cliente é obrigatório (exceto qtd 0).' });
-      }
-      const nomeFinal = nome.length >= 3 ? nome : 'Nenhum lead encontrado';
-      garimpoMeta = { qtd, nome: nomeFinal, telefone: telefone || null, alertaGestor: qtd === '0' || qtd === '5+' };
       nota = [
-        `Qtd ${qtd}`,
-        `Cliente: ${nomeFinal}`,
-        telefone ? `Tel: ${telefone}` : null,
+        `Qtd ${garimpoMeta.qtd}`,
+        garimpoMeta.qtd === '0' ? 'Nenhum lead' : `Cliente(s): ${garimpoMeta.nome}`,
+        garimpoMeta.telefone ? `Tel: ${garimpoMeta.telefone}` : null,
       ].filter(Boolean).join(' · ');
+
+      estado.tarefas[t.id] = {
+        min: now.min,
+        hora: now.hm,
+        nota,
+        garimpo: garimpoMeta,
+        sheets: persist.sheets,
+      };
+      await salvaEstado(estado);
+      const dif = now.min - previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
+      const modoIco = estado.modo === 'katzer' ? '🏢' : '🏠';
+      let msg;
+      if (garimpoMeta.alertaGestor) {
+        msg = [
+          mensagemAlertaGarimpo({
+            qtd: garimpoMeta.qtd,
+            dataHm,
+            leads: garimpoMeta.leads,
+          }),
+          `${emojiDif(dif)} ${modoIco}`,
+        ].join('\n');
+      } else {
+        msg = [
+          '⛏️ Relatório Garimpo',
+          `*Garimpo 10:15* · ${now.hm} · ${emojiDif(dif)} ${modoIco}`,
+          `Quantidade: *${garimpoMeta.qtd}*`,
+          ...garimpoMeta.leads.map((l) => `· ${l.nome}${l.telefone ? ` · ${l.telefone}` : ''}`),
+        ].join('\n');
+      }
+      const w = ceo ? await enviaWhats(ceo, msg) : { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
+      return json(200, {
+        ok: true,
+        tarefa: t.id,
+        hora: now.hm,
+        difMin: dif,
+        whats: w,
+        garimpo: garimpoMeta,
+        sheets: persist.sheets,
+        blobs: persist.blobs,
+        toast: garimpoMeta.alertaGestor
+          ? (garimpoMeta.qtd === '0'
+            ? '⛏️ Relatório 0 enviado · gestor avisado (dia zerado)'
+            : '⛏️ Relatório 5+ enviado · gestor avisado')
+          : '⛏️ Relatório Garimpo salvo',
+      });
     }
 
     estado.tarefas[t.id] = {
       min: now.min,
       hora: now.hm,
       nota,
-      ...(garimpoMeta ? { garimpo: garimpoMeta } : {}),
     };
     await salvaEstado(estado);
     const dif = now.min - previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
     const modoIco = estado.modo === 'katzer' ? '🏢' : '🏠';
     let msg = `✅ Michel — *${t.nome}* · feito ${now.hm} · ${emojiDif(dif)} ${modoIco}`;
-    if (t.id === 'garimpo' && garimpoMeta) {
-      const flag = garimpoMeta.alertaGestor
-        ? (garimpoMeta.qtd === '0' ? '⚠️ QTD 0 — ouro zerado hoje' : '🔥 QTD 5+ — ouro cheio')
-        : '⛏️ Relatório Garimpo';
-      msg = [
-        `${flag}`,
-        `*Garimpo 10:15* · ${now.hm} · ${emojiDif(dif)} ${modoIco}`,
-        `Quantidade: *${garimpoMeta.qtd}*`,
-        `Cliente: *${garimpoMeta.nome}*`,
-        garimpoMeta.telefone ? `Tel: ${garimpoMeta.telefone}` : null,
-        '',
-        'Planilha Katzer · meta diária 0–5+',
-      ].filter(Boolean).join('\n');
-    } else if (nota) {
+    if (nota) {
       msg += `\n📝 ${nota}`;
     }
     const w = ceo ? await enviaWhats(ceo, msg) : { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
-    return json(200, { ok: true, tarefa: t.id, hora: now.hm, difMin: dif, whats: w, garimpo: garimpoMeta });
+    return json(200, { ok: true, tarefa: t.id, hora: now.hm, difMin: dif, whats: w });
   }
 
   if (acao === 'desfazer') {
