@@ -46,16 +46,19 @@ Meta Ads + Advantage+ + Meta IA
 
 ## 3. Entrega diária ao Michel (formato fixo)
 
-Todos os dias, **só isto** (WhatsApp + tela do placar):
+**Template oficial (exemplo do CEO):** ver `TEMPLATE-CARTAO-COPILOTO.md`  
+(Campanha Fort Myers — Investidores: situação → significado → dado comercial → recomendação → ação → por quê → aprendizado → precisa Bruno?).
 
-1. **O que aconteceu** — gasto, leads, CPL do período  
-2. **O que está bom** — 🟢 (escalar / manter)  
-3. **O que está ruim** — 🔴 (revisar / vazamento)  
-4. **Por que provavelmente aconteceu** — 1–2 linhas (mídia ≠ qualidade ≠ conversão)  
-5. **O que ele deve fazer hoje** — no máximo 3 ações  
-6. **Onde clicar** — caminho curto no Ads Manager (nome da campanha + ação)  
-7. **O que não deve alterar** — lista explícita (protege Advantage+/estrutura boa)  
-8. **Aprendizado do dia** — 1 frase que fica no histórico
+Resumo dos blocos obrigatórios:
+
+1. **CAMPANHA / SITUAÇÃO** — fato numérico + janela  
+2. **O QUE ISSO SIGNIFICA** — traduz sem pânico  
+3. **DADO COMERCIAL** — funil pós-cadastro (Fase B); na A, avisar se só Meta  
+4. **RECOMENDAÇÃO** — pausar / não pausar / escalar / manter  
+5. **AÇÃO PARA O MICHEL** — passos numerados (onde clicar / o que não alterar)  
+6. **POR QUE** — mídia ≠ qualidade ≠ conversão  
+7. **APRENDIZADO DO DIA** — 1 frase  
+8. **PRECISA DE APROVAÇÃO DO BRUNO?** — Sim/Não + motivo  
 
 Modo seguro: a mão que pausa/escala é do **Michel**. O Copiloto **sugere**.
 
