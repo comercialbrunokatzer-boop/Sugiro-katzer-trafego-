@@ -183,6 +183,7 @@ async function listaDealsViaHelena({ limit = 400, produtos = [] } = {}) {
       utmContent: d.utmContent || '',
       telefone: d.telefone || null,
       whatsappUrl: d.whatsappUrl || linkWhatsApp(d.telefone),
+      dateCreate: d.dateCreate || null,
     }));
     return { ok: true, deals, fonte: 'helena' };
   } catch (e) {
@@ -314,8 +315,9 @@ export function produtoCampanha(nomeCampanha) {
   return null;
 }
 
-function hayContemProduto(hay, produto) {
+function hayContemProduto(hay, produto, nomeCampanha = '') {
   if (!produto) return false;
+  const nome = String(nomeCampanha || '').toUpperCase();
   if (produto === 'BR_SC') {
     return /\bCIDADES\s+SC\b/.test(hay) || /\bSC\s*\+\s*PR\b/.test(hay) || /\bFORT\s*MYERS\s+SC\b/.test(hay);
   }
@@ -324,6 +326,17 @@ function hayContemProduto(hay, produto) {
     return /PUNTA|TORRESANI/.test(hay);
   }
   if (produto === 'NOVACONFIG' || produto === 'PUBLICOS') return /NOVACONFIG|PUBLICOS/.test(hay);
+  if (produto === 'ALICERCE') {
+    if (!/ALICERCE/.test(hay)) return false;
+    // Não misturar form de outro corretor (ex.: EDSEL) na campanha do Alisson
+    if (/EDSEL/.test(hay)) return false;
+    if (/ALISSON/.test(nome)) {
+      return /ALISSON/.test(hay)
+        || /KATZER\s+ALICERCE/.test(hay)
+        || /PATROC\.?\s+ALICERCE/.test(hay);
+    }
+    return true;
+  }
   return hay.includes(produto);
 }
 
@@ -341,7 +354,7 @@ export function dealBateCampanha(deal, nomeCampanha) {
 
   // Se a campanha tem produto conhecido → SÓ casa deal desse produto (fase correta)
   const produto = produtoCampanha(nomeCampanha);
-  if (produto) return hayContemProduto(hay, produto);
+  if (produto) return hayContemProduto(hay, produto, nome);
 
   // Fallbacks só quando não há produto no nome
   const isBrSc = /(?:^|[^A-Z0-9])BR[_-\s]?SC(?:[^A-Z0-9]|$)/.test(nome) || /_BR_SC/.test(nome);
@@ -361,8 +374,17 @@ export function dealBateCampanha(deal, nomeCampanha) {
  * Para uma campanha: TODAS as fases do funil + qtd + leads (WA/Bitrix).
  * Fases sem lead vêm com n=0 (Michel vê o funil inteiro).
  */
-export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = []) {
-  const matched = (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha));
+function dealDentroDoPeriodo(deal, inicioISO) {
+  if (!inicioISO || !deal?.dateCreate) return true;
+  const ini = Date.parse(inicioISO);
+  const cri = Date.parse(deal.dateCreate);
+  if (!Number.isFinite(ini) || !Number.isFinite(cri)) return true;
+  // 3 dias de folga (fuso / atraso de sync Meta→Bitrix)
+  return cri >= (ini - 3 * 24 * 60 * 60 * 1000);
+}
+
+export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], { inicioISO = null } = {}) {
+  const matched = (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha) && dealDentroDoPeriodo(d, inicioISO));
   const map = new Map();
   for (const nome of [...ORDEM_FUNIL, ...FASES_TERMINAIS]) {
     map.set(nome, { nome, n: 0, leads: [] });

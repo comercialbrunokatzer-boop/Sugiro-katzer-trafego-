@@ -126,13 +126,14 @@ function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = []) {
     const ativa = comCiclo.ciclo?.ativa === true;
     const leadsCamp = leadsDaCampanha(leads, c.nome);
     const leadsHot = montaLeadsHot(leadsCamp);
-    // Fases do Funil Novo Katzer (Bitrix) — bate com os forms da Meta
-    const fasesInfo = fasesPorCampanha(dealsBitrix, c.nome, leadsCamp);
+    const inicioISO = comCiclo.ciclo?.inicioISO || null;
+    // Fases do Funil Novo Katzer (Bitrix) — produto certo + período da campanha
+    const fasesInfo = fasesPorCampanha(dealsBitrix, c.nome, leadsCamp, { inicioISO });
     return {
       id: c.id || c.nome,
       name: c.nome,
       inicio: comCiclo.dataSubiu || '—',
-      inicioISO: comCiclo.ciclo?.inicioISO || null,
+      inicioISO,
       gasto: brl(c.gasto),
       gastoNum: c.gasto,
       forms,
