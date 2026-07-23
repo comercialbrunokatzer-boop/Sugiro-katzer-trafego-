@@ -155,8 +155,8 @@ Usar no guia do painel e, quando fizer sentido, no cartão do dia.
 
 ## 9. Próximo passo recomendado (Bruno)
 
-1. Mergear docs do canal (#8/#9) + esta SPEC.  
-2. Mergear ou completar a **#7** com o formato de 8 blocos (missão Copilot).  
-3. Só então Fase B (Helena+CRM).
+**Recomendação prática (oficial):** ver `RECOMENDACAO-PRATICA-FASE1.md`
 
-Bruno clica: Pull Requests do repo **Supervisor de Tráfego Katzer** (`Sugiro-katzer-trafego-` no GitHub) → revisar e mergear.
+Começar **sem** ferramenta grande. Primeira fase: Michel manda dados Meta → IA diagnostica → Michel executa baixo risco → Bruno só exceções → registra resultado → em **30 dias** automatiza só o repetitivo/confiável.
+
+Docs: mergear esta PR **#10**. Código do placar (#7) entra quando a rotina manual/semi já estiver rodando.
