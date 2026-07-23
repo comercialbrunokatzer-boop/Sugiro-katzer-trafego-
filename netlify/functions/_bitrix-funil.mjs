@@ -206,6 +206,10 @@ export async function listaDealsFunil({
   limit = 300,
   produtos = ['ALICERCE', 'PUNTA', 'GRANT', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'FORT MYERS', 'AMANAY'],
 } = {}) {
+  // Helena primeiro: já enriquece nome/telefone (contact.get) e evita doble hit no Bitrix
+  const viaHelena = await listaDealsViaHelena({ limit, produtos });
+  if (viaHelena.ok && (viaHelena.deals || []).length) return viaHelena;
+
   let localMotivo = null;
   const baseNow = bitrixBase();
   const baseOk = baseNow && /bitrix24\.com/i.test(baseNow);
@@ -263,12 +267,11 @@ export async function listaDealsFunil({
     localMotivo = baseNow ? 'BITRIX_WEBHOOK inválido (sem host bitrix24)' : 'BITRIX_WEBHOOK ausente no runtime';
   }
 
-  const viaHelena = await listaDealsViaHelena({ limit, produtos });
   if (viaHelena.ok) return viaHelena;
   return {
     ok: false,
     deals: [],
-    motivo: [localMotivo, viaHelena.motivo].filter(Boolean).join(' | ') || 'funil indisponível',
+    motivo: [viaHelena.motivo, localMotivo].filter(Boolean).join(' | ') || 'funil indisponível',
   };
 }
 
