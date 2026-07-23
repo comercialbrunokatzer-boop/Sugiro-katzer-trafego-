@@ -3,9 +3,11 @@
 // e monta a lista de sugestões a partir do placar. Sem I/O e SEM depender da
 // rotina — o Placar é um quintal independente (facilita o corte #6 depois).
 
-const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao']);
+const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao', 'desistir', 'manter', 'aumentar']);
 const slug = (s) => String(s || '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'x';
+
+export { slug };
 
 /** Data/hora de Brasília — próprio (o Placar não importa nada da rotina). */
 export function agoraBRT(d = new Date()) {
@@ -93,7 +95,8 @@ export function registraDecisao(decisoes, { id, campanha, tipo, decisao, ajuste,
   decisoes.itens = decisoes.itens || {};
   decisoes.itens[id] = {
     id, campanha: campanha || '', tipo: tipo || '', decisao,
-    ajuste: decisao === 'ajustar' ? String(ajuste || '').slice(0, 300) : '',
+    ajuste: (decisao === 'ajustar' || decisao === 'aumentar' || !!ajuste)
+      ? String(ajuste || '').slice(0, 300) : '',
     hora: hora || '', min: Number.isFinite(min) ? min : null,
   };
   return decisoes;
@@ -106,8 +109,21 @@ export function listaDecisoes(decisoes = {}) {
 
 /** Rótulo curto e honesto de uma decisão (pro WhatsApp/log). */
 export function rotuloDecisao(item = {}) {
-  const acao = item.decisao === 'aplicar' ? '✅ Aplicou' : item.decisao === 'ajustar' ? '✎ Ajustou' : '⏸ Agora não';
-  const alvo = item.tipo === 'mover' ? 'mover' : item.tipo === 'escalar' ? 'escalar' : 'revisar';
-  const aj = item.decisao === 'ajustar' && item.ajuste ? ` — ${item.ajuste}` : '';
-  return `${acao} · ${alvo} *${item.campanha}*${aj}`;
+  const map = {
+    aplicar: '✅ Aplicou',
+    ajustar: '✎ Ajustou',
+    'agora-nao': '⏸ Agora não',
+    desistir: '🛑 Desistiu',
+    manter: '➡️ Manteve',
+    aumentar: '⬆ Aumentou',
+  };
+  const acao = map[item.decisao] || `· ${item.decisao || 'Decisão'}`;
+  const alvo = item.tipo === 'mover' ? 'mover'
+    : item.tipo === 'escalar' ? 'escalar'
+      : item.tipo === 'revisar' ? 'revisar'
+        : item.tipo === 'campanha' ? 'campanha'
+          : (item.tipo || '');
+  const aj = item.ajuste ? ` — ${item.ajuste}` : '';
+  const camp = item.campanha ? ` *${item.campanha}*` : '';
+  return `${acao}${alvo ? ` · ${alvo}` : ''}${camp}${aj}`;
 }

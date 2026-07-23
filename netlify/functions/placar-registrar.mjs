@@ -1,7 +1,6 @@
-// PLACAR-REGISTRAR — recebe os toques do Michel no Placar e avisa o CEO na hora.
-// POST /api/placar-registrar  body: { acao:'decisao', id, campanha, tipo, decisao, ajuste? }
-//   decisao = 'aplicar' | 'ajustar' | 'agora-nao'
-// O Gestor confere ao vivo pelo painel; o WhatsApp é o reforço em tempo real.
+// PLACAR-REGISTRAR — toques do Michel no Placar → registra + avisa Bruno no WhatsApp na hora.
+// POST body: { acao:'decisao', id, campanha, tipo, decisao, ajuste? }
+// decisao = aplicar|ajustar|agora-nao|desistir|manter|aumentar
 import { agoraBRT, registraDecisao, rotuloDecisao } from './_placar-estado.mjs';
 import { leDecisoes, salvaDecisoes } from './_placar-io.mjs';
 import { enviaWhats, json } from './_infra.mjs';
@@ -28,9 +27,16 @@ export async function handler(event) {
   }
   await salvaDecisoes(decisoes);
 
-  // Reforço em tempo real pro CEO (as decisões são poucas por dia — não é spam).
+  // Bruno fica ciente a CADA clique (painel ao vivo + WhatsApp).
+  const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
   const ceo = process.env.WHATSAPP_CEO || '';
-  const w = await enviaWhats(ceo, `📊 *Placar — Michel decidiu:*\n${rotuloDecisao(item)} · ${now.hm}`);
+  const msg = [
+    `📊 *Placar — Michel decidiu* · ${now.hm}`,
+    rotuloDecisao(item),
+    '',
+    `Ao vivo: ${url}/placar-gestor`,
+  ].join('\n');
+  const w = await enviaWhats(ceo, msg);
 
   return json(200, { ok: true, item, whats: w });
 }

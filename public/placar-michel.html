@@ -35,6 +35,17 @@
   .row .val{font-size:.82rem;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
   .dot{width:10px;height:10px;border-radius:50%;flex:none}
   .dot.red{background:var(--late)}.dot.green{background:var(--ok)}.dot.gray{background:var(--sub)}
+  .camp-block{border-bottom:1px solid var(--hair);padding:8px 0}
+  .camp-block:last-child{border-bottom:0}
+  .camp-actions{display:none;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+  .camp-block.open .camp-actions{display:grid}
+  .camp-actions button{border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:10px 6px;font-size:.72rem;font-weight:800;font-family:inherit;cursor:pointer}
+  .camp-actions .d{border-color:rgba(224,118,92,.45)}.camp-actions .m{border-color:rgba(159,177,179,.45)}.camp-actions .a{border-color:rgba(67,192,125,.45)}
+  .camp-val{display:none;margin-top:8px}
+  .camp-block.open.aumentar .camp-val{display:block}
+  .camp-val input{width:100%;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:10px;font-size:.9rem;font-family:inherit}
+  .camp-val button{margin-top:6px;width:100%;border:0;background:var(--sea);color:#fff;border-radius:10px;padding:10px;font-weight:800;font-family:inherit;cursor:pointer}
+  .camp-done{font-size:.72rem;color:var(--ok);font-weight:700;margin-top:6px}
   .hm{text-align:right;color:var(--sub);font-size:.72rem;margin-top:8px;font-variant-numeric:tabular-nums}
   .btn-open{display:block;width:100%;margin-top:12px;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:.95rem;font-family:inherit;cursor:pointer;background:linear-gradient(150deg,var(--sea),#134f49);color:#fff}
   .sug{background:rgba(67,192,125,.12);border:1px solid rgba(67,192,125,.35);border-radius:12px;padding:12px 14px;margin:10px 0}
@@ -116,16 +127,69 @@ function linhaVal(c){
   return `${brl(c.gasto)} · ${c.leads} lead`;
 }
 
+function slug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||'x';}
+function decCampanha(nome){
+  const id='camp-'+slug(nome);
+  return (ST.decisoes||[]).find(d=>d.id===id)||null;
+}
+
 function renderLista(){
   const box=$('#lista');box.innerHTML='';
   const camps=(ST.placar&&ST.placar.campanhas)||[];
   if(!camps.length){box.innerHTML='<div class="empty">Sem campanha com gasto no período.</div>';}
   else camps.slice(0,8).forEach(c=>{
-    const el=document.createElement('div');el.className='row';
-    el.innerHTML=`<div class="nm">${c.nome}</div><div class="val">${linhaVal(c)}</div><div class="dot ${corDot(c)}"></div>`;
-    box.appendChild(el);
+    const done=decCampanha(c.nome);
+    const wrap=document.createElement('div');wrap.className='camp-block';
+    wrap.innerHTML=`
+      <div class="row" style="border:0;padding:0;cursor:pointer">
+        <div class="nm">${c.nome}</div>
+        <div class="val">${linhaVal(c)}</div>
+        <div class="dot ${corDot(c)}"></div>
+      </div>
+      ${done?`<div class="camp-done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:''}
+      <div class="camp-actions">
+        <button class="d" data-cdec="desistir">Desistir</button>
+        <button class="m" data-cdec="manter">Manter</button>
+        <button class="a" data-cdec="aumentar">Aumentar</button>
+      </div>
+      <div class="camp-val">
+        <input placeholder="Novo valor/dia · ex: R$ 80">
+        <button data-conf-aumen>Confirmar aumento</button>
+      </div>`;
+    const head=wrap.querySelector('.row');
+    head.addEventListener('click',()=>{
+      document.querySelectorAll('.camp-block').forEach(x=>{if(x!==wrap){x.classList.remove('open','aumentar');}});
+      wrap.classList.toggle('open');
+      wrap.classList.remove('aumentar');
+    });
+    wrap.querySelectorAll('[data-cdec]').forEach(b=>{
+      b.addEventListener('click',async(ev)=>{
+        ev.stopPropagation();
+        const dec=b.dataset.cdec;
+        if(dec==='aumentar'){wrap.classList.add('aumentar');wrap.querySelector('.camp-val input').focus();return;}
+        await postCampanha(c.nome,dec,'');
+      });
+    });
+    const conf=wrap.querySelector('[data-conf-aumen]');
+    conf.addEventListener('click',async(ev)=>{
+      ev.stopPropagation();
+      const val=wrap.querySelector('.camp-val input').value.trim();
+      if(!val){toast('Digite o novo valor');return;}
+      await postCampanha(c.nome,'aumentar',val);
+    });
+    box.appendChild(wrap);
   });
   $('#hm').textContent=ST.ultimaLeitura||ST.agora||'';
+}
+
+async function postCampanha(nome,decisao,ajuste){
+  const id='camp-'+slug(nome);
+  const r=await fetch('/api/placar-registrar',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({acao:'decisao',id,campanha:nome,tipo:'campanha',decisao,ajuste})
+  }).then(x=>x.json()).catch(()=>({ok:false}));
+  if(r.ok){toast('Registrado · Bruno avisado');await load();}
+  else toast(r.erro||'Não deu');
 }
 
 function jaDecidiuPrincipal(){
@@ -193,7 +257,7 @@ async function decidir(decisao){
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({acao:'decisao',id:s.id,campanha:s.campanha,tipo:s.tipo||'mover',decisao,ajuste})
   }).then(x=>x.json()).catch(()=>({ok:false}));
-  if(r.ok){toast('Registrado');VIEW='decisao';await load();}
+  if(r.ok){toast('Registrado · Bruno avisado');VIEW='decisao';await load();}
   else toast(r.erro||'Não deu — tenta de novo');
 }
 
