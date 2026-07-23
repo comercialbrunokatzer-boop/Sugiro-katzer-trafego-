@@ -131,7 +131,6 @@ function rotuloEstado(l){
   if(l.estado==='atrasado')return`<span class="tag late atraso" data-prev="${l.previsto}">atrasando…</span>`;
   return`<span class="tag" style="color:var(--sub)">aguardando</span>`;
 }
-function blocoCampanhas(){ return ''; }
 function render(){
   if(!ST||!ST.ok)return;const P=ST.pontualidade;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga do Michel 🎉':'');
@@ -152,7 +151,7 @@ function render(){
       <div class="ic ${ic}">${mark}</div>
       <div class="nm"><b>${l.nome}</b><small>previsto ${l.previsto}${l.feito?' · feito '+l.hora:''}${l.nota?' · 📝 '+l.nota:''}</small></div>
       ${rotuloEstado(l)}
-    </div>${blocoCampanhas(l)}`;
+    </div>`;
     box.appendChild(el);
   });
   const ob=ST.obs||[];if(ob.length){$('#obsbox').style.display='';const ol=$('#obsList');ol.innerHTML='';ob.forEach(o=>{const e=document.createElement('div');e.className='obsentry';e.innerHTML=`<span class="who">${o.quem}</span><b>${o.nome}</b> — ${o.inicio}${o.duracao?' · '+o.duracao+' min':''}`;ol.appendChild(e);});}else{$('#obsbox').style.display='none';}
