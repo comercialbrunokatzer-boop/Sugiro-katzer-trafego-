@@ -5,6 +5,7 @@
 import { getStore } from '@netlify/blobs';
 import { montaPlacar } from './_placar.mjs';
 import { decisoesVazias } from './_placar-estado.mjs';
+import { META_AD_ACCOUNT, META_GRAPH } from './_meta-config.mjs';
 
 const STORE = 'placar-michel';
 const PLACAR_TTL_MS = 10 * 60 * 1000; // cache do Meta: 10 min (não martela a API a cada poll)
@@ -45,10 +46,8 @@ export async function lePlacar({ preset = 'last_7d', force = false } = {}) {
 
 async function buscaMetaPlacar(preset) {
   const token = process.env.META_SYSTEM_TOKEN;
-  const acct = process.env.META_AD_ACCOUNT || 'act_1150648749960943';
-  const graph = process.env.META_GRAPH || 'https://graph.facebook.com/v20.0';
   if (!token) return montaPlacar([]);
-  const url = new URL(`${graph}/${acct}/insights`);
+  const url = new URL(`${META_GRAPH}/${META_AD_ACCOUNT}/insights`);
   url.searchParams.set('level', 'campaign');
   url.searchParams.set('date_preset', preset);
   url.searchParams.set('fields', 'campaign_name,spend,actions,results');
