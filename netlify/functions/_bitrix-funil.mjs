@@ -278,9 +278,10 @@ export function dealBateCampanha(deal, nomeCampanha) {
   // match direto pedaço do nome da campanha
   if (nome.length >= 12 && hay.includes(nome.slice(0, 20))) return true;
   // Form Bitrix costuma trazer "LEAD PATROC. … BR SC" / "FORT M. …"
-  if (/\bBR[_\s-]?SC\b/.test(nome) && /\bBR[_\s-]?SC\b/.test(hay)) return true;
   // Form Bitrix da praça SC: "FORT MYERS CIDADES SC" / "FORT MYERS SC+PR"
-  if (/\bBR[_\s-]?SC\b/.test(nome) && (/\bCIDADES\s+SC\b/.test(hay) || /\bSC\s*\+\s*PR\b/.test(hay) || /\bFORT\s*MYERS\s+SC\b/.test(hay))) return true;
+  // Obs: \b falha em FortMyers_BR_SC porque _ é word-char.
+  const isBrSc = /(?:^|[^A-Z0-9])BR[_-\s]?SC(?:[^A-Z0-9]|$)/.test(nome) || /_BR_SC/.test(nome);
+  if (isBrSc && (/\bCIDADES\s+SC\b/.test(hay) || /\bSC\s*\+\s*PR\b/.test(hay) || /\bFORT\s*MYERS\s+SC\b/.test(hay) || /\bFORT\s*MYERS\s+CIDADES\b/.test(hay))) return true;
   if (/\bPORTUGAL\b/.test(nome) && /\bPORTUGAL\b/.test(hay)) return true;
   if (/\bGRANT\b/.test(nome) && /\bGRANT\b/.test(hay)) return true;
   if (/\bPUNTA\b/.test(nome) && /\bPUNTA\b/.test(hay)) return true;
