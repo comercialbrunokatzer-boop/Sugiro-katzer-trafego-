@@ -2,7 +2,7 @@
 // Aplicar / Ajustar / Agora não + regras: base mínima 10, semáforo, cidade, público BR.
 
 import {
-  LEADS_MIN_ESCALAR, cidadeReal, publicoForaDoBrasil, semaforoCampanha,
+  LEADS_MIN_ESCALAR, cidadeReal, publicoForaDoBrasil, semaforoCampanha, rotuloSemBase,
 } from './_campanhas-regras.mjs';
 
 const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao', 'desistir', 'manter', 'aumentar']);
@@ -70,8 +70,10 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
     const cidade = observar.cidade || cidadeReal(observar.nome);
     const pub = publicoForaDoBrasil(observar.nome);
     const sem = observar.semaforo || semaforoCampanha(observar);
+    const rotulo = rotuloSemBase(observar.leads);
     const linhasMotivo = [
-      `Base: ${observar.leads} leads - SEM BASE MÍNIMA (precisa ${LEADS_MIN_ESCALAR})`,
+      rotulo,
+      `BLOQUEADO — não escalar (CPL R$ ${observar.cpl != null ? Number(observar.cpl).toFixed(0) : '—'} irrelevante sem base)`,
       `Cidade: ${cidade === 'Piçarras' ? 'Fort Myers - Piçarras' : cidade}`,
     ];
     if (pub.publico) {
@@ -84,9 +86,6 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
     if (observar.diasNoAr != null) {
       linhasMotivo.push(`Dias no ar: ${observar.diasNoAr} dias${observar.diasNoAr <= 3 ? ' - em aprendizado' : ''}`);
     }
-    if (observar.cpl != null) {
-      linhasMotivo.push(`CPL form. R$ ${Number(observar.cpl).toFixed(0)} (irrelevante sem base)`);
-    }
     if (pub.alerta) linhasMotivo.push(pub.motivo);
     return {
       id: 'obs-' + slug(observar.nome),
@@ -94,9 +93,9 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       origem: null,
       destino: observar.nome,
       valorDia: null,
-      titulo: `SEM BASE - Observar ${observar.nome}`,
+      titulo: rotulo,
       motivo: linhasMotivo.join('\n'),
-      recomendacao: `OBSERVAR - Não escalar até ${LEADS_MIN_ESCALAR} leads`,
+      recomendacao: `BLOQUEADO — ${rotulo}`,
       campanha: observar.nome,
       gasto: observar.gasto ?? 0,
       leads: observar.leads ?? 0,
@@ -106,6 +105,8 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       alertaPublico: pub.alerta ? pub.motivo : null,
       semaforo: sem,
       diasNoAr: observar.diasNoAr ?? null,
+      bloqueadoEscalar: true,
+      trava: 'SEM_BASE_MINIMA',
     };
   }
 

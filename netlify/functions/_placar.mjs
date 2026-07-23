@@ -265,7 +265,7 @@ export function resumoPlacarWhats(placar, { periodo = 'últimos 7 dias' } = {}) 
     return `• *${c.nome}*\n   ${brl(c.gasto)} · ${c.leads} cadastro(s) form. · ${cpl}`;
   });
   const esc = (p.decisao?.escalar || []).map((c) => `🟢 escalar *${c.nome}* (CPL form. ${brl(c.cpl)} · ${c.leads} form.)`);
-  const obs = (p.decisao?.observar || []).slice(0, 2).map((c) => `⚪ SEM BASE *${c.nome}* (${c.leads} form. · precisa ${LEADS_MIN_ESCALAR})`);
+  const obs = (p.decisao?.observar || []).slice(0, 2).map((c) => `⚪ SEM BASE - ${c.leads} leads, precisa ${LEADS_MIN_ESCALAR} · *${c.nome}*`);
   const rev = (p.decisao?.revisar || []).map((c) => `🔴 revisar *${c.nome}* (${brl(c.gasto)} · 0 cadastro form.)`);
   return [
     '📊 *Placar de Campanhas — Michel*',

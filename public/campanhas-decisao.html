@@ -133,7 +133,9 @@ function linhaVal(c){
   const sem=c.semaforo;
   const emoji=sem?.emoji||'';
   if(c.leadConfirmado===false) return c.avisoLead||'Form. não confirmado';
-  if(sem?.codigo==='SEM_BASE') return `${emoji} SEM BASE · ${c.leads} form.`;
+  if(sem?.codigo==='SEM_BASE' || ((c.leads||0)>0 && (c.leads||0)<10)){
+    return `⚪ SEM BASE - ${c.leads||0} leads, precisa 10`;
+  }
   if(c.cpl!=null) return `${emoji} ${brl(c.cpl)}/form. · ${c.leads}`;
   if((c.leads||0)===0) return `${brl(c.gasto)} · 0 form.`;
   return `${brl(c.gasto)} · ${c.leads} form.`;
@@ -261,9 +263,9 @@ function renderDecisao(){
   const semBase = s.tipo==='observar' || (s.leads!=null && s.leads < 10);
   const travaHtml = semBase ? `
     <div class="trava">
-      <div class="trava-t">TRAVA 1 — SEM BASE MÍNIMA</div>
-      <div class="trava-s">Base: <b>${s.leads??0} leads</b> de formulário · precisa <b>10</b> pra escalar.<br>
-      Rotina é pra FAZER. Aqui é pra PENSAR. Sem base = <b>observar</b>, não queimar verba.</div>
+      <div class="trava-t">TRAVA 1 — SEM BASE MÍNIMA · BLOQUEADO</div>
+      <div class="trava-s"><b>⚪ SEM BASE - ${s.leads??0} leads, precisa 10</b><br>
+      Não pode recomendar ESCALAR. Ex.: EUA_Americanos com CPL baixo e &lt;10 leads → observar.</div>
     </div>` : '';
 
   const acoesHtml = semBase ? `
@@ -283,7 +285,7 @@ function renderDecisao(){
   body.innerHTML=`
     ${travaHtml}
     <div class="sug">
-      <div class="lab">${s.tipo==='observar'?'⚪ SEM BASE - Observar':(s.semaforo?(s.semaforo.emoji+' '+s.semaforo.label):'Sugestão da IA')}</div>
+      <div class="lab">${s.tipo==='observar'||s.bloqueadoEscalar?'⚪ SEM BASE - BLOQUEADO':(s.semaforo?(s.semaforo.emoji+' '+s.semaforo.label):'Sugestão da IA')}</div>
       <div class="tit">${s.titulo}</div>
       ${s.recomendacao?`<div class="mot" style="font-weight:700;color:var(--gold,#d4ac60);margin-top:6px">${s.recomendacao}</div>`:''}
       <div class="mot" style="white-space:pre-line;margin-top:8px">${s.motivo||''}</div>

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  cidadeReal, publicoForaDoBrasil, semaforoCampanha, podeEscalar, LEADS_MIN_ESCALAR, resumoCplBom,
+  cidadeReal, publicoForaDoBrasil, semaforoCampanha, podeEscalar, LEADS_MIN_ESCALAR, resumoCplBom, rotuloSemBase,
 } from '../netlify/functions/_campanhas-regras.mjs';
 import { montaPlacar } from '../netlify/functions/_placar.mjs';
 import { montaSugestaoPrincipal } from '../netlify/functions/_placar-estado.mjs';
@@ -22,15 +22,22 @@ test('público fora do Brasil alerta em Piçarras', () => {
 
 test('semáforo: SEM BASE / BOA / ATENÇÃO / CARO', () => {
   assert.equal(semaforoCampanha({ leads: 3, cpl: 7 }).codigo, 'SEM_BASE');
+  assert.equal(semaforoCampanha({ leads: 3, cpl: 7 }).detalhe, '⚪ SEM BASE - 3 leads, precisa 10');
   assert.equal(semaforoCampanha({ leads: 12, cpl: 18 }).codigo, 'BOA');
   assert.equal(semaforoCampanha({ leads: 12, cpl: 40 }).codigo, 'ATENCAO');
   assert.equal(semaforoCampanha({ leads: 12, cpl: 77 }).codigo, 'CARO');
 });
 
-test('não escala com < 10 leads nem público EUA/Miami/Portugal em Piçarras', () => {
-  assert.equal(podeEscalar({ nome: 'EUA_Americanos', leads: 3, cpl: 7, leadConfirmado: true }), false);
-  assert.equal(podeEscalar({ nome: 'FortMyers_BR_SC', leads: 12, cpl: 25, leadConfirmado: true }), true);
-  assert.equal(podeEscalar({ nome: 'FortMyers PORTUGAL', leads: 12, cpl: 16, leadConfirmado: true }), false);
+test('rotuloSemBase canônico Bruno', () => {
+  assert.equal(rotuloSemBase(3), '⚪ SEM BASE - 3 leads, precisa 10');
+  assert.equal(rotuloSemBase(1), '⚪ SEM BASE - 1 leads, precisa 10');
+});
+
+test('EUA_Americanos 3 leads CPL R$7 → NÃO escala (BLOQUEADO)', () => {
+  assert.equal(podeEscalar({
+    nome: '[FortMyers_EUA_Americanos][10/07/26]',
+    leads: 3, cpl: 7, leadConfirmado: true,
+  }), false);
 });
 
 test('quadradinho: EUA_Americanos 3 leads → OBSERVAR, nunca escalar', () => {
@@ -50,13 +57,19 @@ test('quadradinho: EUA_Americanos 3 leads → OBSERVAR, nunca escalar', () => {
   assert.ok(p.decisao.observar.some((c) => /Americanos/i.test(c.nome)));
   const s = montaSugestaoPrincipal(p);
   assert.equal(s.tipo, 'observar');
-  assert.match(s.titulo, /SEM BASE/i);
-  assert.match(s.recomendacao, /OBSERVAR/i);
+  assert.equal(s.titulo, '⚪ SEM BASE - 3 leads, precisa 10');
+  assert.match(s.recomendacao, /BLOQUEADO/i);
   assert.match(s.motivo, /precisa 10/i);
   assert.match(s.motivo, /Piçarras/i);
   assert.match(s.motivo, /fora do Brasil/i);
   assert.equal(s.leads, 3);
+  assert.equal(s.bloqueadoEscalar, true);
   assert.ok(s.leads < LEADS_MIN_ESCALAR);
+});
+
+test('não escala com público EUA/Miami/Portugal em Piçarras mesmo com ≥10 leads', () => {
+  assert.equal(podeEscalar({ nome: 'FortMyers_BR_SC', leads: 12, cpl: 25, leadConfirmado: true }), true);
+  assert.equal(podeEscalar({ nome: 'FortMyers PORTUGAL', leads: 12, cpl: 16, leadConfirmado: true }), false);
 });
 
 test('resumoCplBom: média das boas + % bons + destaque cidade', () => {

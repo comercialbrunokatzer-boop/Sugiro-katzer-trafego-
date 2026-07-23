@@ -8,6 +8,12 @@ export const LEADS_MIN_ESCALAR = 10;
 export const CPL_BOA = 30;
 export const CPL_ATENCAO = 50;
 
+/** Texto canônico Bruno: ⚪ SEM BASE - 3 leads, precisa 10 */
+export function rotuloSemBase(leads = 0) {
+  const n = Number(leads) || 0;
+  return `⚪ SEM BASE - ${n} leads, precisa ${LEADS_MIN_ESCALAR}`;
+}
+
 /**
  * Cidade/produto real (Bruno).
  * FORT MYERS / ALICERCE → Piçarras
@@ -66,7 +72,8 @@ export function semaforoCampanha({ leads = 0, cpl = null, leadConfirmado = true 
       codigo: 'SEM_BASE',
       emoji: '⚪',
       label: 'SEM BASE',
-      detalhe: `Base: ${n} leads - SEM BASE MÍNIMA (precisa ${LEADS_MIN_ESCALAR})`,
+      detalhe: rotuloSemBase(n),
+      bloqueadoEscalar: true,
     };
   }
   if (cpl == null) {

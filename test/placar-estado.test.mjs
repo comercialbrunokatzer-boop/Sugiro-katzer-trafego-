@@ -42,7 +42,8 @@ test('montaSugestaoPrincipal: Americanos sem BR_SC elegível → OBSERVAR', () =
   ]);
   const s = montaSugestaoPrincipal(p);
   assert.equal(s.tipo, 'observar');
-  assert.match(s.recomendacao, /Não escalar até 10/);
+  assert.equal(s.titulo, '⚪ SEM BASE - 3 leads, precisa 10');
+  assert.match(s.recomendacao, /BLOQUEADO/i);
 });
 
 test('registraDecisao: grava e o último toque vale', () => {
