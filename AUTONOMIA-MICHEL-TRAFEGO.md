@@ -28,7 +28,7 @@ Ações permitidas sem pedir GO:
 * organizar nomenclatura;
 * verificar rastreamento;
 * registrar aprendizados;
-* pedir análise para a Meta IA.
+* pedir análise para a Meta IA (**com roteiro** — ver `META-IA-ROTEIRO-MICHEL.md`).
 
 **No cartão:** `PRECISA DE APROVAÇÃO DO BRUNO? Não` + motivo (ex.: só análise / rascunho / aprendizado).
 
@@ -54,19 +54,28 @@ Michel marca no placar (1 toque: Aplicar / Ajustar / Agora não) **antes** ou **
 
 **Limite “pequena parte do orçamento”:** definir com o CEO (ex.: até X% do dia ou até R$ Y). Sem número oficial, tratar redistribuição ampla como **Nível 3**.
 
+**Ficha obrigatória:** `FICHA-MUDANCA.md`.
+
 ---
 
-## Nível 3 — Só com parecer do Bruno *(rascunho até o CEO fechar a lista)*
+## Nível 3 — somente com parecer final do Bruno
 
-**Risco:** alto / difícil de reverter / dinheiro ou reputação.
+**Risco:** alto / caixa / estratégia. **Aprovação do Bruno:** **Sim** (obrigatório).
 
-Enquanto a lista oficial não vier do CEO, tratar como Nível 3 por padrão:
+Ações:
 
-* pausar campanha inteira com verba relevante;
-* subir orçamento acima do limiar;
-* desligar / reestruturar Advantage+ de campanha boa;
-* mudanças em pixel/eventos que afetam toda a conta;
-* qualquer ação que o Copiloto marcar `PRECISA DE APROVAÇÃO DO BRUNO? Sim`.
+* aumento relevante de verba;
+* pausa de campanha principal;
+* lançamento de produto estratégico;
+* mudança de posicionamento;
+* alteração de oferta;
+* troca de cidade ou público central;
+* exclusão de campanha;
+* automação que controla orçamento;
+* decisões com impacto significativo em caixa.
+
+**No cartão:** `PRECISA DE APROVAÇÃO DO BRUNO? Sim` + ficha de mudança completa.  
+Michel **não executa** até o parecer final.
 
 ---
 
@@ -75,16 +84,14 @@ Enquanto a lista oficial não vier do CEO, tratar como Nível 3 por padrão:
 1. Classifica a recomendação do dia (1, 2 ou 3).  
 2. Preenche o cartão no template-ouro.  
 3. Nível 1 → Michel age e aprende.  
-4. Nível 2 → Michel só age com recomendação **registrada**.  
+4. Nível 2 → Michel só age com recomendação **registrada** + ficha.  
 5. Nível 3 → espera Bruno.
 
-A Meta IA pode ser consultada no **Nível 1** (“pedir análise”). Ela **não** autoriza sozinha Nível 2 ou 3.
+A Meta IA pode ser consultada no **Nível 1** (com roteiro). Ela **não** autoriza sozinha Nível 2 ou 3.
 
 ---
 
 ## Ficha de mudança (Níveis 2 e 3)
-
-Antes de executar mudança moderada/alta, preencher:
 
 ```
 O que mudar:
@@ -95,4 +102,4 @@ Prazo de observação:
 Como desfazer:
 ```
 
-Detalhes e exemplo: `FICHA-MUDANCA.md`. **Sem “Como desfazer” → não executar.**
+Detalhes: `FICHA-MUDANCA.md`. **Sem “Como desfazer” → não executar.**

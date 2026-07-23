@@ -44,10 +44,16 @@ caminho até reunião, negociação e venda.
 
 PRECISA DE APROVAÇÃO DO BRUNO?
 Não, porque hoje haverá apenas análise e preparação de criativo.
+(Nível 1 — Michel executa sozinho.)
 ```
 
 ---
 
+## Nível de autonomia no cartão
+
+Incluir implícito ou explícito: **Nível 1 / 2 / 3** conforme `AUTONOMIA-MICHEL-TRAFEGO.md`.  
+O exemplo Fort Myers acima é **Nível 1** (análise + preparar criativo em rascunho).  
+Trocar o criativo no ar ou redistribuir verba → sobe para **Nível 2** (recomendação registrada).
 ## Campos obrigatórios (todo cartão)
 
 | Campo | Regra |
