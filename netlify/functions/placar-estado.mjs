@@ -2,8 +2,11 @@
 // GET /api/placar-estado          -> placar (campanhas + decisão do dia) + sugestões + decisões do Michel.
 // GET /api/placar-estado?ceo=1    -> mesma coisa, mas EXIGE a senha do Gestor (trava "só pra mim").
 import { createHash } from 'node:crypto';
-import { agoraBRT, montaSugestoes, listaDecisoes } from './_placar-estado.mjs';
-import { lePlacar, leDecisoes } from './_placar-io.mjs';
+import { montaCartoesCopiloto } from './_placar.mjs';
+import {
+  agoraBRT, montaSugestoes, listaDecisoes, garanteAprendizados,
+} from './_placar-estado.mjs';
+import { lePlacar, leDecisoes, salvaDecisoes } from './_placar-io.mjs';
 import { json } from './_infra.mjs';
 
 // Mesma senha do Painel Gestor da rotina (Davi2026@) — guardamos só o HASH.
@@ -27,6 +30,10 @@ export async function handler(event) {
     lePlacar({ preset: 'last_7d' }),
     leDecisoes(now.data),
   ]);
+  const sugestoes = montaSugestoes(placar);
+  const resumo = montaCartoesCopiloto(placar, { aprendizados: decisoes.aprendizados });
+  const { mudou } = garanteAprendizados(decisoes, resumo.cartoes);
+  if (mudou) await salvaDecisoes(decisoes);
 
   return json(200, {
     ok: true,
@@ -34,7 +41,10 @@ export async function handler(event) {
     agora: now.hm,
     ultimaLeitura: ts ? agoraBRT(new Date(ts)).hm : now.hm,
     placar,                        // { campanhas, totalGasto, totalLeads, cplMedio, decisao }
-    sugestoes: montaSugestoes(placar),
+    sugestoes,
     decisoes: listaDecisoes(decisoes),
+    cartoes: resumo.cartoes,
+    naoAltere: resumo.naoAltere,
+    roteiroMetaIA: resumo.roteiroMetaIA,
   });
 }

@@ -27,7 +27,7 @@ export function montaSugestoes(placar = {}) {
   return [...map(d.escalar, 'escalar'), ...map(d.revisar, 'revisar')];
 }
 
-export function decisoesVazias(data) { return { data, itens: {} }; }
+export function decisoesVazias(data) { return { data, itens: {}, aprendizados: {} }; }
 
 /** Registra (ou troca) a decisão do Michel pra uma sugestão. Puro — o último toque vale. */
 export function registraDecisao(decisoes, { id, campanha, tipo, decisao, ajuste, hora, min }) {
@@ -45,6 +45,19 @@ export function registraDecisao(decisoes, { id, campanha, tipo, decisao, ajuste,
 /** Lista as decisões do dia (mais recente primeiro) pro painel e pro Gestor. */
 export function listaDecisoes(decisoes = {}) {
   return Object.values((decisoes && decisoes.itens) || {}).sort((a, b) => (b.min ?? 0) - (a.min ?? 0));
+}
+
+/** Persiste o aprendizado do dia por cartão para manter a frase estável no estado. */
+export function garanteAprendizados(decisoes = {}, cartoes = []) {
+  const atual = { ...((decisoes && decisoes.aprendizados) || {}) };
+  let mudou = !decisoes.aprendizados;
+  for (const cartao of (Array.isArray(cartoes) ? cartoes : [])) {
+    if (!cartao || !cartao.id || !cartao.aprendizado || atual[cartao.id]) continue;
+    atual[cartao.id] = cartao.aprendizado;
+    mudou = true;
+  }
+  if (mudou) decisoes.aprendizados = atual;
+  return { mudou, aprendizados: atual };
 }
 
 /** Rótulo curto e honesto de uma decisão (pro WhatsApp/log). */

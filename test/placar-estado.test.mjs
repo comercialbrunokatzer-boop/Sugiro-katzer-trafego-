@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { montaPlacar } from '../netlify/functions/_placar.mjs';
+import { montaPlacar, montaCartoesCopiloto } from '../netlify/functions/_placar.mjs';
 import {
-  montaSugestoes, registraDecisao, listaDecisoes, decisoesVazias, rotuloDecisao, agoraBRT,
+  montaSugestoes, registraDecisao, listaDecisoes, decisoesVazias, rotuloDecisao, agoraBRT, garanteAprendizados,
 } from '../netlify/functions/_placar-estado.mjs';
 
 const data = [
@@ -65,4 +65,18 @@ test('agoraBRT: devolve data e hora coerentes de Brasília', () => {
   assert.equal(a.data, '2026-07-21');
   assert.equal(a.hm, '12:57');
   assert.equal(a.min, 12 * 60 + 57);
+});
+
+test('garanteAprendizados: persiste a primeira frase e não sobrescreve a existente', () => {
+  const dec = decisoesVazias('2026-07-21');
+  const resumo = montaCartoesCopiloto(montaPlacar(data));
+  const primeiro = resumo.cartoes[0];
+  const r1 = garanteAprendizados(dec, resumo.cartoes);
+  assert.equal(r1.mudou, true);
+  assert.equal(dec.aprendizados[primeiro.id], primeiro.aprendizado);
+
+  const alterado = [{ ...primeiro, aprendizado: 'frase nova que não deve substituir' }];
+  const r2 = garanteAprendizados(dec, alterado);
+  assert.equal(r2.mudou, false);
+  assert.equal(dec.aprendizados[primeiro.id], primeiro.aprendizado);
 });

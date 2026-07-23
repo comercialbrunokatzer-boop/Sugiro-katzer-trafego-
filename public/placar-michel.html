@@ -37,9 +37,16 @@
   .cpl{font-weight:800;font-size:.86rem;font-variant-numeric:tabular-nums;white-space:nowrap}
   .sug{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;margin-top:11px;border-left:4px solid var(--hair)}
   .sug.escalar{border-left-color:var(--ok)}.sug.revisar{border-left-color:var(--late)}
-  .sug .h{font-weight:800;font-size:1rem}.sug .h .tp{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:.12rem .5rem;border-radius:999px;margin-right:7px;vertical-align:middle}
+  .sug .h{font-weight:800;font-size:1rem;line-height:1.35}.sug .h .tp{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:.12rem .5rem;border-radius:999px;margin-right:7px;vertical-align:middle}
   .sug.escalar .tp{background:var(--ok-bg);color:var(--ok)}.sug.revisar .tp{background:var(--late-bg);color:var(--late)}
   .sug .why{color:var(--sub);font-size:.82rem;margin:5px 0 12px}
+  .field{margin-top:12px}
+  .field .lb{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:800;margin-bottom:4px}
+  .field p{margin:0;font-size:.88rem;white-space:pre-line}
+  .field ol{margin:0;padding-left:1.1rem}
+  .field li{margin:.22rem 0;font-size:.88rem}
+  .field.ficha{background:var(--ground);border:1px solid var(--hair);border-radius:10px;padding:10px 11px}
+  .field.ficha p{font-size:.82rem}
   .btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
   .btns button{border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:11px 6px;font-weight:800;font-size:.82rem;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
   .btns button .ic{font-size:1rem}
@@ -50,16 +57,13 @@
   .adjrow{margin-top:10px;display:none;gap:8px}.adjrow.show{display:flex}
   .adjrow input{flex:1;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:9px;padding:10px;font-size:.85rem;font-family:inherit}
   .adjrow button{border:0;background:var(--warn);color:#fff;font-weight:800;border-radius:9px;padding:10px 14px;font-family:inherit;cursor:pointer}
-  .confrow{margin-top:10px;display:none;flex-direction:column;gap:8px;background:var(--late-bg);border:1px solid var(--late);border-radius:10px;padding:11px 12px}
-  .confrow.show{display:flex}
-  .confrow .q{font-size:.85rem;font-weight:700;color:var(--late)}
-  .confrow .b{display:flex;gap:8px}
-  .confrow .b button{flex:1;border:0;border-radius:9px;padding:11px;font-weight:800;font-family:inherit;cursor:pointer}
-  .confrow .b .sim{background:var(--late);color:#fff}
-  .confrow .b .nao{background:var(--ground);color:var(--ink);border:1px solid var(--hair)}
   .done{margin-top:9px;font-size:.78rem;color:var(--sub)}.done b{color:var(--ink)}
   .honesty{margin-top:20px;background:var(--warn-bg);border:1px solid var(--hair);border-radius:12px;padding:11px 13px;font-size:.78rem;color:var(--sub)}
   .honesty b{color:var(--ink)}
+  .box{background:var(--panel);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;margin-top:9px}
+  .box ul{margin:0;padding-left:1.1rem}
+  .box li{margin:.22rem 0;font-size:.88rem}
+  pre.metaia{margin:9px 0 0;background:var(--panel);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px;font-size:.78rem;white-space:pre-wrap;overflow:auto;font-family:var(--sans)}
   footer{margin-top:18px;color:var(--sub);font-size:.72rem;text-align:center}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
   .toast.show{opacity:1}
@@ -85,8 +89,14 @@
     <div class="b"><div class="v" id="hCpl">—</div><div class="k">CPL médio</div></div>
   </div>
 
-  <div class="sec">Decisão do dia — 1 toque</div>
+  <div class="sec">Cartões do dia</div>
   <div id="sugs"></div>
+
+  <div class="sec">Não altere hoje</div>
+  <div id="naoAltere"></div>
+
+  <div class="sec">Roteiro Meta IA</div>
+  <pre id="metaIa" class="metaia"></pre>
 
   <div class="sec">Campanhas (últimos 7 dias)</div>
   <div id="camps"></div>
@@ -103,10 +113,14 @@ let DEC={};
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1900);}
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const intBR=(v)=>Number(v||0).toLocaleString('pt-BR');
+const esc=(v)=>String(v==null?'':v).replace(/[&<>"']/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const htmlTexto=(v)=>esc(v).replace(/\n/g,'<br>');
 async function post(body){const r=await fetch('/api/placar-registrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
 async function load(){try{const r=await fetch('/api/placar-estado');const st=await r.json();render(st);}catch(e){}}
 function diaSemana(d){const[y,m,dd]=d.split('-').map(Number);return['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][new Date(Date.UTC(y,m-1,dd)).getUTCDay()];}
 function fmtData(d){const[y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return`${diaSemana(d)}, ${+dd} de ${mes}`;}
+function listaHtml(itens){return`<ol>${(itens||[]).map((item)=>`<li>${htmlTexto(item)}</li>`).join('')}</ol>`;}
+function fichaHtml(f){if(!f)return'';return`<div class="field ficha"><div class="lb">Ficha de mudança</div><p><b>O que mudar:</b> ${htmlTexto(f.oQueMudar)}<br><b>Por que mudar:</b> ${htmlTexto(f.porQueMudar)}<br><b>Resultado esperado:</b> ${htmlTexto(f.resultadoEsperado)}<br><b>Risco:</b> ${htmlTexto(f.risco)}<br><b>Prazo de observação:</b> ${htmlTexto(f.prazoObservacao)}<br><b>Como desfazer:</b> ${htmlTexto(f.comoDesfazer)}</p></div>`;}
 function render(st){
   if(!st||!st.ok)return;
   $('#date').textContent=fmtData(st.data)+' · última leitura '+(st.ultimaLeitura||st.agora);
@@ -118,49 +132,52 @@ function render(st){
   (p.campanhas||[]).slice(0,10).forEach(c=>{
     const el=document.createElement('div');el.className='camp';
     const cpl=c.cpl!=null?('CPL '+brl(c.cpl)):(c.gasto>=50?'⚠️ 0 lead':'sem lead');
-    el.innerHTML=`<div class="nm"><b>${c.nome}</b><small>${brl(c.gasto)} · ${intBR(c.leads)} lead(s)</small></div><div class="cpl">${cpl}</div>`;
+    el.innerHTML=`<div class="nm"><b>${esc(c.nome)}</b><small>${esc(brl(c.gasto))} · ${esc(intBR(c.leads))} lead(s)</small></div><div class="cpl">${esc(cpl)}</div>`;
     cb.appendChild(el);
   });
   if(!(p.campanhas||[]).length)cb.innerHTML='<div class="empty">Sem campanha ativa no período.</div>';
-  // Sugestões
+  // Cartões
   const sb=$('#sugs');sb.innerHTML='';
-  (st.sugestoes||[]).forEach(s=>{
+  (st.cartoes||[]).forEach(s=>{
     const d=DEC[s.id];
-    const why=s.tipo==='escalar'
-      ? `CPL ${brl(s.cpl)} — abaixo da média. Vale mais verba.`
-      : `${brl(s.gasto)} · ${intBR(s.leads)} lead — queimando. Cortar ou trocar criativo.`;
-    const el=document.createElement('div');el.className='sug '+s.tipo;el.dataset.id=s.id;el.dataset.campanha=s.campanha;el.dataset.tipo=s.tipo;
-    const corta=s.tipo==='revisar';
-    const okLabel=corta?'Cortar':'Escalar';const okIc=corta?'✕':'▲';
-    const doneRot=(x)=>x==='aplicar'?(corta?'Cortou':'Escalou'):x==='ajustar'?'Ajustou':'Agora não';
+    const cls=s.tipo==='escalar'?'escalar':(s.tipo==='revisar'?'revisar':'');
+    const resumoTipo=s.tipo==='escalar'?'🟢 Escalar com cautela':(s.tipo==='revisar'?'🔴 Revisar antes de mexer':'🟡 Manter e observar');
+    const el=document.createElement('div');el.className='sug '+cls;el.dataset.id=s.id;el.dataset.campanha=s.campanha;el.dataset.tipo=s.tipo;
+    const doneRot=(x)=>x==='aplicar'?'Aplicou':x==='ajustar'?'Ajustou':'Agora não';
     el.innerHTML=`
-      <div class="h"><span class="tp">${s.tipo==='escalar'?'🟢 escalar':'🔴 revisar'}</span>${s.campanha}</div>
-      <div class="why">${why}</div>
+      <div class="h"><span class="tp">${esc(s.nivel||'Nível 1')}</span>${esc(s.campanha)}</div>
+      <div class="why">${esc(resumoTipo)}</div>
+      <div class="field"><div class="lb">Situação</div><p>${htmlTexto(s.situacao)}</p></div>
+      <div class="field"><div class="lb">O que isso significa</div><p>${htmlTexto(s.significado)}</p></div>
+      <div class="field"><div class="lb">Dado comercial</div><p>${htmlTexto(s.dadoComercial)}</p></div>
+      <div class="field"><div class="lb">Recomendação</div><p>${htmlTexto(s.recomendacao)}</p></div>
+      <div class="field"><div class="lb">Ação para o Michel</div>${listaHtml(s.acaoMichel)}</div>
+      ${fichaHtml(s.fichaMudanca)}
+      <div class="field"><div class="lb">Por que</div><p>${htmlTexto(s.porque)}</p></div>
+      <div class="field"><div class="lb">Aprendizado do dia</div><p>${htmlTexto(s.aprendizado)}</p></div>
+      <div class="field"><div class="lb">Precisa de aprovação do Bruno?</div><p>${htmlTexto(s.precisaAprovacaoBruno)}</p></div>
       <div class="btns">
-        <button class="ok"  data-dec="aplicar"  aria-pressed="${d&&d.decisao==='aplicar'}"><span class="ic">${okIc}</span>${okLabel}</button>
+        <button class="ok"  data-dec="aplicar"  aria-pressed="${d&&d.decisao==='aplicar'}"><span class="ic">✓</span>Aplicar</button>
         <button class="adj" data-dec="ajustar"  aria-pressed="${d&&d.decisao==='ajustar'}"><span class="ic">✎</span>Ajustar</button>
         <button class="no"  data-dec="agora-nao" aria-pressed="${d&&d.decisao==='agora-nao'}"><span class="ic">⏸</span>Agora não</button>
       </div>
-      <div class="adjrow"><input placeholder="O que ajustar? ex.: mover R$50/dia p/ BR_SC" value="${d&&d.ajuste?d.ajuste.replace(/"/g,'&quot;'):''}"><button data-confirm>Confirmar</button></div>
-      <div class="confrow"><div class="q">Cortar a <b>${s.campanha}</b> — tem certeza?</div><div class="b"><button class="sim" data-yescut>Sim, cortar</button><button class="nao" data-nocut>Não</button></div></div>
-      ${d?`<div class="done">Sua decisão: <b>${doneRot(d.decisao)}</b> · ${d.hora}${d.ajuste?` — ${d.ajuste}`:''}</div>`:''}`;
+      <div class="adjrow"><input placeholder="O que ajustar? ex.: trocar criativo / subir verba pequena" value="${d&&d.ajuste?esc(d.ajuste):''}"><button data-confirm>Confirmar</button></div>
+      ${d?`<div class="done">Sua decisão: <b>${esc(doneRot(d.decisao))}</b> · ${esc(d.hora)}${d.ajuste?` — ${esc(d.ajuste)}`:''}</div>`:''}`;
     sb.appendChild(el);
   });
-  if(!(st.sugestoes||[]).length)sb.innerHTML='<div class="empty">Sem decisão clara hoje — nenhuma campanha pra escalar ou cortar.</div>';
+  if(!(st.cartoes||[]).length)sb.innerHTML='<div class="empty">Sem cartão gerado hoje.</div>';
+  const na=$('#naoAltere');
+  na.innerHTML=(st.naoAltere||[]).length?`<div class="box"><ul>${st.naoAltere.map((nome)=>`<li>${esc(nome)}</li>`).join('')}</ul></div>`:'<div class="empty">Só as campanhas do cartão pedem atenção hoje.</div>';
+  $('#metaIa').textContent=st.roteiroMetaIA||'';
 }
 document.addEventListener('click',async(e)=>{
   const b=e.target.closest('[data-dec]');const c=e.target.closest('[data-confirm]');
-  const yc=e.target.closest('[data-yescut]');const nc=e.target.closest('[data-nocut]');
   if(b){
     const card=b.closest('.sug');const dec=b.dataset.dec;
-    card.querySelectorAll('.adjrow,.confrow').forEach(x=>x.classList.remove('show'));
+    card.querySelectorAll('.adjrow').forEach(x=>x.classList.remove('show'));
     if(dec==='ajustar'){const a=card.querySelector('.adjrow');a.classList.add('show');a.querySelector('input').focus();return;}
-    // Corte de campanha = decisão que gasta/para dinheiro: pede "Certeza?" antes.
-    if(dec==='aplicar'&&card.dataset.tipo==='revisar'){card.querySelector('.confrow').classList.add('show');return;}
     await enviar(card,dec,'');
   }
-  if(yc){const card=yc.closest('.sug');card.querySelector('.confrow').classList.remove('show');await enviar(card,'aplicar','');}
-  if(nc){nc.closest('.sug').querySelector('.confrow').classList.remove('show');toast('Ok, não cortei');}
   if(c){
     const card=c.closest('.sug');const val=card.querySelector('.adjrow input').value.trim();
     if(!val){toast('Escreve o que ajustar');return;}

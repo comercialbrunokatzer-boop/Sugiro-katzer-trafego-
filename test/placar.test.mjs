@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extraiLeads, montaPlacar, decideDoDia, resumoPlacarWhats } from '../netlify/functions/_placar.mjs';
+import {
+  extraiLeads, montaPlacar, decideDoDia, resumoPlacarWhats, montaCartoesCopiloto,
+} from '../netlify/functions/_placar.mjs';
 
 // Amostra no formato do Meta Ads Insights (nível campanha).
 const data = [
@@ -58,7 +60,22 @@ test('CPL null quando 0 leads (não divide por zero)', () => {
 
 test('resumoPlacarWhats gera texto com total e decisão', () => {
   const txt = resumoPlacarWhats(montaPlacar(data));
-  assert.match(txt, /Placar de Campanhas/);
-  assert.match(txt, /Total:/);
-  assert.match(txt, /Decis(ã|a)o do dia/);
+  assert.match(txt, /Copiloto de Tr(á|a)fego/);
+  assert.match(txt, /CAMPANHA:/);
+  assert.match(txt, /SITUA(Ç|C)(Ã|A)O:/);
+  assert.match(txt, /DADO COMERCIAL:/);
+  assert.match(txt, /N(Ã|A)O ALTERE HOJE:/);
+  assert.match(txt, /ROTEIRO META IA/);
+});
+
+test('montaCartoesCopiloto usa fallback sem CRM, nível e aprendizado determinístico', () => {
+  const resumo = montaCartoesCopiloto(montaPlacar(data));
+  assert.equal(resumo.cartoes[0].tipo, 'revisar'); // revisar vem antes por urgência
+  assert.match(resumo.cartoes[0].dadoComercial, /CRM ainda n(ã|a)o ligado/);
+  assert.match(resumo.cartoes[0].precisaAprovacaoBruno, /N(í|i)vel 1/);
+  const escalar = resumo.cartoes.find((c) => c.tipo === 'escalar');
+  assert.ok(escalar);
+  assert.match(escalar.precisaAprovacaoBruno, /N(í|i)vel 2/);
+  assert.ok(escalar.fichaMudanca);
+  assert.ok(resumo.naoAltere.includes('FortMyers PORTUGAL'));
 });
