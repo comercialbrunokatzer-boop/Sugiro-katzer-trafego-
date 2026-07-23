@@ -96,9 +96,11 @@ if (!trafego || !helena) {
 }
 const accountSlug = trafego.account_slug || helena.account_slug;
 
-const howT = await setEnv(accountSlug, trafego.id, 'FUNIL_PROXY_KEY', FUNIL_KEY);
 const howH = await setEnv(accountSlug, helena.id, 'FUNIL_PROXY_KEY', FUNIL_KEY);
-console.log(`FUNIL_PROXY_KEY → ${TRAFEGO}:${howT} · ${HELENA}:${howH}`);
+console.log(`FUNIL_PROXY_KEY → ${HELENA}:${howH}`);
+// Tráfego: NÃO usar FUNIL até Helena redeployar — senão manda key que a Helena runtime ainda rejeita.
+const unsetFunilT = await unsetEnv(accountSlug, trafego.id, 'FUNIL_PROXY_KEY');
+console.log(`FUNIL_PROXY_KEY unset ${TRAFEGO}: ${unsetFunilT ? 'ok' : 'skip'}`);
 
 const unset = await unsetEnv(accountSlug, trafego.id, 'BRUNO_PHONE');
 console.log(`BRUNO_PHONE unset ${TRAFEGO}: ${unset ? 'ok' : 'skip'}`);
