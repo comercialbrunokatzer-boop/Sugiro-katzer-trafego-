@@ -282,6 +282,7 @@ export function dealBateCampanha(deal, nomeCampanha) {
   if (/\bPORTUGAL\b/.test(nome) && /\bPORTUGAL\b/.test(hay)) return true;
   if (/\bGRANT\b/.test(nome) && /\bGRANT\b/.test(hay)) return true;
   if (/\bPUNTA\b/.test(nome) && /\bPUNTA\b/.test(hay)) return true;
+  if (/\bEUA\b/.test(nome) && /\bBRASILEIR/.test(nome) && /\bEUA\b/.test(hay) && /\bBRASILEIR/.test(hay)) return true;
   const toks = tokensCampanha(nomeCampanha);
   if (!toks.length) return false;
   const hits = toks.filter((t) => hay.includes(t));
@@ -317,6 +318,7 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = []) {
   }
 
   for (const l of leadsLocais || []) {
+    if (String(l.id || '').startsWith('demo-')) continue; // nunca misturar demo com funil real
     const fase = normalizaNomeFase(l.faseBitrix || l.statusPosMapeamento || l.status || 'Leads Novos');
     if (!map.has(fase)) map.set(fase, { nome: fase, n: 0, leads: [] });
     const bucket = map.get(fase);
