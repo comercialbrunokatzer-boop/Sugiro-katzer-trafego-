@@ -8,7 +8,8 @@ import { agoraBRT, pontualidade, TAREFAS, previstoMin, min2hm } from './_rotina.
 import { leEstado, json } from './_infra.mjs';
 import { lePlacar, leDecisoes } from './_placar-io.mjs';
 import { listaDecisoes, montaSugestoes } from './_placar-estado.mjs';
-import { resumoCplBom } from './_campanhas-regras.mjs';
+import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
+import { enriqueceComQualidade, resumoCplBomQualidade } from './_qualidade.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 const CAMPANHAS_APP_URL = (process.env.CAMPANHAS_APP_URL || 'https://dashing-elf-41a723.netlify.app').replace(/\/+$/, '');
@@ -23,18 +24,20 @@ function senhaGestorOk(event, params) {
 /**
  * Card Campanhas na Rotina (layout Bruno):
  *   7 campanhas | R$ 2351 | 46 leads | CPL méd R$ 51
- *   CPL BOM méd R$ 34 | 40% bons | Rogga: R$ 30 BOM 🟢
+ *   CPL BOM méd R$ 13 | 83% bons | Itapoá: R$ 13,20 BOM 🟢
  *   Decisão do dia: 3 análises pendentes no painel de campanhas
  *   ▶ Abrir Painel de Campanhas
+ * CPL méd = Bruto (gasto÷leads form). CPL BOM = gasto÷(Bom+Comprador).
  * Leads = formulário (nunca clique). Sem botão escalar.
  */
 async function resumoCampanhas(data) {
   const link = CAMPANHAS_APP_URL + '/';
   const cta = '▶ Abrir Painel de Campanhas';
   try {
-    const [{ placar, meta }, bruto] = await Promise.all([
+    const [{ placar, meta }, bruto, qualDoc] = await Promise.all([
       lePlacar({ preset: 'last_7d' }),
       leDecisoes(data),
+      leQualidade(),
     ]);
     const decisoes = listaDecisoes(bruto);
     const idsDecididos = new Set(decisoes.map((d) => d.id));
@@ -61,15 +64,17 @@ async function resumoCampanhas(data) {
         link, cta,
       };
     }
-    const n = (placar.campanhas || []).length;
+    const mapa = mapaQualidade(qualDoc);
+    const campanhasQ = (placar.campanhas || []).map((c) => enriqueceComQualidade(c, mapa));
+    const n = campanhasQ.length;
     const totalGasto = placar.totalGasto ?? 0;
     const totalLeads = placar.totalLeads ?? 0;
     const cplMedio = placar.cplMedio;
-    const bom = resumoCplBom(placar.campanhas || []);
+    const bom = resumoCplBomQualidade(campanhasQ);
     const metrica = [
       `${n} campanhas`,
       `R$ ${Number(totalGasto).toFixed(0)}`,
-      `${totalLeads} leads`,
+      `${totalLeads} leads (form)`,
       `CPL méd ${cplMedio != null ? `R$ ${Number(cplMedio).toFixed(0)}` : '—'}`,
     ].join(' | ');
     return {
@@ -80,6 +85,7 @@ async function resumoCampanhas(data) {
       cplBomMedio: bom.cplBomMedio,
       pctBons: bom.pctBons,
       destaqueBom: bom.destaqueTexto,
+      qualidadeFonte: bom.fonte,
       statusDecisao,
       pendente,
       nPendentes,

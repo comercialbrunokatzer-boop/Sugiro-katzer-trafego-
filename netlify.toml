@@ -82,6 +82,12 @@
   to = "/como-instalar-campanhas.html"
   status = 200
 [[redirects]]
+  from = "/api/qualidade"
+  to = "/.netlify/functions/qualidade"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/placar"
   to = "/.netlify/functions/placar"
   status = 200
@@ -105,6 +111,10 @@
   to = "/.netlify/functions/ranking-campanhas"
   status = 200
   force = true
+[[redirects]]
+  from = "/qualidade"
+  to = "/qualidade.html"
+  status = 200
 [[redirects]]
   from = "/campanhas"
   to = "/campanhas.html"

@@ -6,6 +6,8 @@
 import { createHash } from 'node:crypto';
 import { agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes } from './_placar-estado.mjs';
 import { lePlacar, leDecisoes, mensagemMeta } from './_placar-io.mjs';
+import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
+import { enriqueceComQualidade, textoCplBrutoVsBom, calculaCplQualidade } from './_qualidade.mjs';
 import { json } from './_infra.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
@@ -24,10 +26,24 @@ export async function handler(event) {
   }
 
   const now = agoraBRT();
-  const [{ placar, ts, cacheHit, meta, inventario }, decisoes] = await Promise.all([
+  const [{ placar, ts, cacheHit, meta, inventario }, decisoes, qualDoc] = await Promise.all([
     lePlacar({ preset: 'last_7d', force: params.refresh === '1' }),
     leDecisoes(now.data),
+    leQualidade(),
   ]);
+
+  const mapa = mapaQualidade(qualDoc);
+  const campanhasQ = (placar.campanhas || []).map((c) => {
+    const e = enriqueceComQualidade(c, mapa);
+    return {
+      ...e,
+      comparativo: textoCplBrutoVsBom(calculaCplQualidade(
+        { gasto: e.gasto, leads: e.leads },
+        e.qualidade,
+      )),
+    };
+  });
+  const placarQ = { ...placar, campanhas: campanhasQ };
 
   const metaOut = {
     status: meta?.status || 'ok',
@@ -42,20 +58,22 @@ export async function handler(event) {
   };
 
   const sugestaoPrincipal = metaOut.confiavel && metaOut.status === 'ok'
-    ? montaSugestaoPrincipal(placar)
+    ? montaSugestaoPrincipal(placarQ)
     : null;
 
   const body = {
     ok: true,
     metricaPrincipal: 'lead_formulario',
+    metricaQualidade: 'cpl_bom = gasto ÷ (bom + comprador)',
     data: now.data,
     agora: now.hm,
     ultimaLeitura: ts ? agoraBRT(new Date(ts)).hm : null,
     periodo: 'last_7d',
-    placar,
-    sugestoes: metaOut.confiavel ? montaSugestoes(placar) : [],
+    placar: placarQ,
+    sugestoes: metaOut.confiavel ? montaSugestoes(placarQ) : [],
     sugestaoPrincipal,
     decisoes: listaDecisoes(decisoes),
+    qualidadeAtualizadoEm: qualDoc.atualizadoEm || null,
     meta: metaOut,
     // Atalhos pro front distinguir cenários
     dadosConfiaveis: metaOut.confiavel && (metaOut.status === 'ok' || metaOut.status === 'sem_gasto' || metaOut.status === 'sem_campanha'),

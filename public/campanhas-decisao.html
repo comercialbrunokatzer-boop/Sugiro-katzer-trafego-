@@ -130,11 +130,15 @@ function corDot(c){
   return 'gray';
 }
 function linhaVal(c){
-  const sem=c.semaforo;
+  const sem=c.semaforoDecisao||c.semaforo;
   const emoji=sem?.emoji||'';
   if(c.leadConfirmado===false) return c.avisoLead||'Form. não confirmado';
-  if(sem?.codigo==='SEM_BASE' || ((c.leads||0)>0 && (c.leads||0)<10)){
+  if(sem?.codigo==='SEM_BASE' || ((c.leads||0)>0 && (c.leads||0)<10 && !c.temQualidade)){
     return `⚪ SEM BASE - ${c.leads||0} leads, precisa 10`;
+  }
+  if(c.temQualidade && c.cplBom!=null){
+    const br=c.cplBruto!=null?brl(c.cplBruto):'—';
+    return `Bruto ${br} → BOM ${brl2(c.cplBom)} ${emoji}`;
   }
   if(c.cpl!=null) return `${emoji} ${brl(c.cpl)}/form. · ${c.leads}`;
   if((c.leads||0)===0) return `${brl(c.gasto)} · 0 form.`;
