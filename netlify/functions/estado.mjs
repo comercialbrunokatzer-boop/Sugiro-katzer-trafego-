@@ -32,10 +32,10 @@ async function snapshotCampanhas(data) {
     const alertas = [];
     if (confiavel) {
       (placar.decisao?.revisar || []).forEach((c) => {
-        alertas.push(`revisar ${c.nome} (R$ ${Number(c.gasto || 0).toFixed(0)} · ${c.leads || 0} lead)`);
+        alertas.push(`revisar ${c.nome} (R$ ${Number(c.gasto || 0).toFixed(0)} · ${c.leads || 0} form.)`);
       });
       (placar.decisao?.escalar || []).slice(0, 3).forEach((c) => {
-        alertas.push(`escalar ${c.nome} (CPL ${c.cpl != null ? `R$ ${Number(c.cpl).toFixed(0)}` : '—'})`);
+        alertas.push(`escalar ${c.nome} (CPL form. ${c.cpl != null ? `R$ ${Number(c.cpl).toFixed(0)}` : '—'})`);
       });
     } else if (meta?.mensagemPainel) {
       alertas.push(meta.mensagemPainel);
