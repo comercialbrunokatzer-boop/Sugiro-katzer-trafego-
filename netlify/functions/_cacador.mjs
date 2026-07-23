@@ -67,15 +67,24 @@ export function leadsDemoHoje() {
       id: 'demo-vermelho-saiu',
       nome: 'Carlos Vermelho',
       telefone: '48 9xxxx',
-      campanha: 'AMANAY_ITAPOA_ROGGA_BR-SC',
+      campanha: 'FortMyers_BR_SC[10/07/26]',
       campanhaId: null,
       cidade: 'Itapoá',
       status: 'Saiu mapeamento',
       recebidoEm: new Date(agora - 90 * 60 * 1000).toISOString(),
       qualidade: 'bom',
-      fonte: 'demo',
+      fonte: 'FACEBOOK ADS',
       statusPosMapeamento: 'Saiu',
-      // sem qualidadeReal → VERMELHO (trava)
+      qualidadeIa: 'fake',
+    },
+    {
+      id: 'demo-brsc-ruim',
+      nome: 'Lead Ruim BR',
+      telefone: '47 8xxxx',
+      campanha: 'FortMyers_BR_SC[10/07/26]',
+      fonte: 'FACEBOOK ADS',
+      qualidadeIa: 'ruim',
+      recebidoEm: new Date(agora - 100 * 60 * 1000).toISOString(),
     },
   ];
 }

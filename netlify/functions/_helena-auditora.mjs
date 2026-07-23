@@ -1,16 +1,39 @@
-// Helena Auditora — classifica A/B/C/D (NÃO é a Secretária).
+// Helena Auditora — classifica Potencial/Interessado/Curioso/Fake/Ruim (NÃO é a Secretária).
+import { isVermelho, resumoAuditoria } from './_auditoria-abcd.mjs';
 import {
-  PROMPT_HELENA_AUDITORA,
-  classificaHeuristica,
-  normalizaAbcd,
-  isVermelho,
-  resumoAuditoria,
-} from './_auditoria-abcd.mjs';
+  PROMPT_QUALIDADE_TRAFEGO,
+  normalizaQualTrafego,
+  fonteEhTrafegoPago,
+  QUAL_TRAFEGO_ROTULO,
+} from './_qualidade-trafego.mjs';
 import { enviaWhats } from './_infra.mjs';
+
+export function classificaHeuristicaTrafego(lead = {}) {
+  const q = lead.qualidade;
+  let qualidade = 'curioso';
+  let confianca = 40;
+  let motivo = 'Poucos dados — default Curioso';
+  if (q === 'comprador') {
+    qualidade = 'interessado'; confianca = 75; motivo = 'Caçador marcou comprador';
+  } else if (q === 'bom') {
+    qualidade = 'potencial'; confianca = 70; motivo = 'Caçador marcou bom';
+  } else if (q === 'curioso') {
+    qualidade = 'curioso'; confianca = 65; motivo = 'Caçador marcou curioso';
+  } else if (q === 'errado') {
+    qualidade = 'fake'; confianca = 80; motivo = 'Caçador marcou nº errado';
+  }
+  return {
+    qualidade,
+    confianca,
+    motivo,
+    resumo: `${lead.nome || 'Lead'} · ${lead.campanha || 'sem campanha'} · ${QUAL_TRAFEGO_ROTULO[qualidade] || qualidade}`,
+    via: 'heuristica',
+  };
+}
 
 export async function classificaComIa(lead, timelineTexto = '') {
   const key = process.env.OPENAI_API_KEY || process.env.HELENA_AUDITORA_OPENAI_KEY || '';
-  if (!key) return classificaHeuristica(lead);
+  if (!key) return classificaHeuristicaTrafego(lead);
 
   const user = [
     `Lead: ${lead.nome}`,
@@ -19,12 +42,11 @@ export async function classificaComIa(lead, timelineTexto = '') {
     `Cidade: ${lead.cidade || '—'}`,
     `Fonte: ${lead.fonte || '—'}`,
     `Status: ${lead.status || '—'}`,
-    `Status pós-mapeamento: ${lead.statusPosMapeamento || '—'}`,
+    `Etiqueta corretor: ${lead.corretor || '—'}`,
     `Marca Caçador (CPL): ${lead.qualidade || '—'}`,
-    `Provisória: ${lead.qualidadeProvisoria || '—'}`,
     '',
-    'Timeline:',
-    timelineTexto || '(sem timeline — classifique com o que houver)',
+    'Timeline (Bitrix abas + ligação + WhatsApp Helena):',
+    timelineTexto || lead.timeline || '(sem timeline — classifique com o que houver)',
   ].join('\n');
 
   try {
@@ -39,39 +61,35 @@ export async function classificaComIa(lead, timelineTexto = '') {
         temperature: 0.2,
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: PROMPT_HELENA_AUDITORA },
+          { role: 'system', content: PROMPT_QUALIDADE_TRAFEGO },
           { role: 'user', content: user },
         ],
       }),
     });
     const body = await r.json();
     if (!r.ok) {
-      const h = classificaHeuristica(lead);
-      h.via = 'heuristica';
+      const h = classificaHeuristicaTrafego(lead);
       h.motivo = `OpenAI falhou (${r.status}) · ${h.motivo}`;
       return h;
     }
     const raw = body.choices?.[0]?.message?.content || '{}';
     let parsed = {};
     try { parsed = JSON.parse(raw); } catch { parsed = {}; }
-    const qualidade = normalizaAbcd(String(parsed.qualidade || '').replace(/[^ABCD]/gi, '')) || 'C';
+    const qualidade = normalizaQualTrafego(parsed.qualidade) || 'curioso';
     return {
       qualidade,
       confianca: Number(parsed.confianca) || 50,
       motivo: String(parsed.motivo || '').slice(0, 200) || 'classificado pela IA',
       resumo: String(parsed.resumo || '').slice(0, 400),
-      sinais_compra: Array.isArray(parsed.sinais_compra) ? parsed.sinais_compra.slice(0, 5) : [],
-      risco: String(parsed.risco || 'médio'),
       via: 'openai',
     };
   } catch (e) {
-    const h = classificaHeuristica(lead);
+    const h = classificaHeuristicaTrafego(lead);
     h.motivo = `IA erro: ${String(e.message || e).slice(0, 80)} · ${h.motivo}`;
     return h;
   }
 }
 
-/** Atualiza UF_CRM_QUALIDADE_IA + UF_CRM_RESUMO_IA no Bitrix (webhook REST). */
 export async function atualizaBitrixIa(lead, classif) {
   const base = (process.env.BITRIX_WEBHOOK_URL || process.env.BITRIX24_WEBHOOK || '').replace(/\/+$/, '');
   if (!base) return { ok: false, skipped: true, motivo: 'BITRIX_WEBHOOK_URL ausente' };
@@ -79,8 +97,9 @@ export async function atualizaBitrixIa(lead, classif) {
   if (!dealId || !/^\d+$/.test(dealId)) {
     return { ok: false, skipped: true, motivo: 'dealId Bitrix numérico ausente' };
   }
+  const rotulo = QUAL_TRAFEGO_ROTULO[classif.qualidade] || classif.qualidade;
   const fields = {
-    UF_CRM_QUALIDADE_IA: classif.qualidade,
+    UF_CRM_QUALIDADE_IA: rotulo,
     UF_CRM_RESUMO_IA: `${classif.resumo || ''} | ${classif.motivo || ''}`.slice(0, 500),
   };
   try {
@@ -99,10 +118,6 @@ export async function atualizaBitrixIa(lead, classif) {
   }
 }
 
-/**
- * Roda um ciclo da Auditora nos leads de hoje.
- * @returns {{ ok, processados, vermelhos, resumo }}
- */
 export async function rodaCicloAuditora(leads, {
   forcar = false,
   avisarVermelhos = true,
@@ -111,26 +126,23 @@ export async function rodaCicloAuditora(leads, {
   const lista = [...(leads || [])];
   for (let i = 0; i < lista.length; i++) {
     const lead = lista[i];
-    if (!forcar && normalizaAbcd(lead.qualidadeIa)) continue;
-    // Filtro doc: fontes pagas — demo também roda pra validar fluxo
-    const fonte = String(lead.fonte || '').toLowerCase();
-    const paga = /bitrix|meta|facebook|patroc|ads|demo/.test(fonte) || !fonte;
-    if (!paga) continue;
+    if (!forcar && normalizaQualTrafego(lead.qualidadeIa)) continue;
+    if (lead.fonte && !fonteEhTrafegoPago(lead.fonte) && lead.fonte !== 'demo') continue;
 
     const classif = await classificaComIa(lead, lead.timeline || '');
     const bitrix = await atualizaBitrixIa(lead, classif);
+    const sj = classif.qualidade === 'sem_justificativa';
     lista[i] = {
       ...lead,
-      qualidadeIa: classif.qualidade,
+      qualidadeIa: sj ? null : classif.qualidade,
+      semJustificativa: sj || !!lead.semJustificativa,
       confiancaIa: classif.confianca,
       motivoIa: classif.motivo,
       resumoIa: classif.resumo,
-      riscoIa: classif.risco,
-      sinaisIa: classif.sinais_compra,
       iaVia: classif.via,
       iaEm: new Date().toISOString(),
       bitrixIa: bitrix,
-      travaVermelha: isVermelho({ ...lead, qualidadeReal: lead.qualidadeReal, statusPosMapeamento: lead.statusPosMapeamento }),
+      travaVermelha: isVermelho(lead),
     };
     out.push({ id: lead.id, nome: lead.nome, ...classif, bitrix });
   }
@@ -140,15 +152,10 @@ export async function rodaCicloAuditora(leads, {
   if (avisarVermelhos && resumo.vermelhos > 0) {
     const ceo = process.env.WHATSAPP_CEO || '';
     if (ceo) {
-      const linhas = resumo.leadsVermelhos.slice(0, 8).map((l) => `· ${l.nome} (${l.corretor || '—'})`);
+      const linhas = resumo.leadsVermelhos.slice(0, 8).map((l) => `· ${l.nome}`);
       whats = await enviaWhats(
         ceo,
-        [
-          `🔴 *TRAVA Auditoria* — ${resumo.vermelhos} lead(s) Saiu sem Qualidade Real`,
-          ...linhas,
-          '',
-          'Preencher A/B/C/D Real no Painel 3.',
-        ].join('\n'),
+        [`🔴 *TRAVA* — ${resumo.vermelhos} lead(s) Saiu sem Qualidade Real`, ...linhas].join('\n'),
       );
     }
   }

@@ -55,7 +55,7 @@ test('payloadCacador: 4 botões por lead + auditoria vermelha', () => {
   assert.equal(p.ok, true);
   assert.match(p.titulo, /CAÇAR LEADS DE HOJE/);
   assert.equal(p.toastOk, 'Registrado - CPL BOM recalculado');
-  assert.equal(p.leads.length, 3);
+  assert.equal(p.leads.length, 4);
   assert.equal(p.leads[0].botoes.length, 4);
   assert.equal(p.leads[0].botoes[0].label, '🟢 Bom');
   assert.equal(p.leads[0].botoes[3].label, '💰 Comprador');

@@ -209,8 +209,8 @@ function rotuloEstadoTarefa(t){
 /** Card Campanhas: SÓ OLHAR — resumo + CPL BOM + Abrir. Sem escalar / sem executar. */
 function htmlCardCampanhas(t){
   const C=ST.campanhas||{};
-  const link=C.link||'https://dashing-elf-41a723.netlify.app/painel.html';
-  const cta=C.cta||'▶ Abrir Painel 2 (Execução)';
+  const link=C.link||'https://dashing-elf-41a723.netlify.app/app.html';
+  const cta=C.cta||'▶ Abrir App Decisão';
   const metrica=(C.metrica||C.resumo||'Sem dados da Meta ainda').replace(/\n/g,'<br>');
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';

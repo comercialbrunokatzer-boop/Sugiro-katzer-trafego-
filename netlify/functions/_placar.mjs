@@ -209,6 +209,8 @@ export function montaPlacar(data = []) {
       gasto,
       leads,
       cpl,
+      impressoes: num(c.impressions),
+      alcance: num(c.reach),
       fonteLead: fonte,
       avisoLead: aviso,
       leadConfirmado: confirmado,

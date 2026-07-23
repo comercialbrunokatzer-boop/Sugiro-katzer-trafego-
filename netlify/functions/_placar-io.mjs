@@ -10,7 +10,7 @@ export { inventariarAcoes } from './_placar.mjs';
 
 const STORE = 'placar-michel';
 const PLACAR_TTL_MS = 10 * 60 * 1000;
-const CACHE_KEY = 'placar-cache-v2';
+const CACHE_KEY = 'placar-cache-v3';
 
 function abreStore() {
   const siteID = process.env.BLOBS_SITE_ID;

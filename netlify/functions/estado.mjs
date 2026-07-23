@@ -71,8 +71,8 @@ function periodoPresetBRT(preset = 'last_7d', agora = new Date()) {
 }
 
 async function resumoCampanhas(data) {
-  const link = CAMPANHAS_APP_URL + '/';
-  const cta = '▶ Abrir Painel de Campanhas';
+  const link = CAMPANHAS_APP_URL + '/app.html';
+  const cta = '▶ Abrir App Decisão';
   try {
     const [{ placar, meta }, bruto, qualDoc, ciclo] = await Promise.all([
       lePlacar({ preset: 'last_7d' }),

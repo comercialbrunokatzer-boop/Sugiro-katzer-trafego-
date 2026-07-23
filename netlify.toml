@@ -126,6 +126,23 @@
   to = "/.netlify/functions/helena-auditora"
   status = 200
   force = true
+[[redirects]]
+  from = "/api/decisao-app"
+  to = "/.netlify/functions/decisao-app"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/app"
+  to = "/app.html"
+  status = 200
+[[redirects]]
+  from = "/app/"
+  to = "/app.html"
+  status = 200
+[[redirects]]
+  from = "/decisao"
+  to = "/app.html"
+  status = 200
 
 [[redirects]]
   from = "/api/placar"
