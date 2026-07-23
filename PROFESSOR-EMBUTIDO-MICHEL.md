@@ -28,6 +28,25 @@ Regra: se não houver base (Lei do “sem base para sugerir”), preencher assim
 - **Como apareceu nesta campanha:** faltam sinais de qualidade/conversão
 - **Qual erro evitar:** concluir só pelo CPL
 
+### Bloco de segurança (obrigatório no cartão)
+
+```
+BLOCO DE SEGURANÇA:
+Nível de risco:
+<baixo | moderado | alto>
+Pode executar hoje?
+<sim | não | só com Bruno>
+O que não pode fazer:
+<trava objetiva>
+Como desfazer:
+<passo reversível ou "não executar">
+```
+
+Regra:
+- se **não** estiver claro como desfazer, a mudança não entra como executável;
+- Nível 3 = `Pode executar hoje? só com Bruno`;
+- o bloco protege o Michel de agir além do combinado.
+
 
 ---
 

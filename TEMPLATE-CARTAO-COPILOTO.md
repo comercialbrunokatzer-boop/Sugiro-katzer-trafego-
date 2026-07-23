@@ -50,6 +50,16 @@ Qual erro evitar:
 Pausar ou escalar só pelo CPL, sem checar saturação do criativo e
 sem olhar qualidade/conversão.
 
+BLOCO DE SEGURANÇA:
+Nível de risco:
+Baixo
+Pode executar hoje?
+Sim
+O que não pode fazer:
+Não alterar orçamento e não pausar a campanha hoje.
+Como desfazer:
+Sem desfazer, porque hoje a ação é só análise + rascunho.
+
 PRECISA DE APROVAÇÃO DO BRUNO?
 Não, porque hoje haverá apenas análise e preparação de criativo.
 (Nível 1 — Michel executa sozinho.)
@@ -74,6 +84,7 @@ Trocar o criativo no ar ou redistribuir verba → sobe para **Nível 2** (recome
 | **AÇÃO PARA O MICHEL** | Lista numerada, clicável na prática (conjunto, frequência, orçamento, criativo) |
 | **POR QUE** | Liga mídia ≠ qualidade ≠ conversão |
 | **APRENDIZADO DO DIA** | **Obrigatório.** Bloco com 4 linhas: **Conceito** → **O que significa** → **Como apareceu nesta campanha** → **Qual erro evitar**. Preferir ligar ao tipo de problema (mídia / qualidade / conversão) e a **custo por venda**, não só CPL. Sem base → dizer isso explicitamente. |
+| **BLOCO DE SEGURANÇA** | **Obrigatório.** Bloco curto com 4 linhas: **Nível de risco** → **Pode executar hoje?** → **O que não pode fazer** → **Como desfazer**. Se não houver forma clara de desfazer, não executar mudança de Nível 2/3. |
 | **PRECISA DE APROVAÇÃO DO BRUNO?** | Sim/Não + motivo. Ligado ao **nível de autonomia** (`AUTONOMIA-MICHEL-TRAFEGO.md`): Nível 1 = Não; Nível 2 = Não, se recomendação registrada; Nível 3 = Sim |
 
 ---

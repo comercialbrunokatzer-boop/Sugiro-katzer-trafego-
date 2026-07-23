@@ -58,8 +58,9 @@ Resumo dos blocos obrigatórios:
 4. **RECOMENDAÇÃO** — pausar / não pausar / escalar / manter  
 5. **AÇÃO PARA O MICHEL** — passos numerados (onde clicar / o que não alterar)  
 6. **POR QUE** — mídia ≠ qualidade ≠ conversão  
-7. **APRENDIZADO DO DIA** — 1 frase  
-8. **PRECISA DE APROVAÇÃO DO BRUNO?** — Sim/Não + motivo  
+7. **APRENDIZADO DO DIA** — conceito · significado · caso · erro a evitar  
+8. **BLOCO DE SEGURANÇA** — risco · trava · desfazer  
+9. **PRECISA DE APROVAÇÃO DO BRUNO?** — Sim/Não + motivo  
 
 Modo seguro: a mão que pausa/escala é do **Michel**. O Copiloto **sugere**.
 
@@ -151,6 +152,20 @@ Qual erro evitar:
 ```
 
 (Usar **só um** conceito por dia no cartão. Biblioteca de conceitos: `PROFESSOR-EMBUTIDO-MICHEL.md`.)
+
+**Obrigatório também:** `BLOCO DE SEGURANÇA`
+
+```
+BLOCO DE SEGURANÇA:
+Nível de risco:
+<baixo | moderado | alto>
+Pode executar hoje?
+<sim | não | só com Bruno>
+O que não pode fazer:
+<trava objetiva>
+Como desfazer:
+<passo reversível ou "não executar">
+```
 
 **Regra:** um conceito por dia, numa campanha real — ver `ROTINA-DIARIA-COPILOTO.md`. Em ~60 dias Michel aprende na própria operação.
 
