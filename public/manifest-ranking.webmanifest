@@ -1,0 +1,16 @@
+{
+  "name": "Ranking Campanhas Katzer",
+  "short_name": "Ranking CPL",
+  "description": "Ranking de campanhas por CPL de formulário Meta — nunca clique.",
+  "start_url": "/ranking-campanhas",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f2a24",
+  "theme_color": "#0f2a24",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-katzer.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
