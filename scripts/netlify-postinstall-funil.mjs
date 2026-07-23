@@ -119,6 +119,18 @@ try {
   console.log('espelho CEO falhou:', String(e.message || e));
 }
 
+
+// Status dos builds recentes da Helena
+try {
+  const builds = await api(`/sites/${helena.id}/builds?per_page=5`);
+  const arr = Array.isArray(builds) ? builds : (builds?.builds || []);
+  for (const b of arr.slice(0, 5)) {
+    console.log(`helena-build ${b.id} state=${b.state} error=${b.error_message || ''} created=${b.created_at}`);
+  }
+} catch (e) {
+  console.log('list builds', String(e.message || e).slice(0, 120));
+}
+
 // Tenta rebuild (pega env nova) — pode falhar por crédito; tentamos os dois sites.
 for (const site of [helena, trafego]) {
   try {
