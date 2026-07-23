@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { montaPlacar, montaCartoesCopiloto } from '../netlify/functions/_placar.mjs';
 import {
-  montaSugestoes, registraDecisao, listaDecisoes, decisoesVazias, rotuloDecisao, agoraBRT, garanteAprendizados,
+  montaSugestoes, montaSugestaoPrincipal, registraDecisao, listaDecisoes, decisoesVazias, rotuloDecisao, agoraBRT, garanteAprendizados,
 } from '../netlify/functions/_placar-estado.mjs';
 
 const data = [
@@ -23,6 +23,14 @@ test('montaSugestoes: separa escalar e revisar, com id estável', () => {
   assert.ok(rev.includes('FortMyers ESPANHA'));   // gastou e 0 lead revisa
   // id é derivado do nome (mesmo nome -> mesmo id, pra o toque casar entre polls)
   assert.equal(montaSugestoes(montaPlacar(data))[0].id, sug[0].id);
+});
+
+test('montaSugestaoPrincipal preserva a decisão principal usada pela rota oficial', () => {
+  const principal = montaSugestaoPrincipal(montaPlacar(data));
+  assert.equal(principal.tipo, 'mover');
+  assert.match(principal.titulo, /Mover R\$ 50\/dia/);
+  assert.match(principal.campanha, /FortMyers ESPANHA/);
+  assert.match(principal.campanha, /FortMyers PORTUGAL/);
 });
 
 test('registraDecisao: grava e o último toque vale', () => {

@@ -65,15 +65,28 @@
   status = 200
   force = true
 
-# Placar-quadradinho do Michel (app dourado) + Gestor (com senha).
 [[redirects]]
   from = "/placar-michel"
-  to = "/placar-michel.html"
+  to = "/painel-michel.html"
+  status = 200
+[[redirects]]
+  from = "/painel-michel"
+  to = "/painel-michel.html"
   status = 200
 [[redirects]]
   from = "/placar-gestor"
-  to = "/placar-gestor.html"
+  to = "/painel-ceo.html"
   status = 200
+  force = true
+[[redirects]]
+  from = "/painel-gestor"
+  to = "/painel-ceo.html"
+  status = 200
+[[redirects]]
+  from = "/placar-gestor.html"
+  to = "/painel-ceo.html"
+  status = 200
+  force = true
 [[redirects]]
   from = "/api/placar-estado"
   to = "/.netlify/functions/placar-estado"

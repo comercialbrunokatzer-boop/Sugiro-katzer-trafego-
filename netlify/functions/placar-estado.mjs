@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import { montaCartoesCopiloto } from './_placar.mjs';
 import {
-  agoraBRT, montaSugestoes, listaDecisoes, garanteAprendizados,
+  agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes, garanteAprendizados,
 } from './_placar-estado.mjs';
 import { lePlacar, leDecisoes, salvaDecisoes } from './_placar-io.mjs';
 import { json } from './_infra.mjs';
@@ -27,7 +27,7 @@ export async function handler(event) {
 
   const now = agoraBRT();
   const [{ placar, ts }, decisoes] = await Promise.all([
-    lePlacar({ preset: 'last_7d' }),
+    lePlacar({ preset: 'last_7d', force: params.refresh === '1' }),
     leDecisoes(now.data),
   ]);
   const sugestoes = montaSugestoes(placar);
@@ -42,6 +42,7 @@ export async function handler(event) {
     ultimaLeitura: ts ? agoraBRT(new Date(ts)).hm : now.hm,
     placar,                        // { campanhas, totalGasto, totalLeads, cplMedio, decisao }
     sugestoes,
+    sugestaoPrincipal: montaSugestaoPrincipal(placar),
     decisoes: listaDecisoes(decisoes),
     cartoes: resumo.cartoes,
     naoAltere: resumo.naoAltere,

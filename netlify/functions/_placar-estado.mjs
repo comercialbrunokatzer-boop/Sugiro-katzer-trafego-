@@ -27,6 +27,59 @@ export function montaSugestoes(placar = {}) {
   return [...map(d.escalar, 'escalar'), ...map(d.revisar, 'revisar')];
 }
 
+/** Mantém a sugestão principal do quadradinho legada para a rota oficial de decisão. */
+export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
+  const d = (placar && placar.decisao) || {};
+  const origem = (d.revisar && d.revisar[0]) || null;
+  const destino = (d.escalar && d.escalar[0]) || null;
+  if (origem && destino) {
+    return {
+      id: `mov-${slug(origem.nome)}-para-${slug(destino.nome)}`,
+      tipo: 'mover',
+      origem: origem.nome,
+      destino: destino.nome,
+      valorDia,
+      titulo: `Mover R$ ${valorDia}/dia do ${origem.nome} → ${destino.nome}`,
+      motivo: `${origem.nome}: R$ ${Number(origem.gasto || 0).toFixed(0)} gastos, ${origem.leads || 0} lead. ${destino.nome} tem melhor CPL (${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}/lead` : 'abaixo da média'}).`,
+      campanha: `${origem.nome} → ${destino.nome}`,
+      gasto: origem.gasto ?? 0,
+      leads: origem.leads ?? 0,
+      cpl: destino.cpl ?? null,
+    };
+  }
+  if (origem) {
+    return {
+      id: `rev-${slug(origem.nome)}`,
+      tipo: 'revisar',
+      origem: origem.nome,
+      destino: null,
+      valorDia: null,
+      titulo: `Revisar / cortar ${origem.nome}`,
+      motivo: `R$ ${Number(origem.gasto || 0).toFixed(0)} gastos · ${origem.leads || 0} lead — queimando verba.`,
+      campanha: origem.nome,
+      gasto: origem.gasto ?? 0,
+      leads: origem.leads ?? 0,
+      cpl: origem.cpl ?? null,
+    };
+  }
+  if (destino) {
+    return {
+      id: `esc-${slug(destino.nome)}`,
+      tipo: 'escalar',
+      origem: null,
+      destino: destino.nome,
+      valorDia,
+      titulo: `Escalar ${destino.nome} (+R$ ${valorDia}/dia)`,
+      motivo: `CPL ${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}` : 'bom'} — abaixo da média. Vale mais verba.`,
+      campanha: destino.nome,
+      gasto: destino.gasto ?? 0,
+      leads: destino.leads ?? 0,
+      cpl: destino.cpl ?? null,
+    };
+  }
+  return null;
+}
+
 export function decisoesVazias(data) { return { data, itens: {}, aprendizados: {} }; }
 
 /** Registra (ou troca) a decisão do Michel pra uma sugestão. Puro — o último toque vale. */

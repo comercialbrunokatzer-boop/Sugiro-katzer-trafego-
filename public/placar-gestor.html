@@ -61,7 +61,7 @@
 </div>
 <div class="wrap">
   <p class="eyebrow">Katzer OS · Placar do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
-  <h1>Campanhas do Michel</h1>
+  <h1>Seu relatório — Campanhas</h1>
   <p class="date" id="date">carregando…</p>
 
   <div class="hero">
@@ -76,7 +76,7 @@
   <div class="sec">Campanhas (últimos 7 dias)</div>
   <div id="camps"></div>
 
-  <div class="honesty">🔎 <b>CPL = custo por LEAD</b>, não por venda. Sem o arquivo de atribuição da Katzer (venda ↔ campanha), o placar mede cadastros/conversas da Meta — não confunda com custo por venda.</div>
+  <div class="honesty">🔎 <b>CPL = custo por LEAD</b>, não por venda. Sem o arquivo de atribuição da Katzer (venda↔campanha), o placar mede clique — não confunda com custo por venda.</div>
   <footer>Katzer OS · atualiza sozinho · dados reais da Meta</footer>
 </div>
 
@@ -118,14 +118,24 @@ function render(st){
   // Decisões ao vivo
   const db=$('#decs');db.innerHTML='';
   (st.decisoes||[]).forEach(d=>{
-    const cls=d.decisao==='aplicar'?'ap':d.decisao==='ajustar'?'aj':'no';
-    const ic=d.decisao==='aplicar'?'✓':d.decisao==='ajustar'?'✎':'⏸';
-    const rot=d.decisao==='aplicar'?'Aplicou':d.decisao==='ajustar'?'Ajustou':'Agora não';
+    const cls=d.decisao==='aplicar'||d.decisao==='aumentar'||d.decisao==='manter'?'ap'
+      :d.decisao==='ajustar'?'aj':'no';
+    const ic=d.decisao==='aplicar'||d.decisao==='manter'?'✓'
+      :d.decisao==='aumentar'?'⬆'
+      :d.decisao==='ajustar'?'✎'
+      :d.decisao==='desistir'?'🛑':'⏸';
+    const rot=d.decisao==='aplicar'?'Michel aplicou'
+      :d.decisao==='ajustar'?'Michel ajustou'
+      :d.decisao==='desistir'?'Michel desistiu'
+      :d.decisao==='manter'?'Michel manteve'
+      :d.decisao==='aumentar'?'Michel aumentou'
+      :'Michel — agora não';
+    const detalhe=d.ajuste||d.campanha||'';
     const el=document.createElement('div');el.className='dec';
-    el.innerHTML=`<div class="mk ${cls}">${ic}</div><div class="tx"><b>${rot}</b> · ${d.tipo==='escalar'?'escalar':'revisar'} <b>${d.campanha}</b>${d.ajuste?` — ${d.ajuste}`:''}<div class="meta">${d.hora}</div></div>`;
+    el.innerHTML=`<div class="mk ${cls}">${ic}</div><div class="tx"><b>${rot}</b> — ${detalhe}<div class="meta">decisão · ${d.hora||''} · confere na Meta</div></div>`;
     db.appendChild(el);
   });
-  if(!(st.decisoes||[]).length)db.innerHTML='<div class="empty">Nada ainda hoje. Quando o Michel tocar uma decisão, aparece aqui na hora.</div>';
+  if(!(st.decisoes||[]).length)db.innerHTML='<div class="empty">Nada ainda hoje. Quando o Michel tocar um botão, aparece aqui na hora.</div>';
   // Campanhas
   const cb=$('#camps');cb.innerHTML='';
   (p.campanhas||[]).slice(0,10).forEach(c=>{
