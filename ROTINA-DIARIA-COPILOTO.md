@@ -50,11 +50,18 @@ Cruza (Fase B com Helena/CRM; até lá, o que já existir no Bitrix/atendimento)
 
 ## Final do dia — fechamento
 
-* O que foi feito (ações Nível 1/2).  
-* O que ficou pendente / aguardando Bruno (Nível 3).  
-* Resultado vs hipótese (se houve ficha de mudança).  
-* **Aprendizado do dia** (1 frase).  
-* O que **não** mexer amanhã cedo, se ainda estiver em prazo de observação.
+Template oficial (`FECHAMENTO-DIARIO.md`):
+
+```
+O que executei:
+O que não executei:
+O que mudou:
+Resultado inicial:
+O que aprendi:
+O que precisa de Bruno:
+```
+
+Isso alimenta o histórico de ~60 dias e separa o que é Nível 3 (Bruno) do que o Michel já resolveu.
 
 ---
 
