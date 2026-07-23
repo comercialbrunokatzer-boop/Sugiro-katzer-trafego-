@@ -194,16 +194,18 @@ export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
   const semaforo = semaforoCampanha({
     leads: c.leads, cpl: c.cpl, leadConfirmado: c.leadConfirmado !== false,
   });
-  const trava = travaEscalar({ ...c, cidade, alertaPublico: pub.alerta ? pub.motivo : null, publico: pub.publico });
+  const trava = travaEscalar({ ...c, cidade, alertaPublico: pub.alerta ? pub.motivo : null, publico: id.publico || pub.publico });
   return {
     ...c,
     cidade,
     produto: id.produto,
     construtora: id.construtora,
-    corretor: id.corretor,
+    publicoNome: id.publico,
+    dataCampanha: id.data,
+    tipoCampanha: id.tipo,
     rotuloProdutoCidade: id.rotulo,
     identidade: id,
-    publico: pub.publico,
+    publico: id.publico || pub.publico,
     alertaPublico: pub.alerta ? pub.motivo : null,
     semaforo,
     diasNoAr: diasNoAr != null ? diasNoAr : (c.diasNoAr ?? null),
