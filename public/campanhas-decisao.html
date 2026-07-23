@@ -105,6 +105,9 @@
 
 <script>
 const $=(s)=>document.querySelector(s);
+// App Campanhas em campanhas-katzer usa as APIs da Rotina (Meta + Blobs já ligados lá).
+const API_BASE=/campanhas-katzer/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
+const api=(path)=>API_BASE+path;
 let ST=null, VIEW='lista'; // lista | decisao | feito
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:0});
@@ -112,7 +115,7 @@ const brl2=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFra
 
 async function load(){
   try{
-    const r=await fetch('/api/placar-estado?refresh=1');
+    const r=await fetch(api('/api/placar-estado?refresh=1'));
     ST=await r.json();
     render();
   }catch(e){toast('Sem conexão');}
@@ -209,7 +212,7 @@ function renderLista(){
 
 async function postCampanha(nome,decisao,ajuste){
   const id='camp-'+slug(nome);
-  const r=await fetch('/api/placar-registrar',{
+  const r=await fetch(api('/api/placar-registrar'),{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({acao:'decisao',id,campanha:nome,tipo:'campanha',decisao,ajuste})
   }).then(x=>x.json()).catch(()=>({ok:false}));
@@ -285,7 +288,7 @@ async function decidir(decisao){
   } else if(decisao==='aplicar' && s.tipo==='mover' && s.valorDia!=null){
     ajuste=`mover R$${s.valorDia}/dia ${s.origem} → ${s.destino}`;
   }
-  const r=await fetch('/api/placar-registrar',{
+  const r=await fetch(api('/api/placar-registrar'),{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({acao:'decisao',id:s.id,campanha:s.campanha,tipo:s.tipo||'mover',decisao,ajuste})
   }).then(x=>x.json()).catch(()=>({ok:false}));

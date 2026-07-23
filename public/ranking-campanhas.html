@@ -137,9 +137,12 @@ function render(){
   $('#ft').textContent = `${blk.periodo} · leitura ${blk.horarioLeitura||'—'} · ${blk.conta||''} · lead = formulário`;
 }
 
+const API_BASE=/campanhas-katzer/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
+const api=(path)=>API_BASE+path;
+
 async function load(){
   try{
-    const r=await fetch('/api/ranking-campanhas');
+    const r=await fetch(api('/api/ranking-campanhas'));
     DATA=await r.json();
   }catch(e){DATA={ok:false,erro:'Dados da Meta indisponíveis.'};}
   render();

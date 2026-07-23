@@ -118,12 +118,15 @@ function render(){
   });
 }
 
+const API_BASE=/campanhas-katzer/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
+const api=(path)=>API_BASE+path;
+
 async function post(r,decisao,ajuste){
   const body={
     acao:'decisao', id:r.id, campanha:`${r.produto} · ${r.titulo}`,
     tipo:r.tipo||'recomendacao', decisao, ajuste
   };
-  const res=await fetch('/api/placar-registrar',{
+  const res=await fetch(api('/api/placar-registrar'),{
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)
   }).then(x=>x.json()).catch(()=>({ok:false}));
@@ -133,7 +136,7 @@ async function post(r,decisao,ajuste){
 
 async function loadDecisoes(){
   try{
-    const r=await fetch('/api/placar-estado');
+    const r=await fetch(api('/api/placar-estado'));
     const j=await r.json();
     DECS=j.decisoes||[];
   }catch{DECS=[];}
@@ -142,7 +145,7 @@ async function loadDecisoes(){
 async function load(){
   try{
     const [rank, _] = await Promise.all([
-      fetch('/api/ranking-campanhas').then(r=>r.json()),
+      fetch(api('/api/ranking-campanhas')).then(r=>r.json()),
       loadDecisoes()
     ]);
     DATA=rank;
