@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { montaRecomendacoes } from '../netlify/functions/_recomendacoes.mjs';
 
-test('recomendacoes: BR_SC criativo + Amanay R$30', () => {
+test('recomendacoes: texto canônico Bruno + botões', () => {
   const r = montaRecomendacoes({
     operacional7d: {
       logSeguro: [
@@ -17,16 +17,16 @@ test('recomendacoes: BR_SC criativo + Amanay R$30', () => {
     },
   });
   assert.equal(r.ok, true);
-  assert.equal(r.metricaPrincipal, 'lead_formulario');
-  assert.equal(r.recomendacoes.length, 2);
   const br = r.recomendacoes[0];
-  assert.match(br.produto, /FORT MYERS/i);
-  assert.match(br.acao, /Carol/i);
-  assert.equal(br.numeros.cplBrSc7d, 76.69);
+  assert.equal(br.produto, 'FORT MYERS - PIÇARRAS');
+  assert.match(br.publico, /9 leads a R\$ 77/);
+  assert.equal(br.problema, 'Mesma cidade que Alicerce, mas CPL 3x maior');
+  assert.equal(br.recomendacao, 'MANTER BR_SC, mas trocar criativo');
+  assert.equal(br.acao, 'Gravar com Carol a mesma fórmula do Alicerce (R$ 18) para Fort Myers');
   assert.deepEqual(br.botoes, ['aplicar', 'ajustar', 'agora-nao']);
   const am = r.recomendacoes[1];
-  assert.match(am.produto, /AMANAY/i);
+  assert.equal(am.produto, 'AMANAY - ITAPOÁ');
+  assert.equal(am.oportunidade, '24 leads a R$ 11 - menor CPL da conta');
+  assert.equal(am.acao, 'Duplicar Amanay com R$ 30/dia - público SC+PR');
   assert.equal(am.valorDiaSugerido, 30);
-  assert.equal(am.numeros.leadsForm, 24);
-  assert.equal(am.numeros.cplForm, 11.01);
 });
