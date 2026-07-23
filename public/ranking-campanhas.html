@@ -59,7 +59,7 @@
   <button class="tab" data-p="7d">7 dias</button>
   <button class="tab" data-p="30d">30 dias</button>
 </div>
-<main id="app"><div class="empty">Carregando Meta…</div></main>
+<main id="app"><div class="empty" id="loadMsg">Carregando Meta…</div></main>
 <footer id="ft">Modo seguro · sem token na tela</footer>
 <script>
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -102,9 +102,17 @@ function pickBlk(){
 
 function render(){
   const app=$('#app');
-  if(!DATA||!DATA.ok){app.innerHTML=`<div class="err">${(DATA&&DATA.erro)||'Dados da Meta indisponíveis.'}</div>`;return;}
+  if(!DATA||!DATA.ok){
+    app.innerHTML=`<div class="err">${(DATA&&DATA.erro)||'Dados da Meta indisponíveis.'}<br><button class="tab" style="margin-top:12px;display:inline-block;width:auto;padding:10px 18px" id="btnRetry">Tentar de novo</button></div>`;
+    const b=$('#btnRetry'); if(b) b.onclick=()=>load();
+    return;
+  }
   const blk = pickBlk();
-  if(!blk||!blk.ok){app.innerHTML=`<div class="err">${(blk&&blk.erro)||'Dados da Meta indisponíveis.'}</div>`;return;}
+  if(!blk||!blk.ok){
+    app.innerHTML=`<div class="err">${(blk&&blk.erro)||'Dados da Meta indisponíveis.'}<br><button class="tab" style="margin-top:12px;display:inline-block;width:auto;padding:10px 18px" id="btnRetry2">Tentar de novo</button></div>`;
+    const b=$('#btnRetry2'); if(b) b.onclick=()=>load();
+    return;
+  }
   const t=blk.totais||{};
   const conf=DATA.conferencia;
   let confHtml='';
@@ -138,6 +146,7 @@ const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'h
 const api=(path)=>API_BASE+path;
 const IS_EXECUTA=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname);
 const EXEC_URL='https://dashing-elf-41a723.netlify.app';
+const FETCH_MS=28000;
 
 (function modoNav(){
   const sub=$('#subModo');
@@ -157,15 +166,32 @@ const EXEC_URL='https://dashing-elf-41a723.netlify.app';
 })();
 
 async function load(){
+  const app=$('#app');
+  app.innerHTML=`<div class="empty" id="loadMsg">Carregando Meta…</div>`;
+  let tip=null;
+  tip=setTimeout(()=>{
+    const m=$('#loadMsg');
+    if(m) m.textContent='Ainda buscando Meta… (~5–15s na 1ª vez)';
+  },3500);
+  const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+  const to=setTimeout(()=>{ try{ctrl&&ctrl.abort();}catch(_){} }, FETCH_MS);
   try{
-    const r=await fetch(api('/api/ranking-campanhas'));
+    const r=await fetch(api('/api/ranking-campanhas'), ctrl?{signal:ctrl.signal}:undefined);
+    if(!r.ok) throw new Error('HTTP '+r.status);
     DATA=await r.json();
-  }catch(e){DATA={ok:false,erro:'Dados da Meta indisponíveis.'};}
+    if(!DATA||DATA.ok===false) DATA={ok:false,erro:(DATA&&DATA.erro)||'Dados da Meta indisponíveis.'};
+  }catch(e){
+    const abort=e&&(e.name==='AbortError'||/abort/i.test(String(e.message||'')));
+    DATA={ok:false,erro:abort?'Demorou demais · toque em Tentar de novo':'Dados da Meta indisponíveis.'};
+  }finally{
+    clearTimeout(to); if(tip) clearTimeout(tip);
+  }
   render();
 }
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); PER=b.dataset.p; render();
+  b.classList.add('on'); PER=b.dataset.p;
+  if(DATA&&DATA.ok) render(); else load();
 }));
 load();
 </script>
