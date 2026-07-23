@@ -1,9 +1,8 @@
-// Lógica de disparo (cron + teste): Rotina + Placar no mesmo ritmo.
+// Lógica de disparo (cron + teste): só ROTINA.
+// Campanhas = produto separado (/campanhas).
 import { pontualidade, agoraBRT, min2hm, previstoMin, TAREFAS } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, enviaEmail } from './_infra.mjs';
 import { resumoWhats, emailHTML } from './_relatorio.mjs';
-import { leDecisoes, lePlacar } from './_placar-io.mjs';
-import { listaDecisoes, montaSugestaoPrincipal, rotuloDecisao } from './_placar-estado.mjs';
 
 function agendaLinhas(estado) {
   return TAREFAS
@@ -26,8 +25,7 @@ export async function disparaCard(now = agoraBRT()) {
     '',
     agenda,
     '',
-    `Placar do Michel 👉 ${url}/placar-michel`,
-    `(Campanhas: abra a decisão dentro do placar)`,
+    `Rotina 👉 ${url}/placar-michel`,
   ].join('\n');
   const wM = await enviaWhats(process.env.WHATSAPP_MICHEL, michelMsg);
 
@@ -36,7 +34,7 @@ export async function disparaCard(now = agoraBRT()) {
     '',
     agenda,
     '',
-    `Placar do Gestor (ao vivo): ${url}/placar-gestor`,
+    `Rotina (ao vivo): ${url}/placar-gestor`,
   ].join('\n');
   const wC = await enviaWhats(process.env.WHATSAPP_CEO, ceoMsg);
 
@@ -44,17 +42,14 @@ export async function disparaCard(now = agoraBRT()) {
 }
 
 /**
- * Relatório da tarde pro Bruno (WhatsApp + e-mail):
- * - Jlle/Casa: a partir de 13:00
- * - Katzer: a partir de 14:30
- * Inclui % da Rotina + decisões/métricas/alertas do Placar.
+ * Relatório da tarde pro Bruno (WhatsApp + e-mail) — só ROTINA.
+ * Campanhas = outro produto (/campanhas).
  */
 export async function disparaRelatorio(now, { teste = false } = {}) {
   if (now.dow === 0) return { skip: 'domingo (folga)' };
   const estado = await leEstado(now.data);
   if (estado.relatorioEnviado && !teste) return { skip: `já enviado ${estado.relatorioEnviado}` };
 
-  // 13:00 BRT = 780 min · 14:30 = 870 min
   const janelaKatzer = now.min >= 14 * 60 + 30;
   const janelaJlle = now.min >= 13 * 60;
   const ehKatzer = estado.modo === 'katzer';
@@ -65,21 +60,7 @@ export async function disparaRelatorio(now, { teste = false } = {}) {
 
   const P = pontualidade(estado, now.min);
   const modoTxt = ehKatzer ? '🏢 Katzer' : '🏠 Jlle/Casa';
-
-  // Placar do dia (decisões + métricas + alertas)
-  let campanhasExtra = { decisoes: [], placar: null, sugestao: null, alertas: [] };
-  try {
-    const [{ placar }, bruto] = await Promise.all([
-      lePlacar({ preset: 'last_7d' }),
-      leDecisoes(now.data),
-    ]);
-    const decisoes = listaDecisoes(bruto);
-    const sugestao = montaSugestaoPrincipal(placar);
-    const alertas = [];
-    (placar.decisao?.revisar || []).forEach((c) => alertas.push(`🔴 revisar ${c.nome} (${Number(c.gasto || 0).toFixed(0)} · ${c.leads || 0} lead)`));
-    (placar.decisao?.escalar || []).forEach((c) => alertas.push(`🟢 escalar ${c.nome} (CPL ${c.cpl != null ? Number(c.cpl).toFixed(0) : '—'})`));
-    campanhasExtra = { decisoes, placar, sugestao, alertas };
-  } catch { /* placar opcional se blobs/Meta falhar */ }
+  const campanhasExtra = { decisoes: [], placar: null, sugestao: null, alertas: [] };
 
   const w = await enviaWhats(
     process.env.WHATSAPP_CEO,
@@ -94,7 +75,7 @@ export async function disparaRelatorio(now, { teste = false } = {}) {
   if (!teste) { estado.relatorioEnviado = now.hm; await salvaEstado(estado); }
   return {
     pct: P.pct,
-    decisoes: campanhasExtra.decisoes.length,
+    decisoes: 0,
     whats: w,
     email: e,
     teste,

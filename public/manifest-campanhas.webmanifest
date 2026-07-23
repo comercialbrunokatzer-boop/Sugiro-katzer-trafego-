@@ -1,8 +1,8 @@
 {
-  "name": "Ranking Campanhas Katzer",
-  "short_name": "Ranking CPL",
-  "description": "Ranking CPL formulário — Painel de Campanhas (sem Rotina).",
-  "start_url": "/ranking-campanhas",
+  "name": "Campanhas Katzer",
+  "short_name": "Campanhas",
+  "description": "Painel de Campanhas Katzer — CPL formulário, ranking e decisão. Sem rotina.",
+  "start_url": "/campanhas",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0f2a24",

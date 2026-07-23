@@ -1,16 +1,12 @@
 {
-  "name": "Placar do Michel — Katzer",
+  "name": "Placar do Michel",
   "short_name": "Placar Michel",
-  "description": "Placar operacional do Michel — rotina, prioridades, campanhas e decisões do dia.",
+  "description": "Rotina operacional do Michel — reuniões, Instagram, discadora. Sem Campanhas.",
   "start_url": "/placar-michel",
-  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#0d1820",
   "theme_color": "#0d1820",
   "icons": [
-    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-katzer.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }

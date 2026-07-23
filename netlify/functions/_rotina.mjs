@@ -9,7 +9,6 @@ export const TAREFAS = [
   { id: 'agend',     nome: 'Agendamentos/Atend.', base: '08:10' },
   { id: 'pendencias',nome: 'Pendências',          base: '08:20' },
   { id: 'instagram', nome: 'Instagram',           base: '08:35' },
-  { id: 'campanhas', nome: 'Campanhas',           base: '08:55' },
   { id: 'discadora', nome: 'Discadora',           base: '09:15' },
   { id: 'garimpo',   nome: 'Garimpo',             base: '09:35' },
   { id: 'auditor',   nome: 'Lista do Auditor',    base: '12:00' },

@@ -83,8 +83,8 @@
     <div id="obsList"></div>
   </div>
 
-  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Campanhas: Meta real + decisões do quadradinho neste mesmo painel.</p>
-  <footer>Katzer OS · Placar do Gestor · mesma base do Placar do Michel · app na tela</footer>
+  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Este painel é só a <b>Rotina</b>. Campanhas: app separado em /campanhas.</p>
+  <footer>Katzer OS · Rotina do Michel · app na tela</footer>
 </div>
 
 <script>
@@ -131,20 +131,7 @@ function rotuloEstado(l){
   if(l.estado==='atrasado')return`<span class="tag late atraso" data-prev="${l.previsto}">atrasando…</span>`;
   return`<span class="tag" style="color:var(--sub)">aguardando</span>`;
 }
-function blocoCampanhas(l){
-  if(l.id!=='campanhas')return'';
-  const C=ST.campanhas||{};
-  const chips=`<div class="m">
-    <span class="chip">${C.n||0} campanhas</span>
-    <span class="chip">R$ ${Number(C.totalGasto||0).toFixed(0)}</span>
-    <span class="chip">${C.totalLeads||0} form.</span>
-    <span class="chip">CPL form. ${C.cplMedio!=null?'R$ '+Number(C.cplMedio).toFixed(0):'—'}</span>
-  </div>`;
-  const decs=(C.decisoes||[]).slice(0,5).map(d=>`<div class="dec">${d.rotulo||d.decisao}${d.hora?' · '+d.hora:''}</div>`).join('');
-  const pend=C.pendenteAplicar?`<div class="warn">Decisão do dia: ainda pendente no quadradinho</div>`:`<div class="warn" style="color:var(--ok)">Decisões registradas · Michel aplica na Meta (modo seguro)</div>`;
-  const al=(C.alertas||[]).slice(0,3).map(a=>`<div class="dec">⚠️ ${a}</div>`).join('');
-  return`<div class="camp">${chips}${decs||''}${pend}${al}</div>`;
-}
+function blocoCampanhas(){ return ''; }
 function render(){
   if(!ST||!ST.ok)return;const P=ST.pontualidade;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga do Michel 🎉':'');

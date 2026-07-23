@@ -78,8 +78,8 @@
   to = "/email-preview.html"
   status = 200
 [[redirects]]
-  from = "/como-instalar"
-  to = "/como-instalar.html"
+  from = "/como-instalar-campanhas"
+  to = "/como-instalar-campanhas.html"
   status = 200
 [[redirects]]
   from = "/api/placar"

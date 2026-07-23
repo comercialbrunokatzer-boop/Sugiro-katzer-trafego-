@@ -96,13 +96,6 @@
 
   <div class="orient" id="orient">Carregando orientação…</div>
 
-  <div class="campbox" id="campbox">
-    <h2>📊 Tráfego / Campanhas</h2>
-    <div class="s" id="campResumo">—</div>
-    <div class="chips" id="campChips"></div>
-    <a class="btn" href="/campanhas-decisao?from=placar">Abrir decisão do dia</a>
-  </div>
-
   <div class="sec">Rotina do dia</div>
   <div id="tasks"></div>
 
@@ -164,53 +157,30 @@ function renderPrioridades(){
   const ts=ST.tarefas||[];
   const urg=ts.filter(t=>!t.feito&&(t.estado==='atrasado'||t.atrasoAberto>0));
   const next=ts.filter(t=>!t.feito&&t.estado==='aguardando').slice(0,2);
-  const camp=ts.find(t=>t.id==='campanhas'&&!t.feito);
   const items=[];
   urg.forEach(t=>items.push(`🔴 ${t.nome} — atrasando (previsto ${t.previsto})`));
-  if(camp&&!urg.find(u=>u.id==='campanhas')) items.push(`📊 Campanhas — abrir decisão se ainda não fez`);
-  next.forEach(t=>{if(t.id!=='campanhas'||items.every(i=>!i.includes('Campanhas'))) items.push(`➡️ Próximo: ${t.nome} (${t.previsto})`);});
+  next.forEach(t=>items.push(`➡️ Próximo: ${t.nome} (${t.previsto})`));
   if(!items.length) items.push(ST.domingo?'Folga — domingo.':'✅ Nada urgente agora. Siga a rotina.');
   $('#prioList').innerHTML=items.slice(0,4).map(i=>`<li>${i}</li>`).join('');
 
   let orient='';
   if(ST.domingo) orient='<b>Hoje:</b> folga. Não há rotina.';
   else if(urg.length) orient=`<b>Agora:</b> regular o atraso em <b>${urg[0].nome}</b>. Depois volte à ordem.`;
-  else if(camp) orient='<b>Agora:</b> no horário de Campanhas, abra a decisão do dia. Não invente verba — registre e aplique na Meta.';
   else orient='<b>Agora:</b> siga a próxima tarefa da lista. Sem atalho fora da ordem.';
   $('#orient').innerHTML=orient;
-}
-
-function renderCampanhas(){
-  const C=ST.campanhas||{};
-  if(C.confiavel===false){
-    $('#campResumo').textContent=C.metaMensagem||C.resumo||'Dados da Meta indisponíveis.';
-    $('#campChips').innerHTML='<span class="chip">integração</span>';
-    return;
-  }
-  $('#campResumo').textContent=C.resumo||'Sem dados da Meta ainda';
-  const chips=[];
-  chips.push(`<span class="chip">${C.n||0} campanhas</span>`);
-  if(C.totalGasto!=null) chips.push(`<span class="chip">R$ ${Number(C.totalGasto).toFixed(0)}</span>`);
-  if(C.totalLeads!=null) chips.push(`<span class="chip">${C.totalLeads} form.</span>`);
-  if(C.cplMedio!=null) chips.push(`<span class="chip">CPL form. R$ ${Number(C.cplMedio).toFixed(0)}</span>`);
-  const nDec=(C.decisoes||[]).length;
-  chips.push(nDec?`<span class="chip">${nDec} decisão(ões)</span>`:`<span class="chip">decisão pendente</span>`);
-  $('#campChips').innerHTML=chips.join('');
 }
 
 function render(){
   if(!ST||!ST.ok)return;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga 🎉':'');
   document.querySelectorAll('#modo button').forEach(b=>b.classList.toggle('on',b.dataset.modo===ST.modo));
-  renderStrip();renderPrioridades();renderCampanhas();
+  renderStrip();renderPrioridades();
 
   const box=$('#tasks');box.innerHTML='';
   ST.tarefas.forEach(t=>{
     const el=document.createElement('div');el.className='task';
     const late=!t.feito&&(t.atrasoAberto>0||t.estado==='atrasado'||t.estado==='nao_realizado');
     const run=!t.feito&&t.estado==='em_andamento';
-    const isCamp=t.id==='campanhas';
-    const campBtn=isCamp&&!t.feito?`<a class="btn ghost" href="/campanhas-decisao?from=placar" style="margin-top:8px">Abrir decisão</a>`:'';
     el.innerHTML=`<div class="top">
       <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
       <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${t.feito?' · feito '+t.hora:(late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':(run?' · em andamento':''))}</small></div>
@@ -219,8 +189,7 @@ function render(){
         : `<button class="btn" data-feito="${t.id}">Feito</button>`}
     </div>
     ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
-    ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}
-    ${campBtn}`;
+    ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
     box.appendChild(el);
   });
   const ol=$('#obsList');ol.innerHTML='';
