@@ -128,7 +128,26 @@ Modo seguro: a mão que pausa/escala é do **Michel**. O Copiloto **sugere**.
 
 ---
 
-## 8. Próximo passo recomendado (Bruno)
+## 8. Aprendizado do dia (professor embutido)
+
+O Copiloto **ensina** no fluxo. Bloco fixo oficial: `PROFESSOR-EMBUTIDO-MICHEL.md`
+
+```
+MICHEL, APRENDA ISTO:
+
+CTR: Mostra quantas pessoas clicaram após ver o anúncio.
+CPM: Mostra quanto estamos pagando por mil impressões.
+Frequência: Mostra quantas vezes, em média, cada pessoa viu o anúncio.
+CPL: Mostra o custo de cada cadastro.
+
+Mas nenhum deles sozinho mostra se estamos vendendo.
+```
+
+Usar no guia do painel e, quando fizer sentido, no cartão do dia.
+
+---
+
+## 9. Próximo passo recomendado (Bruno)
 
 1. Mergear docs do canal (#8/#9) + esta SPEC.  
 2. Mergear ou completar a **#7** com o formato de 8 blocos (missão Copilot).  
