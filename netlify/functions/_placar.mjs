@@ -119,10 +119,10 @@ function campanhaEmLista(c, tipo) {
 
 function aprendizadoPadrao(item, placar = {}) {
   if (item.tipo === 'escalar') {
-    return `Quando ${item.campanha} gera lead com CPL ${brl(item.cpl)} abaixo da média ${brl(placar.cplMedio)}, o próximo passo é escalar devagar e medir por 48–72 horas.`;
+    return 'Campanha com CPL abaixo da média deve escalar devagar, com registro e observação de 48–72 horas.';
   }
   if (item.tipo === 'revisar') {
-    return `Quando ${item.campanha} gasta ${brl(item.gasto)} e fica sem lead, o certo é revisar criativo, público e frequência antes de pausar.`;
+    return 'Gasto alto sem lead pede revisar criativo, público e frequência antes de pausar.';
   }
   return 'Quando o placar não aponta campeã nem vazamento, a melhor decisão é proteger o que já está saudável e só observar.';
 }

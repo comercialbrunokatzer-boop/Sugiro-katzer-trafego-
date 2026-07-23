@@ -9,7 +9,7 @@ import {
 import { lePlacar, leDecisoes, salvaDecisoes } from './_placar-io.mjs';
 import { json } from './_infra.mjs';
 
-// Mesma senha do Painel Gestor da rotina (Davi2026@) — guardamos só o HASH.
+// Mesma senha do Painel Gestor da rotina — guardamos só o HASH.
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 function senhaGestorOk(event, params) {
   const h = event.headers || {};

@@ -60,10 +60,14 @@ test('CPL null quando 0 leads (não divide por zero)', () => {
 
 test('resumoPlacarWhats gera texto com total e decisão', () => {
   const txt = resumoPlacarWhats(montaPlacar(data));
-  assert.match(txt, /Copiloto de Tr(á|a)fego/);
+  assert.match(txt, /Copiloto de Tráfego/);
   assert.match(txt, /CAMPANHA:/);
   assert.match(txt, /SITUA(Ç|C)(Ã|A)O:/);
   assert.match(txt, /DADO COMERCIAL:/);
+  assert.match(txt, /FortMyers ESPANHA/);
+  assert.match(txt, /FortMyers cidades PORTUGAL/);
+  assert.match(txt, /Cruzamento Helena\/CRM ainda n(ã|a)o ligado nesta fase/);
+  assert.match(txt, /FICHA DE MUDAN(Ç|C)A:/);
   assert.match(txt, /N(Ã|A)O ALTERE HOJE:/);
   assert.match(txt, /ROTEIRO META IA/);
 });

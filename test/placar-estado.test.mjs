@@ -79,4 +79,9 @@ test('garanteAprendizados: persiste a primeira frase e não sobrescreve a existe
   const r2 = garanteAprendizados(dec, alterado);
   assert.equal(r2.mudou, false);
   assert.equal(dec.aprendizados[primeiro.id], primeiro.aprendizado);
+
+  const novo = { id: 'novo-card', aprendizado: 'novo aprendizado do dia' };
+  const r3 = garanteAprendizados(dec, [novo]);
+  assert.equal(r3.mudou, true);
+  assert.equal(dec.aprendizados[novo.id], novo.aprendizado);
 });

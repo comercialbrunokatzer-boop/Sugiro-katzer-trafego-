@@ -50,13 +50,13 @@ export function listaDecisoes(decisoes = {}) {
 /** Persiste o aprendizado do dia por cartão para manter a frase estável no estado. */
 export function garanteAprendizados(decisoes = {}, cartoes = []) {
   const atual = { ...((decisoes && decisoes.aprendizados) || {}) };
-  let mudou = !decisoes.aprendizados;
+  let mudou = false;
   for (const cartao of (Array.isArray(cartoes) ? cartoes : [])) {
     if (!cartao || !cartao.id || !cartao.aprendizado || atual[cartao.id]) continue;
     atual[cartao.id] = cartao.aprendizado;
     mudou = true;
   }
-  if (mudou) decisoes.aprendizados = atual;
+  if (mudou || !decisoes.aprendizados) decisoes.aprendizados = atual;
   return { mudou, aprendizados: atual };
 }
 
