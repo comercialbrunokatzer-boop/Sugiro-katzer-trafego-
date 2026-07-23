@@ -324,7 +324,7 @@ async function loadMichel(){
   MELHORES=DATA.top10Melhores||[];
   PIORES=DATA.top10Piores||[];
   const info=document.getElementById('infoAtivas');
-  if(info) info.innerHTML=`Só campanhas <b>ACTIVE</b> na Meta · <b>${ATIVAS.length}</b> agora. ${esc(DATA.avisoAbas||'')}`;
+  if(info) info.innerHTML=`Só campanhas <b>ACTIVE</b> na Meta (sem [TESTE]) · <b>${ATIVAS.length}</b> agora. ${esc(DATA.avisoAbas||'')}${DATA.bitrixOk===false?' · <span style="color:#b91c1c">Bitrix: webhook ainda não ligado — fases parciais</span>':(DATA.bitrixOk?' · Bitrix OK':'')}`;
   const ir=document.getElementById('infoRanking');
   if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> até <b>${esc(DATA.rankingAte||'hoje')}</b> · Top 10 melhores + Top 10 piores por CPL · fases Bitrix + WhatsApp por lead.`;
   const fbM=document.getElementById('fbMelhores');
