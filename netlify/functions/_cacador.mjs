@@ -50,7 +50,7 @@ export function leadsDemoHoje() {
       fonte: 'demo',
       statusPosMapeamento: 'Em mapeamento',
       qualidadeIa: 'interessado',
-      bitrixUrl: 'https://katzer.bitrix24.com.br/',
+      bitrixUrl: 'https://katzerassessoria.bitrix24.com.br/',
     },
     {
       id: 'demo-maria',
@@ -65,7 +65,7 @@ export function leadsDemoHoje() {
       fonte: 'demo',
       statusPosMapeamento: 'Em mapeamento',
       qualidadeIa: 'potencial',
-      bitrixUrl: 'https://katzer.bitrix24.com.br/',
+      bitrixUrl: 'https://katzerassessoria.bitrix24.com.br/',
     },
     {
       id: 'demo-vermelho-saiu',
@@ -80,7 +80,7 @@ export function leadsDemoHoje() {
       fonte: 'FACEBOOK ADS',
       statusPosMapeamento: 'Saiu',
       qualidadeIa: 'fake',
-      bitrixUrl: 'https://katzer.bitrix24.com.br/',
+      bitrixUrl: 'https://katzerassessoria.bitrix24.com.br/',
     },
     {
       id: 'demo-brsc-ruim',
@@ -90,7 +90,7 @@ export function leadsDemoHoje() {
       fonte: 'FACEBOOK ADS',
       status: 'Fluxo - Leads',
       qualidadeIa: 'ruim',
-      bitrixUrl: 'https://katzer.bitrix24.com.br/',
+      bitrixUrl: 'https://katzerassessoria.bitrix24.com.br/',
       recebidoEm: new Date(agora - 100 * 60 * 1000).toISOString(),
     },
     {
@@ -101,7 +101,7 @@ export function leadsDemoHoje() {
       fonte: 'FACEBOOK ADS',
       status: 'Em Atendimento',
       qualidadeIa: 'interessado',
-      bitrixUrl: 'https://katzer.bitrix24.com.br/',
+      bitrixUrl: 'https://katzerassessoria.bitrix24.com.br/',
       recebidoEm: new Date(agora - 50 * 60 * 1000).toISOString(),
     },
   ];

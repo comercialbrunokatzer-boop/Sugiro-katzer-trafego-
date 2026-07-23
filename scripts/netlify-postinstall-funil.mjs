@@ -98,6 +98,10 @@ const accountSlug = trafego.account_slug || helena.account_slug;
 
 const howH = await setEnv(accountSlug, helena.id, 'FUNIL_PROXY_KEY', FUNIL_KEY);
 console.log(`FUNIL_PROXY_KEY → ${HELENA}:${howH}`);
+// Portal Bitrix correto (katzer.bitrix24.com.br está 404)
+const PORTAL = 'https://katzerassessoria.bitrix24.com.br';
+console.log(`BITRIX_PORTAL_URL → ${TRAFEGO}:`, await setEnv(accountSlug, trafego.id, 'BITRIX_PORTAL_URL', PORTAL));
+console.log(`BITRIX_PORTAL_URL → ${HELENA}:`, await setEnv(accountSlug, helena.id, 'BITRIX_PORTAL_URL', PORTAL));
 // Tráfego: NÃO usar FUNIL até Helena redeployar — senão manda key que a Helena runtime ainda rejeita.
 const unsetFunilT = await unsetEnv(accountSlug, trafego.id, 'FUNIL_PROXY_KEY');
 console.log(`FUNIL_PROXY_KEY unset ${TRAFEGO}: ${unsetFunilT ? 'ok' : 'skip'}`);

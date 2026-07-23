@@ -59,9 +59,9 @@ function ensureBitrixUrl(raw) {
   if (!v) return v;
   if (!/^https?:\/\//i.test(v)) {
     // token solto ou path sem host → assume portal Katzer
-    if (/^rest\//i.test(v) || /^\d+\//.test(v)) v = `https://katzer.bitrix24.com.br/${v.replace(/^\/+/, '')}`;
+    if (/^rest\//i.test(v) || /^\d+\//.test(v)) v = `https://katzerassessoria.bitrix24.com.br/${v.replace(/^\/+/, '')}`;
     else if (/bitrix24\.com/i.test(v)) v = `https://${v}`;
-    else v = `https://katzer.bitrix24.com.br/rest/${v.replace(/^\/+/, '')}`;
+    else v = `https://katzerassessoria.bitrix24.com.br/rest/${v.replace(/^\/+/, '')}`;
   }
   return v.replace(/\/+$/, '') + '/';
 }

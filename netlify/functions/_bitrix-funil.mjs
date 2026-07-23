@@ -74,15 +74,19 @@ function bitrixBase() {
   u = u.replace(/^["']|["']$/g, '');
   u = u.replace(/\/(?:[a-z][a-z0-9_]*\.)+[a-z0-9_]+(?:\.json)?\/?$/i, '/');
   if (!/^https?:\/\//i.test(u)) {
-    if (/^rest\//i.test(u) || /^\d+\//.test(u)) u = `https://katzer.bitrix24.com.br/${u.replace(/^\/+/, '')}`;
+    if (/^rest\//i.test(u) || /^\d+\//.test(u)) u = `https://katzerassessoria.bitrix24.com.br/${u.replace(/^\/+/, '')}`;
     else if (/bitrix24\.com/i.test(u)) u = `https://${u}`;
-    else u = `https://katzer.bitrix24.com.br/rest/${u.replace(/^\/+/, '')}`;
+    else u = `https://katzerassessoria.bitrix24.com.br/rest/${u.replace(/^\/+/, '')}`;
   }
   return u.replace(/\/+$/, '');
 }
 
 function portalBase() {
-  return (process.env.BITRIX_PORTAL_URL || 'https://katzer.bitrix24.com.br').replace(/\/+$/, '');
+  // Portal real: katzerassessoria (katzer.bitrix24.com.br dá 404/desativado)
+  const raw = process.env.BITRIX_PORTAL_URL || 'https://katzerassessoria.bitrix24.com.br';
+  let u = String(raw).replace(/\/+$/, '');
+  if (/\/\/katzer\.bitrix24\.com\.br$/i.test(u)) u = 'https://katzerassessoria.bitrix24.com.br';
+  return u;
 }
 
 function linkWhatsApp(telefone) {
@@ -176,7 +180,10 @@ async function listaDealsViaHelena({ limit = 400, produtos = [] } = {}) {
       stageId: d.stageId,
       fase: normalizaNomeFase(d.fase || d.stageId),
       contactId: d.contactId,
-      bitrixUrl: d.bitrixUrl || `${portalBase()}/crm/deal/details/${d.id}/`,
+      bitrixUrl: (() => {
+        const raw = d.bitrixUrl || `${portalBase()}/crm/deal/details/${d.id}/`;
+        return String(raw).replace(/https?:\/\/katzer\.bitrix24\.com\.br/gi, portalBase());
+      })(),
       comments: d.comments || '',
       sourceDescription: d.sourceDescription || '',
       utmCampaign: d.utmCampaign || '',

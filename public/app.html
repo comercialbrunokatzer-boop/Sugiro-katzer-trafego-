@@ -210,13 +210,20 @@ function htmlFases(cam){
   const panels=fases.map((f,i)=>{
     if(!f.n) return '';
     const key=`fase-${String(cam.id).replace(/\W/g,'_')}-${i}`;
-    const leads=(f.leads||[]).map(l=>`
-      <div class="lead-line">
-        <b>${esc(l.nome||'Lead')}</b>
-        <span style="color:#888">${esc(f.nome)}</span>
-        ${l.bitrixUrl?`<a class="bx" href="${esc(l.bitrixUrl)}" target="_blank" rel="noopener">Bitrix</a>`:'<span style="color:#bbb">sem Bitrix</span>'}
-        ${l.whatsappUrl?`<a href="${esc(l.whatsappUrl)}" target="_blank" rel="noopener">WhatsApp</a>`:'<span style="color:#bbb">sem WA</span>'}
-      </div>`).join('') || `<div class="lead-line"><span style="color:#888">${esc(f.nome)} · ${f.n}</span></div>`;
+    const leads=(f.leads||[]).map(l=>{
+      const bx=(l.bitrixUrl||'').replace(/https?:\/\/katzer\.bitrix24\.com\.br/gi,'https://katzerassessoria.bitrix24.com.br');
+      const wa=l.whatsappUrl||'';
+      return `<div class="lead-line">
+        <div style="flex:1;min-width:0">
+          <b>${esc(l.nome||'Lead')}</b>
+          <div style="color:#888;font-size:10px">${esc(f.nome)}${l.telefone?` · ${esc(l.telefone)}`:''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          ${bx?`<a class="bx" href="${esc(bx)}" target="_blank" rel="noopener" style="padding:6px 10px;border-radius:8px;background:#1d4ed8;color:#fff;text-decoration:none;font-size:11px;font-weight:700">Bitrix</a>`:'<span style="color:#bbb;font-size:10px">sem Bitrix</span>'}
+          ${wa?`<a href="${esc(wa)}" target="_blank" rel="noopener" style="padding:6px 10px;border-radius:8px;background:#16a34a;color:#fff;text-decoration:none;font-size:11px;font-weight:700">WhatsApp</a>`:'<span style="color:#bbb;font-size:10px">sem WA</span>'}
+        </div>
+      </div>`;
+    }).join('') || `<div class="lead-line"><span style="color:#888">${esc(f.nome)} · ${f.n}</span></div>`;
     return `<div class="fase-leads" id="${key}">${leads}</div>`;
   }).join('');
   return `<div class="fase-box">
