@@ -59,17 +59,20 @@ test('quadradinho: EUA_Americanos 3 leads → OBSERVAR, nunca escalar', () => {
   assert.ok(s.leads < LEADS_MIN_ESCALAR);
 });
 
-test('resumoCplBom: média das boas + % bons', () => {
+test('resumoCplBom: média das boas + % bons + destaque cidade', () => {
   const r = resumoCplBom([
-    { gasto: 100, leads: 10, cpl: 20, leadConfirmado: true },
-    { gasto: 100, leads: 10, cpl: 30, leadConfirmado: true },
-    { gasto: 100, leads: 10, cpl: 80, leadConfirmado: true },
+    { nome: 'AMANAY Itapoá', gasto: 100, leads: 10, cpl: 13, leadConfirmado: true },
+    { nome: 'FortMyers_BR_SC', gasto: 100, leads: 10, cpl: 30, leadConfirmado: true },
+    { nome: 'PORTUGAL', gasto: 100, leads: 10, cpl: 80, leadConfirmado: true },
     { gasto: 50, leads: 1, cpl: 50, leadConfirmado: true },
   ]);
   // boas = cpl<=40 e leads>=3 → 2 de 3 avaliadas = 67%
   assert.equal(r.nBons, 2);
-  assert.equal(r.cplBomMedio, 25);
+  assert.equal(r.cplBomMedio, 22);
   assert.equal(r.pctBons, 67);
-  assert.match(r.texto, /CPL BOM médio: R\$ 25/);
+  assert.equal(r.destaque.cidade, 'Itapoá');
+  assert.equal(r.destaque.cpl, 13);
+  assert.match(r.texto, /CPL BOM méd R\$ 22/);
   assert.match(r.texto, /67% bons/);
+  assert.match(r.texto, /Itapoá: R\$ 13 BOM/);
 });

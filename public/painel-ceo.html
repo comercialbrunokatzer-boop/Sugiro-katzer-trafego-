@@ -141,13 +141,13 @@ function blocoCampanhas(l){
   const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
-  const pend=C.statusDecisao||'Decisão do dia pendente no painel de campanhas';
+  const pend=C.statusDecisao||'Decisão do dia: análises pendentes no painel de campanhas';
   const pendCls=C.pendente===false?'pend ok':'pend';
   const link=C.link||'https://dashing-elf-41a723.netlify.app/';
   const cta=C.cta||'▶ Abrir Painel de Campanhas';
   return`<div class="camp">
     <div class="metrica">${metrica}</div>
-    ${bom?`<div class="${bomCls}">[${bom}]</div>`:''}
+    ${bom?`<div class="${bomCls}">${bom}</div>`:''}
     <div class="${pendCls}">${pend}</div>
     <div class="cta"><a href="${link}" target="_blank" rel="noopener">${cta}</a></div>
   </div>`;

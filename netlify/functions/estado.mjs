@@ -2,12 +2,12 @@
 // GET /api/estado        → tarefas + obs + modo + campanhas{resumo}
 // GET /api/estado?ceo=1  → + pontualidade (% + saldo)
 //
-// Decisão / quadradinho NÃO vive aqui. App: https://dashing-elf-41a723.netlify.app
+// Decisão / quadradinho NÃO vive aqui. App: CAMPANHAS_APP_URL
 import { createHash } from 'node:crypto';
 import { agoraBRT, pontualidade, TAREFAS, previstoMin, min2hm } from './_rotina.mjs';
 import { leEstado, json } from './_infra.mjs';
 import { lePlacar, leDecisoes } from './_placar-io.mjs';
-import { listaDecisoes } from './_placar-estado.mjs';
+import { listaDecisoes, montaSugestoes } from './_placar-estado.mjs';
 import { resumoCplBom } from './_campanhas-regras.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
@@ -21,12 +21,12 @@ function senhaGestorOk(event, params) {
 }
 
 /**
- * Card Campanhas na Rotina (Bruno):
- *   N campanhas | R$ | leads form. | CPL méd
- *   [CPL BOM médio…]
- *   Decisão do dia pendente no painel de campanhas  (ou registrada)
- *   ▶ Abrir Painel de Campanhas  → app separado
- * Sem botão escalar / sem decisão aqui.
+ * Card Campanhas na Rotina (layout Bruno):
+ *   7 campanhas | R$ 2351 | 46 leads | CPL méd R$ 51
+ *   CPL BOM méd R$ 34 | 40% bons | Rogga: R$ 30 BOM 🟢
+ *   Decisão do dia: 3 análises pendentes no painel de campanhas
+ *   ▶ Abrir Painel de Campanhas
+ * Leads = formulário (nunca clique). Sem botão escalar.
  */
 async function resumoCampanhas(data) {
   const link = CAMPANHAS_APP_URL + '/';
@@ -37,12 +37,17 @@ async function resumoCampanhas(data) {
       leDecisoes(data),
     ]);
     const decisoes = listaDecisoes(bruto);
-    const confiavel = meta?.confiavel !== false && meta?.status === 'ok';
-    const pendente = decisoes.length === 0;
+    const idsDecididos = new Set(decisoes.map((d) => d.id));
+    const sugestoes = montaSugestoes(placar);
+    const nPendentes = sugestoes.filter((s) => !idsDecididos.has(s.id)).length;
+    const pendente = nPendentes > 0;
     const statusDecisao = pendente
-      ? 'Decisão do dia pendente no painel de campanhas'
-      : `Decisão registrada no painel (${decisoes.length}) — aplicar na Meta lá`;
+      ? (nPendentes === 1
+        ? 'Decisão do dia: 1 análise pendente no painel de campanhas'
+        : `Decisão do dia: ${nPendentes} análises pendentes no painel de campanhas`)
+      : 'Decisão do dia: nenhuma análise pendente no painel de campanhas';
 
+    const confiavel = meta?.confiavel !== false && meta?.status === 'ok';
     if (!confiavel) {
       return {
         confiavel: false,
@@ -51,6 +56,7 @@ async function resumoCampanhas(data) {
         cplBom: null,
         statusDecisao,
         pendente,
+        nPendentes,
         n: null, totalGasto: null, totalLeads: null, cplMedio: null,
         link, cta,
       };
@@ -73,8 +79,10 @@ async function resumoCampanhas(data) {
       cplBom: bom.texto,
       cplBomMedio: bom.cplBomMedio,
       pctBons: bom.pctBons,
+      destaqueBom: bom.destaqueTexto,
       statusDecisao,
       pendente,
+      nPendentes,
       resumo: metrica,
       link, cta,
     };
@@ -84,8 +92,9 @@ async function resumoCampanhas(data) {
       resumo: 'Dados da Meta indisponíveis.',
       metrica: null,
       cplBom: null,
-      statusDecisao: 'Decisão do dia pendente no painel de campanhas',
+      statusDecisao: 'Decisão do dia: análises pendentes no painel de campanhas',
       pendente: true,
+      nPendentes: null,
       n: null, totalGasto: null, totalLeads: null, cplMedio: null,
       link, cta,
     };

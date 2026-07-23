@@ -94,8 +94,9 @@ export function podeEscalar(c = {}) {
 }
 
 /**
- * Linha "CPL BOM médio: R$ X — Y% bons" pro card da Rotina.
- * BOM = lead de formulário confirmado, amostra ≥3, CPL ≤ 40 (mesma régua do ranking).
+ * Linha do card Rotina:
+ *   CPL BOM méd R$ 32 | 68% bons | Itapoá: R$ 13 BOM 🟢
+ * BOM = lead de formulário confirmado, amostra ≥3, CPL ≤ 40 (régua ranking).
  */
 export const CPL_BOM_CARD = 40;
 export const LEADS_MIN_BOM_CARD = 3;
@@ -117,13 +118,34 @@ export function resumoCplBom(campanhas = [], {
   const cplBomMedio = bons.length
     ? Math.round(bons.reduce((s, c) => s + Number(c.cpl), 0) / bons.length)
     : null;
+
+  // Destaque: melhor CPL BOM (menor) com cidade real
+  let destaque = null;
+  let destaqueTexto = null;
+  if (bons.length) {
+    const top = [...bons].sort((a, b) => Number(a.cpl) - Number(b.cpl))[0];
+    const cidade = top.cidade || cidadeReal(top.nome);
+    const cpl = Math.round(Number(top.cpl));
+    destaque = { cidade, cpl, nome: top.nome };
+    destaqueTexto = `${cidade}: R$ ${cpl} BOM 🟢`;
+  }
+
+  const partes = [];
+  if (cplBomMedio != null) {
+    partes.push(`CPL BOM méd R$ ${cplBomMedio}`);
+    partes.push(`${pctBons}% bons`);
+    if (destaqueTexto) partes.push(destaqueTexto);
+  }
+
   return {
     cplBomMedio,
     pctBons,
     nBons: bons.length,
     nAvaliadas: avaliadas.length,
-    texto: cplBomMedio != null
-      ? `CPL BOM médio: R$ ${cplBomMedio} — ${pctBons}% bons`
+    destaque,
+    destaqueTexto,
+    texto: partes.length
+      ? partes.join(' | ')
       : (comGasto.length ? `CPL BOM: sem campanha boa ainda (régua R$ ${cplBom})` : 'CPL BOM: sem dados'),
   };
 }

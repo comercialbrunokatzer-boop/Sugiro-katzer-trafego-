@@ -188,7 +188,7 @@ function rotuloEstadoTarefa(t){
   return 'aguardando';
 }
 
-/** Card Campanhas: só resumo + status da decisão + Abrir (app separado). Sem escalar. */
+/** Card Campanhas: layout Bruno — 2 linhas de resumo + status + Abrir. Sem escalar. */
 function htmlCardCampanhas(t){
   const C=ST.campanhas||{};
   const link=C.link||'https://dashing-elf-41a723.netlify.app/';
@@ -196,11 +196,11 @@ function htmlCardCampanhas(t){
   const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
-  const pend=C.statusDecisao||'Decisão do dia pendente no painel de campanhas';
+  const pend=C.statusDecisao||'Decisão do dia: análises pendentes no painel de campanhas';
   const pendCls=C.pendente===false?'pend ok':'pend';
   return `<div class="camp-card">
     <div class="metrica">${metrica}</div>
-    ${bom?`<div class="${bomCls}">[${bom}]</div>`:''}
+    ${bom?`<div class="${bomCls}">${bom}</div>`:''}
     <div class="${pendCls}">${pend}</div>
     <div class="cta"><a class="btn" href="${link}" data-abrir-campanhas="1">${cta}</a></div>
   </div>`;
