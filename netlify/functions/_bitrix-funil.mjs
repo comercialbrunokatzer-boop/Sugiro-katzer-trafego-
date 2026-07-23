@@ -341,6 +341,20 @@ export function inicioFunilISO(nomeCampanha, inicioMetaISO = null) {
   return inicioMetaISO || null;
 }
 
+/**
+ * Início efetivo = max(início da campanha, início da janela Meta).
+ * Assim forms last_30d e deals do funil falam da mesma fatia (ex.: PUBLICOS/NOVACONFIG).
+ */
+export function inicioEfetivoFunil(nomeCampanha, inicioMetaISO = null, periodoDesdeISO = null) {
+  const camp = inicioFunilISO(nomeCampanha, inicioMetaISO);
+  if (!periodoDesdeISO) return camp;
+  const a = camp ? Date.parse(camp) : NaN;
+  const b = Date.parse(periodoDesdeISO);
+  if (!Number.isFinite(b)) return camp;
+  if (!Number.isFinite(a)) return periodoDesdeISO;
+  return a >= b ? camp : periodoDesdeISO;
+}
+
 /** Produto canônico da campanha Meta (se houver). */
 export function produtoCampanha(nomeCampanha) {
   const nome = String(nomeCampanha || '').toUpperCase();
@@ -447,8 +461,11 @@ function dealDentroDoPeriodo(deal, inicioISO) {
   return cri >= (ini - 3 * 24 * 60 * 60 * 1000);
 }
 
-export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], { inicioISO = null } = {}) {
-  const inicio = inicioFunilISO(nomeCampanha, inicioISO);
+export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], {
+  inicioISO = null,
+  periodoDesdeISO = null,
+} = {}) {
+  const inicio = inicioEfetivoFunil(nomeCampanha, inicioISO, periodoDesdeISO);
   const matched = (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha) && dealDentroDoPeriodo(d, inicio));
   const map = new Map();
   for (const nome of [...ORDEM_FUNIL, ...FASES_TERMINAIS]) {
