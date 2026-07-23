@@ -24,6 +24,43 @@ O canal Katzer continua sendo a fonte de:
 
 ---
 
+## Pipeline oficial (CEO)
+
+```
+META ADS + ADVANTAGE+ + META IA
+              ↓
+      DADOS DE CAMPANHA
+              ↓
+ SUPERVISOR DE TRÁFEGO KATZER
+              ↓
+ CRUZA COM HELENA + CRM + TIME + VENDAS
+              ↓
+   RECOMENDAÇÃO PARA MICHEL
+              ↓
+ PARECER FINAL DE BRUNO QUANDO NECESSÁRIO
+```
+
+### Leitura de cada etapa
+
+| Etapa | O que acontece | Quem / o quê |
+|-------|----------------|--------------|
+| **Meta Ads + Advantage+ + Meta IA** | Origem da mídia paga e sinais da plataforma | Conta Meta do Michel; Meta IA = ferramenta, não canal |
+| **Dados de campanha** | Gasto, leads, resultados, CPL bruto | Graph API (`ads_read`) — aritmética em **código** |
+| **Supervisor de Tráfego Katzer** | Placar, alertas 🔴/🟢, sugestão do dia, 1 toque de decisão | Este repo — motor Katzer |
+| **Cruza Helena + CRM + time + vendas** | Liga anúncio → lead real → atendimento → conversão | Helena + Bitrix + Auditor + corretores — **não** só clique |
+| **Recomendação para Michel** | O que pausar / escalar / mover verba | IA sugere; **Michel executa na Meta** |
+| **Parecer final de Bruno** | Só quando necessário (risco, verba alta, exceção) | CEO — não no fluxo diário rotineiro |
+
+### O que este cruzamento deve separar (sempre)
+
+1. Erro de **mídia** — anúncio caro / Advantage+ ineficiente  
+2. Erro de **qualidade** — lead curioso / número errado (Michel marca no Bitrix)  
+3. Erro de **conversão** — lead bom mal atendido (Helena / time / CRM)
+
+Sem misturar os três no mesmo “CPL ruim”.
+
+---
+
 ## Escada de custo neste canal
 
 Segue a governança Katzer OS (`helena-katzer` → `docs/GOVERNANCA-CUSTO-IA.md`):

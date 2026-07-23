@@ -6,6 +6,10 @@ nem monta o relatório de vendas — isso é do Katzer (Auditor), outro repo.
 
 ## DECISÃO DE CANAL (CEO · 23/07/2026)
 **Manter o Supervisor de Tráfego Katzer.** Meta IA é ferramenta especializada **dentro** deste canal — não o substitui.
+
+Pipeline oficial:
+`Meta Ads + Advantage+ + Meta IA → dados → Supervisor Katzer → cruza Helena+CRM+time+vendas → recomendação Michel → parecer Bruno (se necessário)`.
+
 Detalhes: `CANAL-SUPERVISOR-TRAFEGO.md`. Papel do Michel: `FUNCAO-MICHEL-IA.md` (PR relacionada).
 Custo/tokens: escada código → regra → modelo barato → Claude só se P0.
 
