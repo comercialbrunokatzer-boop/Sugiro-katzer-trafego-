@@ -6,6 +6,7 @@
 | **Canal** | Supervisor de Tráfego Katzer |
 | **Princípio** | IA recomenda, explica e ensina · Michel executa · Bruno aprova o relevante |
 | **Escada de custo** | Código/regra → modelo barato → Claude só se P0 |
+| **Autonomia** | Ver `AUTONOMIA-MICHEL-TRAFEGO.md` (Níveis 1 · 2 · 3) |
 
 ---
 

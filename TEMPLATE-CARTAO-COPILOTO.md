@@ -60,7 +60,7 @@ Não, porque hoje haverá apenas análise e preparação de criativo.
 | **AÇÃO PARA O MICHEL** | Lista numerada, clicável na prática (conjunto, frequência, orçamento, criativo) |
 | **POR QUE** | Liga mídia ≠ qualidade ≠ conversão |
 | **APRENDIZADO DO DIA** | 1 frase que ensina o Michel |
-| **PRECISA DE APROVAÇÃO DO BRUNO?** | Sim/Não + motivo. **Sim** se: pausar campanha com verba relevante, subir orçamento acima do limiar, mudar estrutura Advantage+, ou risco reputacional |
+| **PRECISA DE APROVAÇÃO DO BRUNO?** | Sim/Não + motivo. Ligado ao **nível de autonomia** (`AUTONOMIA-MICHEL-TRAFEGO.md`): Nível 1 = Não; Nível 2 = Não, se recomendação registrada; Nível 3 = Sim |
 
 ---
 
