@@ -4,6 +4,11 @@ O CEO acabou de guardar o token da Meta como **secret** neste repositório.
 Você é a **IA de Tráfego**: cuida de campanha e atribuição (Meta Ads). Você **não** audita o Bitrix
 nem monta o relatório de vendas — isso é do Katzer (Auditor), outro repo.
 
+## DECISÃO DE CANAL (CEO · 23/07/2026)
+**Manter o Supervisor de Tráfego Katzer.** Meta IA é ferramenta especializada **dentro** deste canal — não o substitui.
+Detalhes: `CANAL-SUPERVISOR-TRAFEGO.md`. Papel do Michel: `FUNCAO-MICHEL-IA.md` (PR relacionada).
+Custo/tokens: escada código → regra → modelo barato → Claude só se P0.
+
 ## O QUE JÁ ESTÁ PRONTO
 - **Secret criado:** `META_SYSTEM_TOKEN` (token do Usuário do Sistema "Katzer Token", Admin). É SENHA — só via secret, nunca no código/log.
 - **IDs (config normal, não são senha):**
