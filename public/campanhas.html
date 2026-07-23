@@ -41,10 +41,21 @@
   .ajuste input{width:100%;border:1px solid var(--line);background:#0f2420;color:var(--ink);border-radius:10px;padding:11px;font-family:inherit}
   .ajuste button{margin-top:6px;width:100%;border:0;background:var(--gold);color:#1a1408;border-radius:10px;padding:11px;font-weight:800;font-family:inherit}
   .done{margin-top:10px;font-size:.8rem;color:var(--good);font-weight:700}
-  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#0f2a24;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:.25s;pointer-events:none}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#0f2a24;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90%;text-align:center}
   .toast.show{opacity:1}
   .err{color:var(--bad);text-align:center;padding:20px}
   .trava-topo{background:rgba(212,101,90,.15);border:1px solid rgba(212,101,90,.4);color:#f0c2bc;border-radius:10px;padding:10px 12px;font-size:.78rem;font-weight:700;margin:0 0 12px;line-height:1.35}
+  /* Caçador */
+  .cac-head{font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin:18px 0 8px}
+  .cac-sub{font-size:.75rem;color:var(--muted);margin:0 0 10px}
+  .lead{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:0 0 10px}
+  .lead .ln{font-size:.88rem;font-weight:700;line-height:1.35}
+  .lead .meta{font-size:.72rem;color:var(--muted);margin-top:4px}
+  .lead .btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+  .lead .btns button{border:1px solid var(--line);background:#122c26;color:var(--ink);border-radius:10px;padding:10px 6px;font-size:.78rem;font-weight:700;font-family:inherit;cursor:pointer}
+  .lead .btns button.on{outline:2px solid var(--gold);background:#1a3d33}
+  .lead .btns button:disabled{opacity:.55}
+  .lead.done-mark{border-color:rgba(61,186,126,.45)}
   footer{margin-top:16px;text-align:center;color:var(--muted);font-size:.72rem}
 </style>
 </head>
@@ -61,15 +72,16 @@
     <a href="/campanhas-decisao">Lista</a>
   </div>
   <div id="app"><div class="sub">Carregando…</div></div>
+  <div id="cacador"></div>
   <footer>Michel executa na Meta · Bruno acompanha</footer>
 </div>
 <div class="toast" id="toast"></div>
 <script>
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
 const $= (s)=>document.querySelector(s);
-let DATA=null, DECS=[];
+let DATA=null, DECS=[], CAC=null;
 
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
 function decOf(id){return (DECS||[]).find(d=>d.id===id)||null;}
 
@@ -103,7 +115,7 @@ function card(r){
   </article>`;
 }
 
-function render(){
+function renderDecisao(){
   const app=$('#app');
   const recs=DATA?.recomendacoes?.recomendacoes;
   if(!recs?.length){app.innerHTML=`<div class="err">${DATA?.erro||'Dados da Meta indisponíveis.'}</div>`;return;}
@@ -127,6 +139,52 @@ function render(){
   });
 }
 
+function leadCard(l){
+  const btns=(l.botoes||[]).map(b=>
+    `<button type="button" data-q="${b.tipo}" class="${b.ativo?'on':''}" ${l._saving?'disabled':''}>${b.label}</button>`
+  ).join('');
+  return `<article class="lead ${l.qualidade?'done-mark':''}" data-lead="${l.id}">
+    <div class="ln">${l.linha||l.nome}</div>
+    <div class="meta">${l.cidade||''}${l.qualidade?' · marcado: '+l.qualidade:''}${l.bitrixUrl?' · <a href="'+l.bitrixUrl+'" style="color:var(--gold)">Bitrix</a>':''}</div>
+    <div class="btns">${btns}</div>
+  </article>`;
+}
+
+function renderCacador(){
+  const box=$('#cacador');
+  if(!CAC||!CAC.ok){
+    box.innerHTML=`<div class="cac-head">CAÇAR LEADS DE HOJE - 2 TOQUES</div><div class="sub">${(CAC&&CAC.erro)||'Carregando caçador…'}</div>`;
+    return;
+  }
+  const leads=CAC.leads||[];
+  box.innerHTML=`
+    <div class="cac-head">${CAC.titulo||'CAÇAR LEADS DE HOJE - 2 TOQUES (vai pro Bitrix)'}</div>
+    <p class="cac-sub">${CAC.aviso||''} · ${CAC.pendentes??0} pendente(s)</p>
+    ${leads.length?leads.map(leadCard).join(''):'<div class="sub">Nenhum lead de hoje ainda.</div>'}
+  `;
+  box.querySelectorAll('.lead').forEach(el=>{
+    const id=el.dataset.lead;
+    el.querySelectorAll('[data-q]').forEach(b=>{
+      b.onclick=async()=>{
+        const qualidade=b.dataset.q;
+        el.querySelectorAll('button').forEach(x=>x.disabled=true);
+        const res=await fetch(api('/api/cacador'),{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({leadId:id,qualidade,quem:'Michel'})
+        }).then(x=>x.json()).catch(()=>({ok:false}));
+        if(res.ok){
+          toast(res.toast||'Registrado - CPL BOM recalculado');
+          CAC=res;
+          renderCacador();
+        } else {
+          toast(res.erro||'Não deu');
+          el.querySelectorAll('button').forEach(x=>x.disabled=false);
+        }
+      };
+    });
+  });
+}
+
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
 const api=(path)=>API_BASE+path;
 
@@ -144,7 +202,7 @@ async function post(r,decisao,ajuste){
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)
   }).then(x=>x.json()).catch(()=>({ok:false}));
-  if(res.ok){toast('Registrado · Bruno avisado'); await loadDecisoes(); render();}
+  if(res.ok){toast('Registrado · Bruno avisado'); await loadDecisoes(); renderDecisao();}
   else toast(res.erro||'Não deu');
 }
 
@@ -156,6 +214,13 @@ async function loadDecisoes(){
   }catch{DECS=[];}
 }
 
+async function loadCacador(){
+  try{
+    CAC=await fetch(api('/api/cacador')).then(r=>r.json());
+  }catch{CAC={ok:false,erro:'Caçador indisponível'};}
+  renderCacador();
+}
+
 async function load(){
   try{
     const [rank, _] = await Promise.all([
@@ -165,7 +230,8 @@ async function load(){
     DATA=rank;
     if(!DATA.recomendacoes) DATA={erro:'Recomendações indisponíveis.'};
   }catch{DATA={erro:'Dados da Meta indisponíveis.'};}
-  render();
+  renderDecisao();
+  loadCacador();
 }
 load();
 </script>

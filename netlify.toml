@@ -86,6 +86,11 @@
   to = "/.netlify/functions/qualidade"
   status = 200
   force = true
+[[redirects]]
+  from = "/api/cacador"
+  to = "/.netlify/functions/cacador"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/api/placar"
