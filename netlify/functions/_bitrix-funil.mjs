@@ -250,11 +250,19 @@ export async function listaDealsFunil({ limit = 250 } = {}) {
 }
 
 function tokensCampanha(nome) {
-  return String(nome || '')
-    .toUpperCase()
+  const up = String(nome || '').toUpperCase();
+  const parts = up
     .split(/[^A-Z0-9ÁÉÍÓÚÃÕÂÊÔÇ]+/i)
-    .filter((t) => t.length >= 3)
-    .filter((t) => !['TESTE', 'FORT', 'MYERS', 'FORTMYERS', 'CONFIG', 'VIDEO', 'NOVO', 'THE', 'AND'].includes(t));
+    .filter(Boolean);
+  // Compostos tipo BR_SC / EUA_BRASILEIROS — úteis no título do formulário Bitrix
+  const compostos = (up.match(/[A-Z]{2,}(?:_[A-Z0-9]{2,})+/g) || [])
+    .map((c) => c.replace(/_/g, ' '))
+    .concat(up.match(/[A-Z]{2,}(?:_[A-Z0-9]{2,})+/g) || []);
+  const stop = new Set(['TESTE', 'FORT', 'MYERS', 'FORTMYERS', 'CONFIG', 'VIDEO', 'NOVO', 'THE', 'AND', 'META', 'ADS']);
+  return [...new Set([...parts, ...compostos])]
+    .filter((t) => t.length >= 2)
+    .filter((t) => !stop.has(t))
+    .filter((t) => !/^\d{1,2}$/.test(t)); // dia avulso
 }
 
 export function dealBateCampanha(deal, nomeCampanha) {
@@ -269,6 +277,11 @@ export function dealBateCampanha(deal, nomeCampanha) {
   if (!hay || !nome) return false;
   // match direto pedaço do nome da campanha
   if (nome.length >= 12 && hay.includes(nome.slice(0, 20))) return true;
+  // Form Bitrix costuma trazer "LEAD PATROC. … BR SC" / "FORT M. …"
+  if (/\bBR[_\s-]?SC\b/.test(nome) && /\bBR[_\s-]?SC\b/.test(hay)) return true;
+  if (/\bPORTUGAL\b/.test(nome) && /\bPORTUGAL\b/.test(hay)) return true;
+  if (/\bGRANT\b/.test(nome) && /\bGRANT\b/.test(hay)) return true;
+  if (/\bPUNTA\b/.test(nome) && /\bPUNTA\b/.test(hay)) return true;
   const toks = tokensCampanha(nomeCampanha);
   if (!toks.length) return false;
   const hits = toks.filter((t) => hay.includes(t));
