@@ -74,3 +74,16 @@ Isso alimenta o histórico de ~60 dias e separa o que é Nível 3 (Bruno) do que
 | C | Meta IA com roteiro obrigatório | Sob demanda, perguntas fechadas |
 
 Não construir plataforma grande antes de validar esta rotina na prática.
+
+---
+
+## Painel — quatro fases (indicadores)
+
+Ver `INDICADORES-KATZER.md`:
+
+1. **Mídia** — investimento, CPM, CTR, frequência, CPL  
+2. **Atendimento** — 1ª resposta, respondidos, qualificados  
+3. **Comercial** — agendamentos, comparecimentos, negociações, propostas  
+4. **Financeiro** — vendas, VGV, comissão, ROI  
+
+Michel aprende a diagnosticar **onde** está o problema — sem misturar CPL com venda.
