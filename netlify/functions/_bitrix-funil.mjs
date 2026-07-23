@@ -129,14 +129,14 @@ async function telefonesPorContato(contactIds = []) {
     const slice = ids.slice(i, i + 40);
     const page = await bitrixCall('crm.contact.list', {
       filter: { '@ID': slice },
-      select: ['ID', 'NAME', 'LAST_NAME', 'PHONE', 'HAS_PHONE'],
+      select: ['ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'PHONE', 'HAS_PHONE'],
     });
     if (!page.ok) break;
     for (const c of page.result || []) {
       const phones = Array.isArray(c.PHONE) ? c.PHONE : [];
       const raw = phones.find((p) => p?.VALUE)?.VALUE || phones[0]?.VALUE || '';
       map[String(c.ID)] = {
-        nome: [c.NAME, c.LAST_NAME].filter(Boolean).join(' ').trim(),
+        nome: [c.NAME, c.SECOND_NAME, c.LAST_NAME].filter(Boolean).join(' ').trim(),
         telefone: raw,
         whatsappUrl: linkWhatsApp(raw),
       };
@@ -250,7 +250,11 @@ export async function listaDealsFunil({
         const c = contatos[String(d.contactId)] || null;
         d.telefone = c?.telefone || null;
         d.whatsappUrl = c?.whatsappUrl || null;
-        if (c?.nome && (!d.title || /^\d+$/.test(d.title))) d.title = c.nome;
+        d.nomeContato = c?.nome || null;
+        d.titleForm = d.titleForm || d.title || '';
+        if (c?.nome && (tituloEhFormulario(d.title) || !d.title || /^\d+$/.test(d.title))) {
+          d.title = c.nome;
+        }
       }
       return { ok: true, deals: all, fonte: 'webhook-local' };
     }
@@ -307,9 +311,39 @@ function tokensColchetes(nome) {
     .filter((t) => !/^VIDEO\d+$/i.test(t) && !/^IMAGEM\d+$/i.test(t));
 }
 
+/**
+ * Data de voo no nome da campanha — ex.: [06/02/26] ou [10/07/2026].
+ * Preferir esta data ao created_time da Meta (que pode ser bem anterior).
+ */
+export function dataColcheteCampanha(nomeCampanha) {
+  const matches = [...String(nomeCampanha || '').matchAll(/\[(\d{1,2})\/(\d{1,2})\/(\d{2,4})\]/g)];
+  if (!matches.length) return null;
+  // Usa o ÚLTIMO colchete de data (padrão Katzer: produto…[dd/mm/aa])
+  const m = matches[matches.length - 1];
+  let dd = Number(m[1]);
+  let mm = Number(m[2]);
+  let yy = Number(m[3]);
+  if (yy < 100) yy += 2000;
+  if (!dd || !mm || mm > 12 || dd > 31 || yy < 2020) return null;
+  const iso = `${yy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}T00:00:00-03:00`;
+  if (!Number.isFinite(Date.parse(iso))) return null;
+  return iso;
+}
+
+/** Início do funil: colchete do nome ganha da data Meta quando os dois existem. */
+export function inicioFunilISO(nomeCampanha, inicioMetaISO = null) {
+  const col = dataColcheteCampanha(nomeCampanha);
+  if (col) return col;
+  return inicioMetaISO || null;
+}
+
 /** Produto canônico da campanha Meta (se houver). */
 export function produtoCampanha(nomeCampanha) {
   const nome = String(nomeCampanha || '').toUpperCase();
+  // PUBLICOS / NOVACONFIG antes de FORT MYERS (senão todo Fort Myers cai no teste de públicos)
+  if (/\bPUBLICOS\b/.test(nome) || /\bNOVACONFIG\b/.test(nome) || /NOVO\s*CONFIG/.test(nome)) {
+    return 'NOVACONFIG';
+  }
   for (const t of tokensColchetes(nomeCampanha)) {
     for (const p of PRODUTOS) {
       if (t === p || t.includes(p) || p.includes(t)) return p;
@@ -332,12 +366,15 @@ function hayContemProduto(hay, produto, nomeCampanha = '') {
     // Torresani vende Punta — form Bitrix quase sempre traz PUNTA CANA
     return /PUNTA|TORRESANI/.test(hay);
   }
-  if (produto === 'NOVACONFIG' || produto === 'PUBLICOS') return /NOVACONFIG|PUBLICOS/.test(hay);
+  if (produto === 'NOVACONFIG' || produto === 'PUBLICOS') {
+    return /NOVACONFIG|PUBLICOS|NOVO\s*CONFIG/.test(hay);
+  }
   if (produto === 'ALICERCE') {
     if (!/ALICERCE/.test(hay)) return false;
     // Não misturar form de outro corretor (ex.: EDSEL) na campanha do Alisson
     if (/EDSEL/.test(hay)) return false;
     if (/ALISSON/.test(nome)) {
+      // Prioriza form ALISSON; aceita KATZER/PATROC ALICERCE genérico (filtro de data corta o resto)
       return /ALISSON/.test(hay)
         || /KATZER\s+ALICERCE/.test(hay)
         || /PATROC\.?\s+ALICERCE/.test(hay);
@@ -345,6 +382,22 @@ function hayContemProduto(hay, produto, nomeCampanha = '') {
     return true;
   }
   return hay.includes(produto);
+}
+
+function tituloEhFormulario(title) {
+  return /preencher formul[aá]rio|lead patroc/i.test(String(title || ''));
+}
+
+/** Nome pra UI: pessoa > título limpo > Lead #id (nunca o texto longo do form). */
+export function nomeExibicaoDeal(deal) {
+  const pessoa = String(deal?.nomeContato || '').trim();
+  if (pessoa && !tituloEhFormulario(pessoa)) return pessoa;
+  const title = String(deal?.title || '').trim();
+  if (title && !tituloEhFormulario(title) && !/^\d+$/.test(title) && title.length <= 60) {
+    return title;
+  }
+  const id = deal?.id != null ? String(deal.id) : '';
+  return id ? `Lead #${id}` : 'Lead sem nome';
 }
 
 export function dealBateCampanha(deal, nomeCampanha) {
@@ -391,21 +444,24 @@ function dealDentroDoPeriodo(deal, inicioISO) {
 }
 
 export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], { inicioISO = null } = {}) {
-  const matched = (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha) && dealDentroDoPeriodo(d, inicioISO));
+  const inicio = inicioFunilISO(nomeCampanha, inicioISO);
+  const matched = (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha) && dealDentroDoPeriodo(d, inicio));
   const map = new Map();
   for (const nome of [...ORDEM_FUNIL, ...FASES_TERMINAIS]) {
     map.set(nome, { nome, n: 0, leads: [] });
   }
 
   for (const d of matched) {
+    // Fase = STAGE_ID atual do Bitrix (já normalizado em d.fase)
     const fase = normalizaNomeFase(d.fase || 'Leads Novos');
     if (!map.has(fase)) map.set(fase, { nome: fase, n: 0, leads: [] });
     const bucket = map.get(fase);
     bucket.n += 1;
     bucket.leads.push({
       id: d.id,
-      nome: d.nomeContato || d.title,
+      nome: nomeExibicaoDeal(d),
       fase,
+      stageId: d.stageId || null,
       bitrixUrl: d.bitrixUrl,
       whatsappUrl: d.whatsappUrl || null,
       telefone: d.telefone || null,
