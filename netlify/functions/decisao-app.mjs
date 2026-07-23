@@ -13,6 +13,8 @@ import {
   deveAlertarManter,
   detalheQualidadeVazio,
   QUAL_TRAFEGO_ROTULO,
+  normalizaQualTrafego,
+  linkWhatsApp,
 } from './_qualidade-trafego.mjs';
 import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_decisao-feed.mjs';
 
@@ -36,6 +38,54 @@ function fmtImp(n) {
   return Number(n).toLocaleString('pt-BR');
 }
 
+function campanhaBate(nomeCamp, leadCamp) {
+  const a = String(nomeCamp || '').toLowerCase();
+  const b = String(leadCamp || '').toLowerCase();
+  if (!a || !b) return false;
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+  const tok = b.split(/[_\s\[\]]+/).filter((t) => t.length > 3);
+  return tok.some((t) => a.includes(t));
+}
+
+function faseLead(l) {
+  return l.faseBitrix || l.statusPosMapeamento || l.status || 'Fluxo - Leads';
+}
+
+function leadsDaCampanha(leads, nomeCamp) {
+  return (leads || []).filter((l) => campanhaBate(nomeCamp, l.campanha));
+}
+
+function montaLeadsHot(leadsCamp) {
+  return leadsCamp
+    .map((l) => {
+      const q = normalizaQualTrafego(l.qualidadeReal)
+        || normalizaQualTrafego(l.qualidadeIa)
+        || normalizaQualTrafego(l.qualidadeProvisoria);
+      return {
+        id: l.id,
+        nome: l.nome,
+        qualidade: q,
+        fase: faseLead(l),
+        bitrixUrl: l.bitrixUrl || null,
+        whatsappUrl: linkWhatsApp(l.telefone),
+        telefone: l.telefone || null,
+        hot: q === 'potencial' || q === 'interessado',
+      };
+    })
+    .filter((l) => l.hot || l.bitrixUrl || l.whatsappUrl);
+}
+
+function montaFases(leadsCamp) {
+  const map = {};
+  for (const l of leadsCamp) {
+    const f = faseLead(l);
+    map[f] = (map[f] || 0) + 1;
+  }
+  const fases = Object.entries(map).map(([nome, n]) => ({ nome, n }));
+  const total = leadsCamp.length;
+  return { total, fases };
+}
+
 function montaCampanhasApp(placar, cicloMapa, leads) {
   const mapaQ = agregaQualidadePorCampanha(leads);
   const rows = (placar.campanhas || []).map((c) => {
@@ -46,25 +96,35 @@ function montaCampanhasApp(placar, cicloMapa, leads) {
     }, cicloMapa);
     const detail = matchDetalheCampanha(mapaQ, c.nome);
     const cpl = c.cpl;
-    const qual = badgeCampanha(cpl, detail);
+    const forms = c.leadConfirmado ? c.leads : (c.leads || 0);
+    const qual = badgeCampanha(cpl, detail, { forms, gasto: c.gasto });
     const impressoes = c.impressoes ?? c.impressions ?? null;
+    const ativa = !!(comCiclo.ciclo?.ativa || String(comCiclo.statusVeiculacao || '').toUpperCase() === 'ACTIVE');
+    const leadsCamp = leadsDaCampanha(leads, c.nome);
+    const leadsHot = montaLeadsHot(leadsCamp);
+    const fasesInfo = montaFases(leadsCamp);
     return {
       id: c.id || c.nome,
-      name: c.nome, // nome como no Meta — não renomear
+      name: c.nome,
       inicio: comCiclo.dataSubiu || '—',
       inicioISO: comCiclo.ciclo?.inicioISO || null,
       gasto: brl(c.gasto),
       gastoNum: c.gasto,
-      forms: c.leadConfirmado ? c.leads : (c.leads || 0),
+      forms,
       custo: cpl != null ? brl(cpl) : '—',
       cpl,
       imp: fmtImp(impressoes),
       impressoes,
       qual,
+      alertaVisual: qual === 'bad' ? 'ruim' : (qual === 'good' ? 'oportunidade' : ''),
       detail,
       dataPausada: comCiclo.dataPausada,
-      statusVeiculacao: comCiclo.statusVeiculacao,
+      statusVeiculacao: comCiclo.statusVeiculacao || (ativa ? 'ACTIVE' : null),
+      ativa,
       alertaManter: deveAlertarManter({ cpl, detail, qual }),
+      leadsHot,
+      fases: fasesInfo.fases,
+      leadsTotal: fasesInfo.total,
     };
   });
   return rows.sort((a, b) => (b.gastoNum || 0) - (a.gastoNum || 0));
@@ -87,6 +147,7 @@ function topFeedback(campanhas) {
     nome: c.name,
     custo: c.custo,
     forms: c.forms,
+    qual: c.qual,
   }));
   const piores = [...comCpl].reverse().slice(0, 10).map((c, i) => ({
     pos: i + 1,
@@ -107,7 +168,7 @@ function topFeedback(campanhas) {
     feedbackPiores: [
       'Sem vídeo, só imagem',
       'Público muito aberto sem filtro',
-      'Custo alto / Fake+Ruim elevados',
+      'Custo alto / Fake+Ruim / pouca conversão',
       'Sem preço na headline',
     ],
   };
@@ -122,11 +183,15 @@ async function payloadApp({ incluirGestor = false } = {}) {
     leFeedDecisao(),
   ]);
 
-  // injeta impressões do cache bruto se placar não trouxe — lePlacar monta sem impressões
-  // Buscamos do placar.campanhas; se null, tenta meta insights via campo extra abaixo
-  const campanhas = montaCampanhasApp(placar, ciclo.mapa || {}, leadsDoc.leads || []);
+  const todas = montaCampanhasApp(placar, ciclo.mapa || {}, leadsDoc.leads || []);
+  // Se Meta não trouxe status, assume ativa quando não tem dataPausada
+  const ativas = todas.filter((c) => c.ativa || (!c.dataPausada && c.statusVeiculacao !== 'PAUSED'));
+  // Ranking: menor CPL primeiro (todas com gasto 30d)
+  const ranking = [...todas]
+    .filter((c) => c.cpl != null)
+    .sort((a, b) => (a.cpl ?? 9999) - (b.cpl ?? 9999))
+    .map((c, i) => ({ ...c, pos: i + 1 }));
 
-  // Se impressões vieram vazias, busca rápida no insights (já no lePlacar data — patch monta)
   const tot = totaisQualidade(leadsDoc.leads || []);
   const hoje = itensHoje(feed, now.data);
   const base = {
@@ -137,21 +202,25 @@ async function payloadApp({ incluirGestor = false } = {}) {
     periodoLabel: 'Janela móvel últimos 30 dias',
     prazo: 'Fazer até 10:15',
     fontes: 'PATROCINADO CORRETOR, FACEBOOK ADS, FORMULARIO CRM, CANAL ABERTO',
-    campanhas,
+    avisoAbas: 'Aba Ativas = só veiculando agora. Ranking = todas com gasto nos últimos 30 dias (ativas + pausadas).',
+    campanhas: ativas, // compat
+    ativas,
+    ranking,
+    todas,
     qualidadeTotais: tot,
     qualidadeRotulos: QUAL_TRAFEGO_ROTULO,
     iaComo: 'IA lê: ligação + todas abas Bitrix + WhatsApp Helena + etiqueta corretor',
-    sugestaoSemanal: campanhas[0] ? {
-      texto: `30% da verba nas que mais converteram: foco no menor CPL`,
-      destaque: campanhas.filter((c) => c.qual === 'good').sort((a, b) => (a.cpl ?? 99) - (b.cpl ?? 99))[0] || null,
-    } : null,
+    sugestaoSemanal: {
+      texto: '30% da verba nas que mais converteram',
+      destaque: ranking.find((c) => c.qual === 'good') || ranking[0] || null,
+    },
     agora: now.hm,
     data: now.data,
   };
 
   if (!incluirGestor) return base;
 
-  const tops = topFeedback(campanhas);
+  const tops = topFeedback(todas);
   return {
     ...base,
     gestor: {
@@ -194,7 +263,7 @@ export async function handler(event) {
 
     const cpl = body.cpl != null ? Number(body.cpl) : null;
     const detail = body.detail || detalheQualidadeVazio();
-    const qual = body.qual || badgeCampanha(cpl, detail);
+    const qual = body.qual || badgeCampanha(cpl, detail, { forms: body.forms || 0, gasto: body.gastoNum || 0 });
     const alerta = acao === 'manter' && deveAlertarManter({ cpl, detail, qual });
 
     let textoFeed = '';

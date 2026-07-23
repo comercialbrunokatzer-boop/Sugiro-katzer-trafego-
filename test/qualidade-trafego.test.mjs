@@ -44,5 +44,11 @@ test('agrega qualidade por campanha', () => {
   ]);
   assert.equal(mapa.get('FortMyers_BR_SC').fake, 1);
   assert.equal(mapa.get('FortMyers_BR_SC').ruim, 1);
-  assert.equal(badgeCampanha(78.96, mapa.get('FortMyers_BR_SC')), 'bad');
+  assert.equal(badgeCampanha(78.96, mapa.get('FortMyers_BR_SC'), { forms: 8, gasto: 600 }), 'bad');
+});
+
+test('linkWhatsApp monta wa.me', async () => {
+  const { linkWhatsApp } = await import('../netlify/functions/_qualidade-trafego.mjs');
+  assert.equal(linkWhatsApp('47 99999-8888'), 'https://wa.me/5547999998888');
+  assert.equal(linkWhatsApp('47 9xxxx'), null);
 });

@@ -1,46 +1,32 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head><style>
-@font-face {
-  font-family: "Optimistic";
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Optimistic Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
-}
-:where(html) {
-  font-family: "Optimistic", system-ui, sans-serif;
-}
-:where(code, pre, kbd, samp) {
-  font-family: "Optimistic Mono", ui-monospace, monospace;
-}
-</style>
+<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Katzer OS - App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Katzer OS - App Decisão</title>
+<link rel="manifest" href="/manifest-campanhas.webmanifest">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Campanhas">
+<link rel="apple-touch-icon" href="/icon-katzer.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif}
 body{background:#fcfcfc;color:#111}
 .header{padding:16px 20px;border-bottom:1px solid #eee;background:#fff;position:sticky;top:0;z-index:10}
 .header h1{font-size:16px;font-weight:700}
 .header p{font-size:11px;color:#888;margin-top:2px}
-.tabs{display:flex;gap:8px;padding:12px 20px;background:#fff;border-bottom:1px solid #eee}
-.tab{padding:8px 14px;border-radius:20px;border:1px solid #e5e5e5;background:#fff;font-size:13px;cursor:pointer}
+.tabs{display:flex;gap:6px;padding:12px 16px;background:#fff;border-bottom:1px solid #eee;flex-wrap:wrap}
+.tab{padding:8px 12px;border-radius:20px;border:1px solid #e5e5e5;background:#fff;font-size:12px;cursor:pointer;font-weight:600}
 .tab.active{background:#111;color:#fff;border-color:#111}
-.alert-top{background:#fff7ed;border:1px solid #fed7aa;padding:10px 14px;margin:12px 20px;border-radius:10px;font-size:12px;display:none}
+.alert-top{background:#fff7ed;border:1px solid #fed7aa;padding:10px 14px;margin:12px 16px;border-radius:10px;font-size:12px;display:none}
+.info{margin:12px 16px;font-size:11px;color:#666;background:#fff;border:1px solid #eee;padding:8px 12px;border-radius:8px;line-height:1.4}
 .card{background:#fff;border:1px solid #eee;border-radius:14px;margin:12px 16px;overflow:hidden}
-.card-head{padding:12px 14px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
-.card-head h3{font-size:13px;font-weight:600}
-.badge{font-size:10px;padding:3px 8px;border-radius:10px;background:#f3f3f3}
+.card.ruim{border-color:#fecaca;background:#fffafa;box-shadow:0 0 0 1px #fecaca}
+.card.oportunidade{border-color:#bbf7d0;background:#f7fef9;box-shadow:0 0 0 1px #bbf7d0}
+.card-head{padding:12px 14px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.card-head h3{font-size:13px;font-weight:600;line-height:1.3}
+.badge{font-size:10px;padding:3px 8px;border-radius:10px;background:#f3f3f3;white-space:nowrap}
 .badge.bad{background:#fee2e2;color:#b91c1c}
 .badge.good{background:#dcfce7;color:#166534}
 .row{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid #f7f7f7;font-size:12px;flex-wrap:wrap}
@@ -49,12 +35,19 @@ body{background:#fcfcfc;color:#111}
 .col span{font-size:11px;color:#666}
 .quality{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .q{font-size:10px;padding:2px 6px;border-radius:6px;background:#f5f5f5}
-.q.pot{background:#dbeafe} .q.int{background:#dcfce7} .q.cur{background:#fef3c7} .q.fake{background:#fee2e2} .q.ruim{background:#f3f4f6} .q.sj{text-decoration:line-through;opacity:.5}
+.q.pot{background:#dbeafe}.q.int{background:#dcfce7}.q.cur{background:#fef3c7}.q.fake{background:#fee2e2}.q.ruim{background:#f3f4f6}
+.fase-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:8px;background:#fff;border:1px solid #eee;border-radius:10px}
+.fase-n{min-width:28px;height:28px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px}
+.fase-pill{font-size:10px;padding:4px 8px;border-radius:999px;background:#f3f3f3;border:1px solid #e5e5e5;font-weight:600}
+.leads-hot{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.lead-line{font-size:11px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#fafafa;border-radius:8px;border:1px solid #f0f0f0}
+.lead-line a{color:#0b6e4f;font-weight:700;text-decoration:none}
+.lead-line a.bx{color:#2a5bd7}
 .actions{display:flex;gap:6px;padding:10px 14px;background:#fafafa}
-.btn{padding:7px 12px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;font-size:12px;cursor:pointer;flex:1}
+.btn{padding:7px 12px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;font-size:12px;cursor:pointer;flex:1;font-weight:600}
 .btn.primary{background:#111;color:#fff;border-color:#111}
 .btn.danger{color:#b91c1c}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:20px;font-size:12px;z-index:100;display:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:20px;font-size:12px;z-index:100;display:none;max-width:90%;text-align:center}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
 .modal-box{background:#fff;padding:20px;border-radius:16px;width:90%;max-width:320px}
 .modal-box h4{font-size:14px;margin-bottom:8px}
@@ -64,84 +57,80 @@ body{background:#fcfcfc;color:#111}
 .feed{padding:12px 16px}
 .feed-item{font-size:12px;padding:8px 0;border-bottom:1px solid #f0f0f0}
 .small-card{background:#f8f7f6;border-radius:10px;padding:12px;margin:10px 0;font-size:12px}
+.pos{font-size:11px;color:#888;font-weight:700;margin-right:4px}
 </style>
 </head>
 <body>
 <div class="header">
-<h1>Katzer OS • App Decisão</h1>
-<p>Atualização automática via Meta API + Bitrix • Painel atualiza na hora • WhatsApp Helena na hora • E-mail definitivo 14h</p>
+  <h1>Katzer OS • App Decisão</h1>
+  <p>Meta API + Bitrix · atualiza na hora · WhatsApp Helena na hora · E-mail 14h</p>
 </div>
 <div class="tabs">
-<button class="tab active" onclick="showTab('michel')">Área Michel</button>
-<button class="tab" onclick="showTab('gestor')">Área Gestor 🔒</button>
+  <button class="tab active" data-tab="ativas" onclick="showTab('ativas')">1 · Ativas</button>
+  <button class="tab" data-tab="ranking" onclick="showTab('ranking')">2 · Ranking</button>
+  <button class="tab" data-tab="gestor" onclick="showTab('gestor')">3 · Gestor 🔒</button>
 </div>
 
-<div id="michelTab">
-<div id="infoBar" style="margin:12px 20px;font-size:11px;color:#666;background:#fff;border:1px solid #eee;padding:8px 12px;border-radius:8px">⏰ Fazer até 10:15 • Janela móvel últimos 30 dias • Fontes: PATROCINADO CORRETOR, FACEBOOK ADS, FORMULARIO CRM, CANAL ABERTO • Sem justificativa = descarta</div>
-<div id="alertMichel" class="alert-top">⚠️ Alerta: você manteve campanha com performance ruim</div>
-
-<div id="campaigns"></div>
-
-<div class="card">
-<div class="card-head"><h3>Sugestão Semanal • 1x por semana</h3></div>
-<div class="row"><span id="sugestaoTxt" style="font-size:12px">Carregando sugestão…</span></div>
-</div>
+<div id="tab-ativas">
+  <div class="info" id="infoAtivas">Só campanhas <b>ativas</b> agora (veiculando). Gasto/CPL = últimos 30 dias.</div>
+  <div id="alertMichel" class="alert-top"></div>
+  <div id="listAtivas"></div>
 </div>
 
-<div id="gestorTab" style="display:none">
-<div class="gestor-lock" id="lockScreen">
-<h3 style="font-size:14px">Área Restrita Gestor</h3>
-<p style="font-size:12px;color:#666;margin:8px 0 16px">Digite a senha para ver decisões do Michel</p>
-<input id="pwd" class="input" type="password" placeholder="Senha">
-<button class="btn primary" onclick="unlock()">Entrar</button>
-<p style="font-size:11px;color:#999;margin-top:8px">Senha: Davi2026@</p>
-</div>
-<div id="gestorContent" style="display:none">
-<div class="card">
-<div class="card-head"><h3>Placar do Gestor - Bruno • Desde 12/07/2025 até sempre</h3><span class="badge">Live via Helena</span></div>
-<div class="feed" id="feed">
-<div class="small-card">Hoje: 0 decisões • Acumulado desde 12/07/2025: 127 decisões • E-mail definitivo enviado 14h</div>
-<div class="feed-item">Aguardando ações do Michel hoje...</div>
-</div>
-</div>
-<div class="card">
-<div class="card-head"><h3>Qualidade real dos leads - IA tempo real</h3></div>
-<div class="row"><div class="col"><b>Como a IA classifica:</b><span>Leitura automática da ligação (quando consegue ouvir - integração em andamento) + comentários em todas as abas de fase do Bitrix + conversa WhatsApp Helena + etiquetas do corretor. Tudo em tempo real. Sem justificativa = card criado por conversa sua com terceiro → descarta, não metrifica.</span></div></div>
-<div class="row"><div class="col"><span id="qualTotais">Carregando qualidade…</span></div></div>
-</div>
-<div class="card">
-<div class="card-head"><h3>Top 10 Melhores • Menor Custo • Desde 12/07/2025</h3></div>
-<div class="row" id="topMelhores" style="flex-direction:column;gap:4px;font-size:12px"><div>Carregando…</div></div>
-</div>
-<div class="card">
-<div class="card-head"><h3>Top 10 Piores + Feedback para Michel</h3></div>
-<div class="row" id="feedbackBox"><div class="col">Carregando feedback…</div></div>
-</div>
-<div id="alertGestor" class="alert-top" style="display:none;margin:12px 16px">⚠️ Alerta Gestor: Michel manteve campanha com performance ruim</div>
-</div>
+<div id="tab-ranking" style="display:none">
+  <div class="info">Todas as campanhas com gasto nos <b>últimos 30 dias</b> (ativas + pausadas), ordenadas por melhor CPL. Não são “só ativas”.</div>
+  <div id="listRanking"></div>
 </div>
 
-<div class="modal" id="modalStop"><div class="modal-box"><h4>Você tem certeza?</h4><p>Essa campanha será pausada na Meta.</p><div style="display:flex;gap:8px"><button class="btn" onclick="closeModal('modalStop')">Cancelar</button><button class="btn primary" onclick="confirmStop()">Sim, parar</button></div></div></div>
+<div id="tab-gestor" style="display:none">
+  <div class="gestor-lock" id="lockScreen">
+    <h3 style="font-size:14px">Área Gestor Bruno</h3>
+    <p style="font-size:12px;color:#666;margin:8px 0 16px">Digite a senha para ver movimentos do Michel</p>
+    <input id="pwd" class="input" type="password" placeholder="Senha" autocomplete="current-password">
+    <button class="btn primary" onclick="unlock()">Entrar</button>
+  </div>
+  <div id="gestorContent" style="display:none">
+    <div class="card">
+      <div class="card-head"><h3>Placar Gestor · desde 12/07/2025</h3><span class="badge">Live</span></div>
+      <div class="feed" id="feed"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Qualidade IA (tempo real)</h3></div>
+      <div class="row"><div class="col"><span id="qualTotais">…</span></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Top 10 melhores · menor custo</h3></div>
+      <div class="row" id="topMelhores" style="flex-direction:column;gap:4px;font-size:12px"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Top 10 piores + feedback</h3></div>
+      <div class="row" id="feedbackBox"></div>
+    </div>
+    <div id="alertGestor" class="alert-top" style="margin:12px 16px"></div>
+  </div>
+</div>
+
+<div class="modal" id="modalStop"><div class="modal-box"><h4>Você tem certeza?</h4><p>Registra a decisão e avisa o gestor no WhatsApp. (Pause na Meta: próximo passo.)</p><div style="display:flex;gap:8px"><button class="btn" onclick="closeModal('modalStop')">Cancelar</button><button class="btn primary" onclick="confirmStop()">Sim, parar</button></div></div></div>
 <div class="modal" id="modalBudget"><div class="modal-box"><h4>Novo orçamento diário</h4><input id="budgetInput" class="input" type="number" placeholder="R$"><div style="display:flex;gap:8px"><button class="btn" onclick="closeModal('modalBudget')">Cancelar</button><button class="btn primary" onclick="confirmBudget()">Confirmar</button></div></div></div>
 <div class="toast" id="toast"></div>
-
 
 <script>
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
 const api=(p)=>API_BASE+p;
-let campaigns=[];
-let currentCamp=null;
-let DATA=null;
-let GESTOR_KEY='';
+let DATA=null, ATIVAS=[], RANKING=[], currentCamp=null, GESTOR_KEY='';
 
-function toast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3200);
-}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3200);}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function acha(id){return [...ATIVAS,...RANKING].find(c=>String(c.id)===String(id)||c.name===id);}
+
 function showTab(t){
-  document.getElementById('michelTab').style.display=t==='michel'?'block':'none';
-  document.getElementById('gestorTab').style.display=t==='gestor'?'block':'none';
-  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',(t==='michel'&&i===0)||(t==='gestor'&&i===1)));
+  ['ativas','ranking','gestor'].forEach(k=>{
+    document.getElementById('tab-'+k).style.display=k===t?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));
 }
+
 function unlock(){
   const pwd=document.getElementById('pwd').value;
   if(pwd==='Davi2026@'){
@@ -149,129 +138,122 @@ function unlock(){
     document.getElementById('lockScreen').style.display='none';
     document.getElementById('gestorContent').style.display='block';
     loadGestor();
-  }else{alert('Senha incorreta');}
+  }else alert('Senha incorreta');
 }
 function openStop(id){currentCamp=id;document.getElementById('modalStop').style.display='flex';}
 function openBudget(id){currentCamp=id;document.getElementById('budgetInput').value='';document.getElementById('modalBudget').style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
-function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
-function acha(id){return campaigns.find(c=>String(c.id)===String(id)||c.name===id);}
 
-function render(list){
-  const c=document.getElementById('campaigns');
-  if(!list||!list.length){
-    c.innerHTML=`<div class="card"><div class="row"><span style="font-size:12px;color:#666">Sem campanhas Meta nos últimos 30 dias (ou token indisponível).</span></div></div>`;
-    return;
-  }
-  c.innerHTML=list.map(cam=>`
-<div class="card">
-<div class="card-head"><h3>${esc(cam.name)}</h3><span class="badge ${cam.qual||''}">${esc(cam.custo)} /lead</span></div>
-<div class="row">
-<div class="col"><b>${esc(cam.inicio)}</b><span>Início</span></div>
-<div class="col"><b>${esc(cam.gasto)}</b><span>Gasto 30d</span></div>
-<div class="col"><b>${esc(cam.imp)}</b><span>Impressões</span></div>
-<div class="col"><b>${cam.forms??0}</b><span>Forms</span></div>
-<div class="col"><b>${esc(cam.custo)}</b><span>Custo/Lead</span></div>
-</div>
-<div class="row"><div class="col"><b>Qualidade IA tempo real:</b>
-<div class="quality">
-<span class="q pot">${cam.detail?.pot||0} Potencial</span>
-<span class="q int">${cam.detail?.int||0} Interessado</span>
-<span class="q cur">${cam.detail?.cur||0} Curioso</span>
-${cam.detail?.fake?`<span class="q fake">${cam.detail.fake} Fake</span>`:''}
-${cam.detail?.ruim?`<span class="q ruim">${cam.detail.ruim} Ruim</span>`:''}
-${cam.detail?.sj?`<span class="q sj">${cam.detail.sj} Sem justificativa (descartado)</span>`:''}
-</div>
-<span style="font-size:10px;color:#999">${esc(DATA?.iaComo||'IA lê: ligação + todas abas Bitrix + WhatsApp Helena + etiqueta corretor')}</span>
-</div></div>
-<div class="actions">
-<button class="btn" onclick="doAction('manter','${escAttr(cam.id)}')">Manter</button>
-<button class="btn" onclick="openBudget('${escAttr(cam.id)}')">R$ +/-</button>
-<button class="btn danger" onclick="openStop('${escAttr(cam.id)}')">Parar</button>
-</div>
-</div>`).join('');
-  const sug=DATA?.sugestaoSemanal?.destaque;
-  const sugEl=document.getElementById('sugestaoTxt');
-  if(sugEl&&sug){
-    sugEl.innerHTML=`30% da verba nas que mais converteram: <b>${esc(sug.name)} ${esc(sug.custo)} - ${sug.forms} leads (${sug.detail?.int||0} Interessado)</b> → Sugestão aumentar orçamento <button class="btn primary" style="margin-left:8px" onclick="toast('Sugestão semanal aplicada via Helena')">Aplicar</button>`;
-  } else if(sugEl){
-    sugEl.textContent='Sem sugestão semanal ainda — aguardando campanhas com CPL bom.';
-  }
+function htmlFases(cam){
+  const n=cam.leadsTotal||0;
+  const pills=(cam.fases||[]).map(f=>`<span class="fase-pill">${esc(f.nome)} · ${f.n}</span>`).join('')
+    ||'<span class="fase-pill">Sem leads de hoje nesta campanha</span>';
+  return `<div class="fase-box"><div class="fase-n">${n}</div>${pills}</div>`;
+}
+
+function htmlLeadsHot(cam){
+  const hot=(cam.leadsHot||[]).filter(l=>l.hot);
+  if(!hot.length) return '';
+  return `<div class="leads-hot">${hot.map(l=>`
+    <div class="lead-line">
+      <b>${esc(l.nome)}</b>
+      <span class="q ${l.qualidade==='potencial'?'pot':'int'}">${esc(l.qualidade)}</span>
+      <span style="color:#888">${esc(l.fase||'')}</span>
+      ${l.bitrixUrl?`<a class="bx" href="${esc(l.bitrixUrl)}" target="_blank" rel="noopener">Bitrix</a>`:''}
+      ${l.whatsappUrl?`<a href="${esc(l.whatsappUrl)}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+    </div>`).join('')}</div>`;
+}
+
+function cardHtml(cam,{showPos=false}={}){
+  const cls=cam.alertaVisual==='ruim'?'ruim':(cam.alertaVisual==='oportunidade'?'oportunidade':'');
+  const badgeTxt=cam.qual==='bad'?'RUIM · '+cam.custo:(cam.qual==='good'?'OPORTUNIDADE · '+cam.custo:cam.custo+' /lead');
+  return `<div class="card ${cls}">
+    <div class="card-head">
+      <h3>${showPos&&cam.pos?`<span class="pos">${cam.pos}º</span>`:''}${esc(cam.name)}${cam.ativa===false?' <span style="color:#999;font-size:10px">· pausada</span>':''}</h3>
+      <span class="badge ${cam.qual||''}">${esc(badgeTxt)}</span>
+    </div>
+    <div class="row">
+      <div class="col"><b>${esc(cam.inicio)}</b><span>Início</span></div>
+      <div class="col"><b>${esc(cam.gasto)}</b><span>Gasto 30d</span></div>
+      <div class="col"><b>${esc(cam.imp)}</b><span>Impressões</span></div>
+      <div class="col"><b>${cam.forms??0}</b><span>Forms</span></div>
+      <div class="col"><b>${esc(cam.custo)}</b><span>Custo/Lead</span></div>
+    </div>
+    <div class="row"><div class="col"><b>Qualidade IA + fase Bitrix</b>
+      <div class="quality">
+        <span class="q pot">${cam.detail?.pot||0} Potencial</span>
+        <span class="q int">${cam.detail?.int||0} Interessado</span>
+        <span class="q cur">${cam.detail?.cur||0} Curioso</span>
+        ${cam.detail?.fake?`<span class="q fake">${cam.detail.fake} Fake</span>`:''}
+        ${cam.detail?.ruim?`<span class="q ruim">${cam.detail.ruim} Ruim</span>`:''}
+      </div>
+      ${htmlFases(cam)}
+      ${htmlLeadsHot(cam)}
+      <span style="font-size:10px;color:#999;display:block;margin-top:6px">${esc(DATA?.iaComo||'')}</span>
+    </div></div>
+    <div class="actions">
+      <button class="btn" onclick="doAction('manter','${escAttr(cam.id)}')">Manter</button>
+      <button class="btn" onclick="openBudget('${escAttr(cam.id)}')">R$ +/-</button>
+      <button class="btn danger" onclick="openStop('${escAttr(cam.id)}')">Parar</button>
+    </div>
+  </div>`;
+}
+
+function renderLists(){
+  const a=document.getElementById('listAtivas');
+  a.innerHTML=ATIVAS.length?ATIVAS.map(c=>cardHtml(c)).join(''):'<div class="card"><div class="row">Nenhuma campanha ativa no momento.</div></div>';
+  const r=document.getElementById('listRanking');
+  r.innerHTML=RANKING.length?RANKING.map(c=>cardHtml(c,{showPos:true})).join(''):'<div class="card"><div class="row">Sem ranking ainda.</div></div>';
 }
 
 async function postAcao(body){
-  const res=await fetch(api('/api/decisao-app'),{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(body)
-  }).then(r=>r.json()).catch(()=>({ok:false,erro:'rede'}));
+  const res=await fetch(api('/api/decisao-app'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).catch(()=>({ok:false}));
   if(!res.ok){toast(res.erro||'Falhou');return res;}
   toast(res.toast||'Registrado');
-  if(res.alertaMichel){
-    const a=document.getElementById('alertMichel');
-    a.style.display='block';a.textContent=res.alertaMichel;
-  }
-  if(res.alertaGestor){
-    const g=document.getElementById('alertGestor');
-    if(g){g.style.display='block';g.textContent=res.alertaGestor;}
-  }
+  if(res.alertaMichel){const el=document.getElementById('alertMichel');el.style.display='block';el.textContent=res.alertaMichel;}
+  if(res.alertaGestor){const el=document.getElementById('alertGestor');if(el){el.style.display='block';el.textContent=res.alertaGestor;}}
   if(GESTOR_KEY) loadGestor();
   return res;
 }
-
 async function doAction(act,id){
   const cam=acha(id); if(!cam) return;
-  if(act==='manter'){
-    await postAcao({
-      acao:'manter', campanha:cam.name, campanhaId:cam.id,
-      cpl:cam.cpl, custo:cam.custo, detail:cam.detail, qual:cam.qual
-    });
-  }
+  await postAcao({acao:'manter',campanha:cam.name,campanhaId:cam.id,cpl:cam.cpl,custo:cam.custo,detail:cam.detail,qual:cam.qual,forms:cam.forms,gastoNum:cam.gastoNum});
 }
 async function confirmStop(){
   closeModal('modalStop');
   const cam=acha(currentCamp); if(!cam) return;
-  await postAcao({ acao:'parar', campanha:cam.name, campanhaId:cam.id, cpl:cam.cpl, detail:cam.detail, qual:cam.qual });
+  await postAcao({acao:'parar',campanha:cam.name,campanhaId:cam.id,cpl:cam.cpl,detail:cam.detail,qual:cam.qual});
 }
 async function confirmBudget(){
   const val=document.getElementById('budgetInput').value;
   closeModal('modalBudget');
   const cam=acha(currentCamp); if(!cam) return;
   if(!val){toast('Informe o orçamento');return;}
-  await postAcao({ acao:'orcamento', campanha:cam.name, campanhaId:cam.id, orcamento:val, cpl:cam.cpl, detail:cam.detail, qual:cam.qual });
+  await postAcao({acao:'orcamento',campanha:cam.name,campanhaId:cam.id,orcamento:val,cpl:cam.cpl,detail:cam.detail,qual:cam.qual});
 }
 
 async function loadMichel(){
-  try{ DATA=await fetch(api('/api/decisao-app')).then(r=>r.json()); }
-  catch{ DATA={ok:false,campanhas:[]}; }
-  campaigns=DATA.campanhas||[];
-  const info=document.getElementById('infoBar');
-  if(info){
-    info.textContent=`⏰ ${DATA.prazo||'Fazer até 10:15'} • ${DATA.periodoLabel||'últimos 30 dias'} • Fontes: ${DATA.fontes||'—'} • Sem justificativa = descarta`;
-  }
-  render(campaigns);
+  try{DATA=await fetch(api('/api/decisao-app')).then(r=>r.json());}catch{DATA={ativas:[],ranking:[]};}
+  ATIVAS=DATA.ativas||DATA.campanhas||[];
+  RANKING=DATA.ranking||[];
+  const info=document.getElementById('infoAtivas');
+  if(info) info.innerHTML=`Só campanhas <b>ativas</b> agora. ${esc(DATA.avisoAbas||'')} · Fontes: ${esc(DATA.fontes||'')}`;
+  renderLists();
 }
 
 async function loadGestor(){
   if(!GESTOR_KEY) return;
-  try{
-    const r=await fetch(api('/api/decisao-app?gestor=1'),{ headers:{'x-gestor-key':GESTOR_KEY} }).then(x=>x.json());
-    if(!r.ok){toast(r.erro||'Gestor indisponível');return;}
-    const g=r.gestor||{};
-    const feed=document.getElementById('feed');
-    const itens=(g.feed||[]).map(i=>`<div class="feed-item">${esc(i.texto||((i.acao||'')+' '+(i.campanha||'')))}</div>`).join('')
-      ||'<div class="feed-item">Aguardando ações do Michel hoje...</div>';
-    feed.innerHTML=`<div class="small-card">Hoje: ${g.hoje||0} decisões • Acumulado desde 12/07/2025: ${g.acumulado||127} decisões • ${esc(g.email14h||'E-mail definitivo 14h')}</div>${itens}`;
-    const qt=document.getElementById('qualTotais');
-    if(qt) qt.textContent=g.qualidadeTexto||'';
-    const tm=document.getElementById('topMelhores');
-    if(tm) tm.innerHTML=(g.melhores||[]).map(m=>`<div>${m.pos}. ${esc(m.nome)} - ${esc(m.custo)} - ${m.forms} leads</div>`).join('')||'<div>Sem dados Meta ainda</div>';
-    const fb=document.getElementById('feedbackBox');
-    if(fb){
-      fb.innerHTML=`<div class="col"><b>O que melhores tiveram em comum:</b><br><span>${(g.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>
-      <div class="col"><b>O que piores tiveram:</b><br><span>${(g.feedbackPiores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>`;
-    }
-  }catch(e){toast('Erro ao carregar gestor');}
+  const r=await fetch(api('/api/decisao-app?gestor=1'),{headers:{'x-gestor-key':GESTOR_KEY}}).then(x=>x.json()).catch(()=>({ok:false}));
+  if(!r.ok){toast(r.erro||'Gestor indisponível');return;}
+  const g=r.gestor||{};
+  const feed=document.getElementById('feed');
+  const itens=(g.feed||[]).map(i=>`<div class="feed-item">${esc(i.texto||'')}</div>`).join('')||'<div class="feed-item">Aguardando ações do Michel hoje...</div>';
+  feed.innerHTML=`<div class="small-card">Hoje: ${g.hoje||0} · Acumulado desde 12/07/2025: ${g.acumulado||127} · ${esc(g.email14h||'E-mail 14h')}</div>${itens}`;
+  document.getElementById('qualTotais').textContent=g.qualidadeTexto||'';
+  document.getElementById('topMelhores').innerHTML=(g.melhores||[]).map(m=>`<div>${m.pos}. ${esc(m.nome)} — ${esc(m.custo)} — ${m.forms} forms</div>`).join('')||'—';
+  document.getElementById('feedbackBox').innerHTML=`
+    <div class="col"><b>Melhores em comum</b><br><span>${(g.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>
+    <div class="col"><b>Piores</b><br><span>${(g.feedbackPiores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>`;
 }
 
 loadMichel();

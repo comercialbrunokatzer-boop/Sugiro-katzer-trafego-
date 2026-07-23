@@ -109,13 +109,19 @@ export function matchDetalheCampanha(mapa, nomeCampanha) {
   return detalheQualidadeVazio();
 }
 
-/** Badge: bad se CPL alto + Fake/Ruim; good se CPL baixo. */
-export function badgeCampanha(cpl, detail = {}) {
+/** Badge: bad (vermelho) se CPL alto / pouca conversão; good (verde) = oportunidade. */
+export function badgeCampanha(cpl, detail = {}, { forms = 0, gasto = 0 } = {}) {
   const fakeRuim = (detail.fake || 0) + (detail.ruim || 0);
+  const formsN = Number(forms) || 0;
+  const gastoN = Number(gasto) || 0;
+  // Ruim: muito dinheiro + pouca conversão OU CPL alto com Fake/Ruim
+  if (gastoN >= 300 && formsN > 0 && cpl != null && cpl >= 70) return 'bad';
+  if (gastoN >= 200 && formsN <= 2 && cpl != null && cpl >= 80) return 'bad';
   if (cpl != null && cpl >= 70 && fakeRuim > 0) return 'bad';
   if (cpl != null && cpl >= 45 && fakeRuim >= 2) return 'bad';
-  if (cpl != null && cpl < 35) return 'good';
-  if (cpl != null && cpl < 50 && fakeRuim === 0) return 'good';
+  // Oportunidade: CPL baixo com volume
+  if (cpl != null && cpl < 35 && formsN >= 5) return 'good';
+  if (cpl != null && cpl < 50 && fakeRuim === 0 && formsN >= 3) return 'good';
   return '';
 }
 
@@ -127,6 +133,13 @@ export function deveAlertarManter(cam = {}) {
   if (cam.qual === 'bad') return true;
   if (fakeRuim > 0 && Number.isFinite(cpl) && cpl >= 45) return true;
   return false;
+}
+
+export function linkWhatsApp(telefone) {
+  const dig = String(telefone || '').replace(/\D+/g, '');
+  if (!dig || dig.length < 8 || /x/i.test(String(telefone || ''))) return null;
+  const full = dig.startsWith('55') ? dig : `55${dig}`;
+  return `https://wa.me/${full}`;
 }
 
 export const PROMPT_QUALIDADE_TRAFEGO = `Você audita leads de tráfego pago da Imobiliária Katzer.
