@@ -279,9 +279,12 @@ export function dealBateCampanha(deal, nomeCampanha) {
   if (nome.length >= 12 && hay.includes(nome.slice(0, 20))) return true;
   // Form Bitrix costuma trazer "LEAD PATROC. … BR SC" / "FORT M. …"
   if (/\bBR[_\s-]?SC\b/.test(nome) && /\bBR[_\s-]?SC\b/.test(hay)) return true;
+  // Form Bitrix da praça SC: "FORT MYERS CIDADES SC" / "FORT MYERS SC+PR"
+  if (/\bBR[_\s-]?SC\b/.test(nome) && (/\bCIDADES\s+SC\b/.test(hay) || /\bSC\s*\+\s*PR\b/.test(hay) || /\bFORT\s*MYERS\s+SC\b/.test(hay))) return true;
   if (/\bPORTUGAL\b/.test(nome) && /\bPORTUGAL\b/.test(hay)) return true;
   if (/\bGRANT\b/.test(nome) && /\bGRANT\b/.test(hay)) return true;
   if (/\bPUNTA\b/.test(nome) && /\bPUNTA\b/.test(hay)) return true;
+  if (/\bPUBLICOS\b/.test(nome) && /\bNOVACONFIG\b/.test(hay)) return true;
   if (/\bEUA\b/.test(nome) && /\bBRASILEIR/.test(nome) && /\bEUA\b/.test(hay) && /\bBRASILEIR/.test(hay)) return true;
   const toks = tokensCampanha(nomeCampanha);
   if (!toks.length) return false;
