@@ -75,6 +75,12 @@
   from = "/placar-gestor"
   to = "/painel-gestor"
   status = 302
+  force = true
+[[redirects]]
+  from = "/placar-gestor.html"
+  to = "/painel-gestor"
+  status = 302
+  force = true
 [[redirects]]
   from = "/api/placar-estado"
   to = "/.netlify/functions/placar-estado"
