@@ -162,6 +162,7 @@ async function listaDealsViaHelena({ limit = 400, produtos = [] } = {}) {
     const qs = new URLSearchParams({
       limit: String(limit),
       key,
+      leve: '1', // cabe no timeout 26s; contact.get só nas fases do topo
     });
     if (prod) qs.set('produtos', prod);
     const url = `${base}/api/funil-katzer?${qs}`;
