@@ -79,3 +79,20 @@ Enquanto a lista oficial não vier do CEO, tratar como Nível 3 por padrão:
 5. Nível 3 → espera Bruno.
 
 A Meta IA pode ser consultada no **Nível 1** (“pedir análise”). Ela **não** autoriza sozinha Nível 2 ou 3.
+
+---
+
+## Ficha de mudança (Níveis 2 e 3)
+
+Antes de executar mudança moderada/alta, preencher:
+
+```
+O que mudar:
+Por que mudar:
+Resultado esperado:
+Risco:
+Prazo de observação:
+Como desfazer:
+```
+
+Detalhes e exemplo: `FICHA-MUDANCA.md`. **Sem “Como desfazer” → não executar.**
