@@ -27,16 +27,19 @@ export async function salvaDecisoes(decisoes) {
 }
 
 /** Placar do Meta com cache curto — devolve { placar, ts, cacheHit }. */
-export async function lePlacar({ preset = 'last_7d' } = {}) {
+export async function lePlacar({ preset = 'last_7d', force = false } = {}) {
   const store = abreStore();
   let cache = null;
-  try { cache = await store.get('placar-cache', { type: 'json' }); } catch { /* ignore */ }
+  try { cache = await store.get('placar-cache-v2', { type: 'json' }); } catch { /* ignore */ }
   const agora = Date.now();
-  if (cache && cache.preset === preset && agora - (cache.ts || 0) < PLACAR_TTL_MS) {
+  if (!force && cache && cache.preset === preset && agora - (cache.ts || 0) < PLACAR_TTL_MS) {
     return { placar: cache.placar, ts: cache.ts, cacheHit: true };
   }
   const placar = await buscaMetaPlacar(preset);
-  try { await store.setJSON('placar-cache', { ts: agora, preset, placar }); } catch { /* ignore */ }
+  // Só cacheia leitura real (com token). Sem token, vazio NÃO pode contaminar o cache.
+  if (process.env.META_SYSTEM_TOKEN) {
+    try { await store.setJSON('placar-cache-v2', { ts: agora, preset, placar }); } catch { /* ignore */ }
+  }
   return { placar, ts: agora, cacheHit: false };
 }
 

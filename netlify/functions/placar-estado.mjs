@@ -24,7 +24,7 @@ export async function handler(event) {
 
   const now = agoraBRT();
   const [{ placar, ts }, decisoes] = await Promise.all([
-    lePlacar({ preset: 'last_7d' }),
+    lePlacar({ preset: 'last_7d', force: params.refresh === '1' }),
     leDecisoes(now.data),
   ]);
 
