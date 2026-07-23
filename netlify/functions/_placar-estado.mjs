@@ -7,8 +7,6 @@ const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao', 'desistir', 'manter
 const slug = (s) => String(s || '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'x';
 
-export { slug };
-
 /** Data/hora de Brasília — próprio (o Placar não importa nada da rotina). */
 export function agoraBRT(d = new Date()) {
   const p = new Intl.DateTimeFormat('en-CA', {
