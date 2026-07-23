@@ -1,14 +1,14 @@
 // Ranking de campanhas por CPL de FORMULÁRIO (arquivo "_" = NÃO vira função).
 // Nunca usa clique / link_click / landing_page_view como resultado.
 import { extraiLeadsFormulario } from './_placar.mjs';
-import { cidadeReal } from './_campanhas-regras.mjs';
+import { rotuloProdutoCidade } from './_mapeamento-v41.mjs';
 
 const round2 = (v) => Math.round(Number(v) * 100) / 100;
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-/** Cidade real canônica (Piçarras / Barra Velha / Itapoá…). */
+/** Rótulo V4.1: Produto · Cidade (nunca misturar construtora/corretor como cidade). */
 export function extraiCidadeProduto(nome = '') {
-  return cidadeReal(nome);
+  return rotuloProdutoCidade(nome);
 }
 
 /** Veredito curto pro ranking (só formulário). */

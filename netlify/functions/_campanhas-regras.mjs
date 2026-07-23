@@ -1,5 +1,6 @@
 // Regras do Painel de Campanhas / quadradinho (arquivo "_" = NÃO vira função).
-// Lead de formulário · base mínima · semáforo · cidade real · público BR.
+// Lead de formulário · base mínima · semáforo · identidade V4.1 · público BR.
+import { identidadeCampanha, cidadeDoMapa } from './_mapeamento-v41.mjs';
 
 /** Base mínima para recomendar ESCALAR. */
 export const LEADS_MIN_ESCALAR = 10;
@@ -26,22 +27,15 @@ export function rotuloPublicoExterno(motivo = null) {
 }
 
 /**
- * Cidade/produto real (Bruno).
- * FORT MYERS / ALICERCE → Piçarras
- * BARRA VIEW → Barra Velha
- * AMANAY → Itapoá
+ * Cidade real (V4.1) — NUNCA devolve produto/construtora/corretor no lugar da cidade.
+ * Ex.: Fort Myers → cidade Piçarras (produto = Fort Myers).
  */
 export function cidadeReal(nome = '') {
-  const n = String(nome);
-  if (/BARRA\s*VIEW|BARRA\s*VELHA|SANDRA/i.test(n)) return 'Barra Velha';
-  if (/AMANAY|ITAPO[ÁA]/i.test(n)) return 'Itapoá';
-  if (/ALICERCE|AYA|EDSEL|PI[CÇ]ARRAS|PICARRAS/i.test(n)) return 'Piçarras';
-  if (/FORT\s*MYERS|FORTMYERS/i.test(n)) return 'Piçarras';
-  if (/TORRESANI|PUNTA\s*CANA|PUNTACANA/i.test(n)) return 'Punta Cana';
-  if (/ROGGA/i.test(n) && !/AMANAY/i.test(n)) return 'Rogga';
-  if (/YARA/i.test(n)) return 'Yara';
-  return '—';
+  return cidadeDoMapa(nome);
 }
+
+/** Identidade completa: produto + cidade + construtora + corretor. */
+export { identidadeCampanha };
 
 /** Público suspeito fora do Brasil para produto Piçarras / Fort Myers. */
 export function publicoForaDoBrasil(nome = '') {
@@ -192,9 +186,10 @@ export function resumoCplBom(campanhas = [], {
   };
 }
 
-/** Enriquece campanha com cidade, semáforo, público, trava. */
+/** Enriquece campanha com identidade V4.1, semáforo, público, trava. */
 export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
-  const cidade = cidadeReal(c.nome);
+  const id = identidadeCampanha(c.nome);
+  const cidade = id.cidade;
   const pub = publicoForaDoBrasil(c.nome);
   const semaforo = semaforoCampanha({
     leads: c.leads, cpl: c.cpl, leadConfirmado: c.leadConfirmado !== false,
@@ -203,6 +198,11 @@ export function enriqueceCampanha(c = {}, { diasNoAr = null } = {}) {
   return {
     ...c,
     cidade,
+    produto: id.produto,
+    construtora: id.construtora,
+    corretor: id.corretor,
+    rotuloProdutoCidade: id.rotulo,
+    identidade: id,
     publico: pub.publico,
     alertaPublico: pub.alerta ? pub.motivo : null,
     semaforo,

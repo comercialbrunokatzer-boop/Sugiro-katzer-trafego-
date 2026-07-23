@@ -247,7 +247,7 @@ function renderLista(){
     const wrap=document.createElement('div');wrap.className='camp-block';
     wrap.innerHTML=`
       <div class="row" style="border:0;padding:0;cursor:pointer">
-        <div class="nm">${c.nome}</div>
+        <div class="nm">${c.nome}<div style="font-size:.68rem;color:var(--sub);font-weight:500;margin-top:2px">${c.rotuloProdutoCidade||[c.produto,c.cidade].filter(Boolean).join(' · ')||c.cidade||''}</div></div>
         <div class="val">${linhaVal(c)}</div>
         <div class="dot ${corDot(c)}"></div>
       </div>

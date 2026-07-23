@@ -11,7 +11,7 @@
 
 import {
   CPL_BOA, CPL_ATENCAO, CPL_BOM_VERDE, CPL_BOM_AMARELO,
-  LEADS_MIN_ESCALAR, cidadeReal, travaEscalar, semaforoCampanha,
+  LEADS_MIN_ESCALAR, cidadeReal, identidadeCampanha, travaEscalar, semaforoCampanha,
 } from './_campanhas-regras.mjs';
 
 export const QUALIDADE_TIPOS = ['bom', 'curioso', 'errado', 'comprador'];
@@ -106,11 +106,17 @@ export function enriqueceComQualidade(campanha = {}, qualidadeMap = {}) {
     { gasto: campanha.gasto, leads: campanha.leads },
     q,
   );
-  const cidade = campanha.cidade || cidadeReal(nome);
+  const idMap = identidadeCampanha(nome);
+  const cidade = campanha.cidade || idMap.cidade || cidadeReal(nome);
   const trava = travaEscalar({ ...campanha, nome, cidade });
   return {
     ...campanha,
     cidade,
+    produto: campanha.produto || idMap.produto,
+    construtora: campanha.construtora || idMap.construtora,
+    corretor: campanha.corretor || idMap.corretor,
+    rotuloProdutoCidade: campanha.rotuloProdutoCidade || idMap.rotulo,
+    identidade: campanha.identidade || idMap,
     cplBruto: calc.cplBruto,
     cplBom: calc.cplBom,
     pctBons: calc.pctBons,
