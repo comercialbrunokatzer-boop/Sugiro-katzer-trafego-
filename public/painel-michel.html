@@ -115,16 +115,21 @@ function render(){
   const box=$('#tasks');box.innerHTML='';
   ST.tarefas.forEach(t=>{
     const el=document.createElement('div');el.className='task';
-    const late=!t.feito&&t.atrasoAberto>0;
+    const late=!t.feito&&(t.atrasoAberto>0||t.estado==='atrasado'||t.estado==='nao_realizado');
+    const run=!t.feito&&t.estado==='em_andamento';
+    const isCamp=t.id==='campanhas';
+    const campHint=isCamp&&ST.campanhas?`<div style="font-size:.78rem;color:var(--sub);margin-top:8px">📊 ${ST.campanhas.resumo||''}${(ST.campanhas.decisoes||[]).length?` · ${(ST.campanhas.decisoes||[]).length} decisão(ões)`:''}</div>`:'';
+    const campBtn=isCamp&&!t.feito?`<a class="btn ghost" href="/placar-michel?from=rotina" style="text-decoration:none;display:inline-block;margin-top:8px">Abrir decisão (quadradinho)</a>`:'';
     el.innerHTML=`<div class="top">
-      <div class="tk ${t.feito?'done':(late?'late':'')}">${t.feito?'✓':(late?'!':'·')}</div>
-      <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${t.feito?' · feito '+t.hora:(late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':'')}</small></div>
+      <div class="tk ${t.feito?'done':(late?'late':'')}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
+      <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${t.feito?' · feito '+t.hora:(late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':(run?' · em andamento':''))}</small></div>
       ${t.feito
         ? `<button class="btn ghost" data-undo="${t.id}">desfazer</button>`
         : `<button class="btn" data-feito="${t.id}">Feito</button>`}
     </div>
     ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
-    ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
+    ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}
+    ${campHint}${campBtn}`;
     box.appendChild(el);
   });
   const ol=$('#obsList');ol.innerHTML='';

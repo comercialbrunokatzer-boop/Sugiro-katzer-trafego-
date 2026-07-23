@@ -65,15 +65,16 @@
   status = 200
   force = true
 
-# Placar-quadradinho do Michel (app dourado) + Gestor (com senha).
+# Quadradinho = ferramenta do item Campanhas (não é outro “Placar do Michel”).
 [[redirects]]
   from = "/placar-michel"
   to = "/placar-michel.html"
   status = 200
+# Antigo “placar-gestor” redireciona pro Painel do Gestor (único ao vivo).
 [[redirects]]
   from = "/placar-gestor"
-  to = "/placar-gestor.html"
-  status = 200
+  to = "/painel-gestor"
+  status = 302
 [[redirects]]
   from = "/api/placar-estado"
   to = "/.netlify/functions/placar-estado"

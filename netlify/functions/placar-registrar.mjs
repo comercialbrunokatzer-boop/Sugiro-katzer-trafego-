@@ -31,10 +31,10 @@ export async function handler(event) {
   const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
   const ceo = process.env.WHATSAPP_CEO || '';
   const msg = [
-    `📊 *Placar — Michel decidiu* · ${now.hm}`,
+    `📊 *Campanhas — Michel decidiu* · ${now.hm}`,
     rotuloDecisao(item),
     '',
-    `Ao vivo: ${url}/placar-gestor`,
+    `Ao vivo no Painel do Gestor: ${url}/painel-gestor`,
   ].join('\n');
   const w = await enviaWhats(ceo, msg);
 

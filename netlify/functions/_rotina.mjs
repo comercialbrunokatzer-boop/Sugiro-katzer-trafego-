@@ -66,22 +66,36 @@ export function estadoVazio(data, modo = 'casa') {
  * Calcula pontualidade (VISÃO CEO — o Michel não vê isto).
  * Regra do CEO: começa 100%; cada min de atraso -1%; adiantar devolve (saldo líquido);
  * teto 100%. Tarefa não feita e já vencida conta como atraso aberto (até 'agoraMin').
- * @returns { pct, saldoMin, linhas:[{id,nome,previsto,feito,hora,difMin,estado}] }
+ *
+ * Estados (vocabulário Bruno):
+ *   aguardando | em_andamento | concluido | atrasado | nao_realizado | bloqueado
+ *
+ * @returns { pct, saldoMin, linhas:[{id,nome,previsto,feito,hora,difMin,estado,nota}] }
  */
-export function pontualidade(estado, agoraMin) {
+export function pontualidade(estado, agoraMin, { domingo = false, fimDiaMin = 13 * 60 } = {}) {
   let saldo = 0; // minutos: >0 atrasado, <0 adiantado
   const linhas = TAREFAS.map((t) => {
     const prev = previstoMin(t, estado.modo, estado.inicioMin);
     const reg = estado.tarefas[t.id];
+    if (domingo) {
+      return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: false, hora: null, difMin: 0, estado: 'bloqueado', nota: '' };
+    }
     if (reg && reg.min != null) {
       const dif = reg.min - prev; // + atrasou, - adiantou
       saldo += dif;
-      return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: true, hora: min2hm(reg.min), difMin: dif, estado: dif > 0 ? 'atrasado' : 'ok', nota: reg.nota || '' };
+      return {
+        id: t.id, nome: t.nome, previsto: min2hm(prev), feito: true, hora: min2hm(reg.min),
+        difMin: dif, estado: dif > 0 ? 'atrasado' : 'concluido', nota: reg.nota || '',
+      };
     }
     // não feita: se já venceu, atraso aberto
     const aberto = agoraMin != null && agoraMin > prev ? agoraMin - prev : 0;
     if (aberto > 0) saldo += aberto;
-    return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: false, hora: null, difMin: aberto, estado: aberto > 0 ? 'pendente' : 'aguardando' };
+    let estadoLinha = 'aguardando';
+    if (aberto > 0 && agoraMin != null && agoraMin >= fimDiaMin) estadoLinha = 'nao_realizado';
+    else if (aberto > 0) estadoLinha = 'atrasado';
+    else if (reg && reg.iniciado) estadoLinha = 'em_andamento';
+    return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: false, hora: null, difMin: aberto, estado: estadoLinha, nota: '' };
   });
   const pct = Math.max(0, Math.min(100, Math.round(100 - saldo)));
   return { pct, saldoMin: saldo, linhas };
