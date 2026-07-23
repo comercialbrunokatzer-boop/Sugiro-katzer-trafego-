@@ -211,9 +211,15 @@ function fillTrafego(){
   const C=ST.campanhas||{};
   const g=ts.find(t=>t.id==='garimpo');
   if(g && $('#garimpoHm') && document.activeElement!==$('#garimpoHm')) $('#garimpoHm').value=g.previsto||'10:15';
+  const gMeta=g&&g.garimpo?g.garimpo:null;
+  const gLinha=gMeta
+    ? `Qtd ${gMeta.qtd}${gMeta.nome?' · '+gMeta.nome:''}${gMeta.telefone?' · '+gMeta.telefone:''}`
+    : (g&&g.feito?(g.nota||'feito sem linha'):'—');
+  const per=C.periodo?`<br><span style="font-size:.78rem">📅 ${C.periodo.label||''}</span>`:'';
   box.innerHTML=`<b>Fez:</b> ${feitos.map(t=>t.nome).join(', ')||'—'}<br>
     <b>Não fez / atrasou:</b> ${pend.map(t=>t.nome).join(', ')||'—'}<br>
-    <b>Campanhas (só olhar na Rotina):</b> ${C.resumo||C.metrica||'—'}<br>
+    <b>Garimpo:</b> ${gLinha}<br>
+    <b>Campanhas (só olhar na Rotina):</b> ${C.resumo||C.metrica||'—'}${per}<br>
     <span style="color:var(--sub);font-size:.78rem">${C.statusDecisao||'Decisão no Painel 2'}</span>`;
   const rel=$('#relTardeBody');
   if(rel){

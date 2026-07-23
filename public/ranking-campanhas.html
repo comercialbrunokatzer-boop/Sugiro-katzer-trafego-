@@ -82,6 +82,7 @@ function bloco(titulo, rows, {volume=false}={}){
         <div>
           <div class="nome"><span class="pos">${r.pos}º</span> ${r.campanha}</div>
           <div class="meta">${r.cidadeProduto||'—'} · ${r.diasNoAr!=null?(r.diasNoAr+' dia(s)'):'máx. conta'}</div>
+          ${r.cicloRotulo?`<div class="meta">${r.cicloRotulo}</div>`:''}
         </div>
         <div class="cpl ${stClass(r.status)}">${brl(r.cplBom!=null?r.cplBom:r.cplForm)}</div>
       </div>
@@ -89,6 +90,8 @@ function bloco(titulo, rows, {volume=false}={}){
         <span class="chip">${r.leadsForm} form.</span>
         ${r.leadsBons!=null?`<span class="chip">${r.leadsBons} BOM</span>`:''}
         <span class="chip">${brl(r.gasto)}</span>
+        ${r.dataSubiu?`<span class="chip">Subiu ${r.dataSubiu}</span>`:''}
+        ${r.dataPausada?`<span class="chip">Pausada ${r.dataPausada}</span>`:''}
         ${r.cplBom!=null?`<span class="chip">CPL BOM ${brl(r.cplBom)}</span>`:`<span class="chip">CPL form ${brl(r.cplForm)}</span>`}
         <span class="chip ${stClass(r.status)}">${r.veredito||r.status}</span>
         ${volume?'<span class="chip">CPL ≤ R$ 40</span>':''}
@@ -131,7 +134,10 @@ function render(){
       · ${conf.notaBrSc||''}</div>`;
   }
   const rowsBom = (blk.top10CplBom && blk.top10CplBom.length) ? blk.top10CplBom : ((blk.rankingCplBom||blk.top10Cpl||blk.rankingCpl||[]).slice(0,10));
-  app.innerHTML = confHtml + `
+  const periodoHtml = blk.periodoLabel
+    ? `<div class="conf"><b>📅 Período desta tela:</b> ${blk.periodoLabel}<br>${(blk.periodoInfo&&blk.periodoInfo.aviso)||'Compare com o mesmo preset no Gerenciador.'}</div>`
+    : '';
+  app.innerHTML = confHtml + periodoHtml + `
     <div class="totais">
       <div class="t"><span>Gasto</span><b>${brl(t.totalGasto)}</b></div>
       <div class="t"><span>Leads form.</span><b>${t.totalLeadsForm??0}</b></div>
@@ -141,7 +147,7 @@ function render(){
     ${bloco('Volume com CPL saudável (≤ R$ 40)', blk.rankingVolumeCpl, {volume:true})}
     ${blk.amostraPequena?.length?bloco('Amostra pequena (&lt; 3 leads)', blk.amostraPequena.slice(0,5)):''}
   `;
-  $('#ft').textContent = `${blk.periodo} · leitura ${blk.horarioLeitura||'—'} · ranking por CPL BOM · ${blk.conta||''}`;
+  $('#ft').textContent = `${blk.periodoLabel||blk.periodo} · leitura ${blk.horarioLeitura||'—'} · ranking por CPL BOM · ${blk.conta||''}`;
 }
 
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';

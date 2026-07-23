@@ -46,8 +46,18 @@ export async function handler(event) {
         const camp = lead.campanha || '';
         const ico = qualidade === 'comprador' ? '💰' : '🟢';
         const label = qualidade === 'comprador' ? 'COMPRADOR' : 'BOM';
+        const isDemo = lead.fonte === 'demo' || String(lead.id || '').startsWith('demo-');
         whats = ceo
-          ? await enviaWhats(ceo, `${ico} Caçador — *${label}* · ${nome}${camp ? ` · ${camp}` : ''}`)
+          ? await enviaWhats(
+            ceo,
+            [
+              isDemo
+                ? '⚠️ *TESTE/DEMO* — lead seed · *não está no Bitrix*'
+                : (lead.fonte === 'bitrix' ? '✅ Lead *Bitrix* (real)' : null),
+              `${ico} Caçador -- *${label}* - ${nome}${camp ? ` - ${camp}` : ''}`,
+              lead.telefone && lead.telefone !== '—' ? `Tel: ${lead.telefone}` : null,
+            ].filter(Boolean).join('\n'),
+          )
           : { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
       }
       return json(200, {

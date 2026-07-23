@@ -6,6 +6,7 @@ import { montaRecomendacoes } from './_recomendacoes.mjs';
 import { classificaMetaResultado } from './_meta-status.mjs';
 import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
 import { enriqueceComQualidade } from './_qualidade.mjs';
+import { leCicloCampanhas, enrichComCiclo } from './_meta-ciclo.mjs';
 
 const GRAPH = () => process.env.META_GRAPH || 'https://graph.facebook.com/v20.0';
 const CONTA = () => process.env.META_AD_ACCOUNT || 'act_1150648749960943';
@@ -104,7 +105,41 @@ export async function rankingPreset(preset, { comDias = false } = {}) {
   return { ranking, meta: camp.meta };
 }
 
-function aplicaCplBomNoRanking(ranking, mapa) {
+function periodoLabelPreset(preset) {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  const br = (iso) => {
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  };
+  const hoje = fmt.format(new Date());
+  if (preset === 'maximum') {
+    return {
+      preset,
+      label: 'Preset Meta *maximum* (histórico da conta — NÃO é “últimos 4 dias”)',
+      aviso: 'No Gerenciador, se estiver em “últimos 4 dias”, o gasto NÃO bate com maximum nem com last_7d.',
+    };
+  }
+  let dias = 7;
+  if (preset === 'last_30d') dias = 30;
+  if (preset === 'last_14d') dias = 14;
+  if (preset === 'last_3d') dias = 3;
+  const [y, m, d] = hoje.split('-').map(Number);
+  const fim = new Date(Date.UTC(y, m - 1, d));
+  const ini = new Date(fim);
+  ini.setUTCDate(ini.getUTCDate() - (dias - 1));
+  const iniIso = `${ini.getUTCFullYear()}-${String(ini.getUTCMonth() + 1).padStart(2, '0')}-${String(ini.getUTCDate()).padStart(2, '0')}`;
+  return {
+    preset,
+    inicioISO: iniIso,
+    fimISO: hoje,
+    label: `Preset Meta *${preset}* · ${br(iniIso)} → ${br(hoje)} (BRT)`,
+    aviso: 'Compare só com o mesmo preset no Gerenciador. “Últimos 4 dias” ≠ last_7d.',
+  };
+}
+
+function aplicaCplBomNoRanking(ranking, mapa, cicloMapa = {}) {
   if (!ranking || !ranking.ok) return ranking;
   const enriquecer = (rows) => (rows || []).map((r) => {
     const e = enriqueceComQualidade({
@@ -114,13 +149,14 @@ function aplicaCplBomNoRanking(ranking, mapa) {
       leads: r.leadsForm,
       cpl: r.cplForm,
     }, mapa);
-    return {
+    const comCiclo = enrichComCiclo({
       ...r,
       cplBom: e.cplBom ?? null,
       leadsBons: e.leadsBons ?? null,
       cplBruto: e.cplBruto ?? r.cplForm,
       semaforoBom: e.semaforoBom || null,
-    };
+    }, cicloMapa);
+    return comCiclo;
   });
   const rankingCpl = enriquecer(ranking.rankingCpl);
   const rankingCplBom = [...rankingCpl]
@@ -130,8 +166,11 @@ function aplicaCplBomNoRanking(ranking, mapa) {
       return ca - cb;
     })
     .map((r, i) => ({ ...r, pos: i + 1, metricaRank: r.cplBom != null ? 'cpl_bom' : 'cpl_form' }));
+  const periodo = periodoLabelPreset(ranking.periodo || 'last_7d');
   return {
     ...ranking,
+    periodoLabel: periodo.label,
+    periodoInfo: periodo,
     rankingCpl,
     rankingCplBom,
     top10Cpl: rankingCpl.slice(0, 10),
@@ -148,13 +187,15 @@ function aplicaCplBomNoRanking(ranking, mapa) {
  * - ranking ordenado por CPL BOM (V6)
  */
 export async function montaPayloadRanking({ conferencia = true } = {}) {
-  const [max, op, hi, qualDoc] = await Promise.all([
+  const [max, op, hi, qualDoc, ciclo] = await Promise.all([
     rankingPreset('maximum', { comDias: false }),
     rankingPreset('last_7d', { comDias: true }),
     rankingPreset('last_30d', { comDias: false }),
     leQualidade().catch(() => ({ campanhas: [] })),
+    leCicloCampanhas().catch(() => ({ ok: false, mapa: {} })),
   ]);
   const mapa = mapaQualidade(qualDoc);
+  const cicloMapa = ciclo.mapa || {};
 
   let conferenciaOut = null;
   if (conferencia) {
@@ -186,9 +227,9 @@ export async function montaPayloadRanking({ conferencia = true } = {}) {
   }
 
   const payload = payloadPainelRanking({
-    contaMaxima: aplicaCplBomNoRanking(max.ranking, mapa),
-    operacional: aplicaCplBomNoRanking(op.ranking, mapa),
-    historico: aplicaCplBomNoRanking(hi.ranking, mapa),
+    contaMaxima: aplicaCplBomNoRanking(max.ranking, mapa, cicloMapa),
+    operacional: aplicaCplBomNoRanking(op.ranking, mapa, cicloMapa),
+    historico: aplicaCplBomNoRanking(hi.ranking, mapa, cicloMapa),
     conferencia: conferenciaOut,
   });
   payload.recomendacoes = montaRecomendacoes({

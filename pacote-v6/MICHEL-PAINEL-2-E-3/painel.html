@@ -266,8 +266,8 @@ function leadCard(l){
     `<button type="button" data-q="${b.tipo}" class="${b.ativo?'on':''}" ${l._saving?'disabled':''}>${b.label}</button>`
   ).join('');
   return `<article class="lead ${l.qualidade?'done-mark':''}" data-lead="${l.id}">
-    <div class="ln">${l.linha||l.nome}</div>
-    <div class="meta">${l.cidade||''}${l.corretor?' · corretor '+l.corretor:''}${l.qualidade?' · marcado: '+l.qualidade:''}${l.bitrixUrl?' · <a href="'+l.bitrixUrl+'" style="color:var(--gold)">Bitrix</a>':''}</div>
+    <div class="ln">${l.linha||l.nome}${l.fonte==='demo'||String(l.id||'').startsWith('demo-')?' <span style="color:var(--warn);font-size:.7rem">· TESTE/DEMO</span>':''}</div>
+    <div class="meta">${l.cidade||''}${l.corretor?' · corretor '+l.corretor:''}${l.qualidade?' · marcado: '+l.qualidade:''}${l.fonte==='demo'?' · ⚠️ não está no Bitrix':''}${l.bitrixUrl?' · <a href="'+l.bitrixUrl+'" style="color:var(--gold)">Bitrix</a>':''}</div>
     <div class="btns">${btns}</div>
   </article>`;
 }

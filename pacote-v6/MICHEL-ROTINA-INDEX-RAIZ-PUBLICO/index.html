@@ -206,13 +206,21 @@ function htmlCardCampanhas(t){
   const C=ST.campanhas||{};
   const link=C.link||'https://dashing-elf-41a723.netlify.app/painel.html';
   const cta=C.cta||'▶ Abrir Painel 2 (Execução)';
-  const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
+  const metrica=(C.metrica||C.resumo||'Sem dados da Meta ainda').replace(/\n/g,'<br>');
   const bom=C.cplBom||'';
   const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
   const pend=C.statusDecisao||'👁 Visualizar · execute no Painel isolado';
   const pendCls=C.pendente===false?'pend ok':'pend';
+  const per=C.periodo;
+  const perLine=per?`<div class="pend" style="margin-top:6px">📅 ${per.label||''}<br><span style="font-size:.72rem">${per.aviso||''}</span></div>`:'';
+  const ciclos=(C.cicloLinhas||[]).slice(0,5);
+  const cicloHtml=ciclos.length
+    ? `<div style="margin-top:8px;font-size:.75rem;line-height:1.45;color:var(--sub)">${ciclos.map(l=>`· ${l}`).join('<br>')}</div>`
+    : '';
   return `<div class="camp-card">
     <div class="metrica">${metrica}</div>
+    ${perLine}
+    ${cicloHtml}
     ${bom?`<div class="${bomCls}">${bom}</div>`:''}
     <div class="${pendCls}">${pend}</div>
     <div class="cta"><a class="btn" href="${link}" data-abrir-campanhas="1">${cta}</a></div>
@@ -240,12 +248,21 @@ function render(){
     } else if(t.id==='garimpo'){
       const st=rotuloEstadoTarefa(t);
       if(t.feito){
+        const g=t.garimpo||{};
+        const linha=[
+          g.qtd!=null?`Qtd <b>${g.qtd}</b>`:null,
+          g.nome?`Cliente: <b>${g.nome}</b>`:null,
+          g.telefone?`Tel: <b>${g.telefone}</b>`:null,
+        ].filter(Boolean).join(' · ');
         el.innerHTML=`<div class="top">
           <div class="tk done">✓</div>
           <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto} · feito ${t.hora||''}</small></div>
           <button class="btn ghost" data-undo="garimpo">desfazer</button>
         </div>
-        ${t.nota?`<div style="font-size:.82rem;color:var(--sub);margin-top:8px;line-height:1.4">📝 ${t.nota}</div>`:''}`;
+        <div style="margin-top:10px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:var(--ok-bg);font-size:.88rem;line-height:1.45">
+          <div style="font-weight:800;color:var(--ok);margin-bottom:4px">⛏️ Relatório Garimpo</div>
+          ${linha?`<div>${linha}</div>`:(t.nota?`<div>📝 ${t.nota}</div>`:'<div style="color:var(--sub)">Sem linha/nome neste relatório</div>')}
+        </div>`;
       } else {
         el.innerHTML=`<div class="top">
           <div class="tk ${late?'late':(run?'run':'')}">${late?'!':(run?'▶':'·')}</div>
