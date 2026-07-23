@@ -106,14 +106,14 @@
   status = 200
   force = true
 [[redirects]]
-  from = "/ranking-campanhas"
-  to = "/ranking-campanhas.html"
-  status = 200
-[[redirects]]
   from = "/campanhas"
-  to = "/ranking-campanhas.html"
+  to = "/campanhas.html"
   status = 200
 [[redirects]]
   from = "/campanhas/"
+  to = "/campanhas.html"
+  status = 200
+[[redirects]]
+  from = "/ranking-campanhas"
   to = "/ranking-campanhas.html"
   status = 200

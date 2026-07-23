@@ -2,6 +2,7 @@
 // 7d operacional · 30d · maximum (ranking real da conta / prints).
 // Sem token na resposta. Log só: campanha, leads, gasto, CPL, período.
 import { montaRanking, contaDiasNoAr, payloadPainelRanking } from './_ranking.mjs';
+import { montaRecomendacoes } from './_recomendacoes.mjs';
 import { classificaMetaResultado } from './_meta-status.mjs';
 
 const GRAPH = () => process.env.META_GRAPH || 'https://graph.facebook.com/v20.0';
@@ -142,10 +143,15 @@ export async function montaPayloadRanking({ conferencia = true } = {}) {
     };
   }
 
-  return payloadPainelRanking({
+  const payload = payloadPainelRanking({
     contaMaxima: max.ranking,
     operacional: op.ranking,
     historico: hi.ranking,
     conferencia: conferenciaOut,
   });
+  payload.recomendacoes = montaRecomendacoes({
+    operacional7d: op.ranking,
+    contaMaxima: max.ranking,
+  });
+  return payload;
 }

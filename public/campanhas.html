@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Decisão · Campanhas Katzer</title>
+<meta name="theme-color" content="#0f2a24">
+<link rel="manifest" href="/manifest-ranking.webmanifest">
+<link rel="apple-touch-icon" href="/icon-katzer.png">
+<link rel="icon" type="image/png" href="/icon-katzer.png">
+<style>
+  :root{
+    --bg:#0f2a24; --panel:#16352d; --ink:#eef6f2; --muted:#9bb5ab;
+    --line:#2a4a40; --good:#3dba7e; --warn:#d4a017; --bad:#d4655a; --chip:#1e4339; --gold:#c4a35a;
+    --sans:"Segoe UI", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0c221d,#12332b);color:var(--ink);font-family:var(--sans);min-height:100dvh}
+  .wrap{max-width:440px;margin:0 auto;padding:16px 16px 40px}
+  .brand{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  h1{margin:6px 0 4px;font-size:1.25rem}
+  .sub{color:var(--muted);font-size:.84rem;margin:0 0 14px}
+  .nav{display:flex;gap:8px;margin-bottom:14px}
+  .nav a{flex:1;text-align:center;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:8px;font-size:.78rem;font-weight:700}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 12px}
+  .prod{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:800}
+  .tit{font-size:1.05rem;font-weight:800;margin:6px 0}
+  .bloco{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .lab{font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .txt{font-size:.88rem;margin:4px 0 0;line-height:1.35}
+  .ev{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+  .acoes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px}
+  .acoes button{border:1px solid var(--line);background:#122c26;color:var(--ink);border-radius:12px;padding:12px 6px;font-family:inherit;cursor:pointer}
+  .acoes b{display:block;font-size:.78rem}
+  .acoes small{display:block;font-size:.62rem;color:var(--muted);margin-top:3px}
+  .ok{border-color:rgba(61,186,126,.5)!important}
+  .warn{border-color:rgba(212,160,23,.5)!important}
+  .no{border-color:rgba(212,101,90,.5)!important}
+  .ajuste{display:none;margin-top:10px}
+  .ajuste.on{display:block}
+  .ajuste input{width:100%;border:1px solid var(--line);background:#0f2420;color:var(--ink);border-radius:10px;padding:11px;font-family:inherit}
+  .ajuste button{margin-top:6px;width:100%;border:0;background:var(--gold);color:#1a1408;border-radius:10px;padding:11px;font-weight:800;font-family:inherit}
+  .done{margin-top:10px;font-size:.8rem;color:var(--good);font-weight:700}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#0f2a24;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:.25s;pointer-events:none}
+  .toast.show{opacity:1}
+  .err{color:var(--bad);text-align:center;padding:20px}
+  footer{margin-top:16px;text-align:center;color:var(--muted);font-size:.72rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Katzer · Painel de Campanhas</div>
+  <h1>Decisão do dia</h1>
+  <p class="sub">Lead de formulário · modo seguro · sem escrita automática na Meta</p>
+  <div class="nav">
+    <a href="/ranking-campanhas">Ranking</a>
+    <a href="/campanhas">Decisão</a>
+  </div>
+  <div id="app"><div class="sub">Carregando…</div></div>
+  <footer>Michel executa na Meta · Bruno acompanha</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
+const $= (s)=>document.querySelector(s);
+let DATA=null, DECS=[];
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+
+function decOf(id){return (DECS||[]).find(d=>d.id===id)||null;}
+
+function card(r){
+  const done=decOf(r.id);
+  const ev=(r.evidencia||[]).map(e=>`<div class="ev">· ${e}</div>`).join('');
+  return `<article class="card" data-id="${r.id}">
+    <div class="prod">${r.produto} · ${r.publico||''}</div>
+    <div class="tit">${r.titulo}</div>
+    ${r.problema?`<div class="bloco"><div class="lab">Problema</div><div class="txt">${r.problema}</div></div>`:''}
+    ${r.oportunidade?`<div class="bloco"><div class="lab">Oportunidade</div><div class="txt">${r.oportunidade}</div></div>`:''}
+    <div class="bloco"><div class="lab">Evidência (formulário)</div>${ev}</div>
+    <div class="bloco"><div class="lab">Recomendação</div><div class="txt">${r.recomendacao||''}</div></div>
+    <div class="bloco"><div class="lab">Ação</div><div class="txt">${r.acao||''}</div></div>
+    ${done?`<div class="done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:`
+    <div class="acoes">
+      <button class="ok" data-dec="aplicar"><b>Aplicar</b><small>Registra</small></button>
+      <button class="warn" data-dec="ajustar"><b>Ajustar</b><small>Você decide</small></button>
+      <button class="no" data-dec="agora-nao"><b>Agora não</b><small>Espera</small></button>
+    </div>
+    <div class="ajuste">
+      <input placeholder="${r.valorDiaSugerido!=null?'Ex: R$ '+r.valorDiaSugerido+'/dia · ou descreva':'Descreva o ajuste'}">
+      <button data-conf>Confirmar ajuste</button>
+    </div>`}
+  </article>`;
+}
+
+function render(){
+  const app=$('#app');
+  const recs=DATA?.recomendacoes?.recomendacoes;
+  if(!recs?.length){app.innerHTML=`<div class="err">${DATA?.erro||'Dados da Meta indisponíveis.'}</div>`;return;}
+  app.innerHTML=recs.map(card).join('');
+  app.querySelectorAll('.card').forEach(el=>{
+    const id=el.dataset.id;
+    const r=recs.find(x=>x.id===id);
+    el.querySelectorAll('[data-dec]').forEach(b=>{
+      b.onclick=async()=>{
+        const dec=b.dataset.dec;
+        if(dec==='ajustar'){el.querySelector('.ajuste').classList.add('on');el.querySelector('.ajuste input').focus();return;}
+        await post(r,dec,'');
+      };
+    });
+    const conf=el.querySelector('[data-conf]');
+    if(conf) conf.onclick=async()=>{
+      const val=el.querySelector('.ajuste input').value.trim();
+      if(!val){toast('Digite o ajuste');return;}
+      await post(r,'ajustar',val);
+    };
+  });
+}
+
+async function post(r,decisao,ajuste){
+  const body={
+    acao:'decisao', id:r.id, campanha:`${r.produto} · ${r.titulo}`,
+    tipo:r.tipo||'recomendacao', decisao, ajuste
+  };
+  const res=await fetch('/api/placar-registrar',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  }).then(x=>x.json()).catch(()=>({ok:false}));
+  if(res.ok){toast('Registrado · Bruno avisado'); await loadDecisoes(); render();}
+  else toast(res.erro||'Não deu');
+}
+
+async function loadDecisoes(){
+  try{
+    const r=await fetch('/api/placar-estado');
+    const j=await r.json();
+    DECS=j.decisoes||[];
+  }catch{DECS=[];}
+}
+
+async function load(){
+  try{
+    const [rank, _] = await Promise.all([
+      fetch('/api/ranking-campanhas').then(r=>r.json()),
+      loadDecisoes()
+    ]);
+    DATA=rank;
+    if(!DATA.recomendacoes) DATA={erro:'Recomendações indisponíveis.'};
+  }catch{DATA={erro:'Dados da Meta indisponíveis.'};}
+  render();
+}
+load();
+</script>
+</body>
+</html>
