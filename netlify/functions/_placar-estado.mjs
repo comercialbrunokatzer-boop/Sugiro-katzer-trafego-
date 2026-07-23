@@ -57,13 +57,18 @@ export function montaSugestoes(placar = {}) {
 /**
  * Sugestão principal do quadradinho.
  * NUNCA escala com leads < 10 — mostra OBSERVAR / SEM BASE.
+ * V4: nunca promove EUA_Americanos/MIAMI/PORTUGAL como “oportunidade de CPL baixo”.
  * Inclui cidade real, semáforo e alerta de público fora do BR.
  */
 export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   const d = (placar && placar.decisao) || {};
   const origem = (d.revisar && d.revisar[0]) || null;
-  const destino = (d.escalar && d.escalar[0]) || null;
-  const observar = (d.observar && d.observar[0]) || null;
+  // Preferir destino sem alerta de público (já filtrado em podeEscalar, reforço aqui)
+  const destino = (d.escalar || []).find((c) => !c.alertaPublico) || null;
+  // Observar: prioriza SEM BASE sem público proibido (BR_SC antes de Americanos)
+  const observar = (d.observar || []).find((c) => !c.alertaPublico)
+    || (d.observar && d.observar[0])
+    || null;
 
   // Se o "melhor CPL" tem < 10 leads, NÃO escalar — observar.
   if (observar && !destino) {

@@ -234,9 +234,15 @@ export function decideDoDia(campanhas = [], cplMedio = null, { gastoMinRevisar =
     .sort((a, b) => (a.cpl ?? Infinity) - (b.cpl ?? Infinity))
     .slice(0, 3);
 
+  // SEM BASE — mas público fora do BR NÃO vira “sugestão” no topo (V4)
   const observar = campanhas
     .filter((c) => c.leadConfirmado !== false && c.leads > 0 && c.leads < LEADS_MIN_ESCALAR)
-    .sort((a, b) => (a.cpl ?? Infinity) - (b.cpl ?? Infinity))
+    .sort((a, b) => {
+      const aProib = a.alertaPublico ? 1 : 0;
+      const bProib = b.alertaPublico ? 1 : 0;
+      if (aProib !== bProib) return aProib - bProib; // BR_SC antes de Americanos
+      return (a.cpl ?? Infinity) - (b.cpl ?? Infinity);
+    })
     .slice(0, 5);
 
   const alertasPublico = campanhas

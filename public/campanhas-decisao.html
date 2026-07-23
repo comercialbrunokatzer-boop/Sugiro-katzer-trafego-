@@ -95,10 +95,14 @@
     <button class="btn-open" id="btnAbrir">▶ Abrir decisão do dia</button>
   </div>
 
-  <!-- QUADRADO 2: Decisão do dia -->
+  <!-- QUADRADO 2: Decisão do dia V4 -->
   <div class="card hide" id="cardDec">
-    <span class="badge">1 toque</span>
+    <span class="badge">V4</span>
     <h2>Decisão do dia</h2>
+    <div class="trava" style="margin-bottom:12px">
+      <div class="trava-t">V4 — nunca EUA_Americanos / MIAMI / PORTUGAL</div>
+      <div class="trava-s">Sugerir: BR_SC trocar criativo · Amanay duplicar R$ 30/dia</div>
+    </div>
     <div id="decBody"></div>
   </div>
 
@@ -229,100 +233,91 @@ async function postCampanha(nome,decisao,ajuste){
   else toast(r.erro||'Não deu');
 }
 
-function jaDecidiuPrincipal(){
-  const s=ST.sugestaoPrincipal;if(!s)return null;
-  return (ST.decisoes||[]).find(d=>d.id===s.id)||null;
+function jaDecidiu(id){
+  return (ST.decisoes||[]).find(d=>d.id===id)||null;
+}
+
+function cardV4(r){
+  const done=jaDecidiu(r.id);
+  const ev=(r.evidencia||[]).map(e=>`<div class="mot" style="margin-top:2px">· ${e}</div>`).join('');
+  const leads=r.numeros?.leadsForm??r.numeros?.leadsGerenciador??r.numeros?.leadsApi7d??null;
+  const escala=/escalar|duplicar/i.test(r.tipo||'');
+  const semBase=r.bloqueadoEscalar || (escala && leads!=null && leads<10);
+  const trava=semBase?`<div class="trava" style="margin-top:10px"><div class="trava-t">TRAVA 1</div><div class="trava-s">⚪ SEM BASE - ${leads||0} leads, precisa 10</div></div>`:'';
+  const acoes=done?`<div class="camp-done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:(semBase
+    ?`<div class="actions"><button class="act no" data-dec="agora-nao" style="grid-column:1/-1"><span class="ic">⚪</span><b>Observar — não escalar</b><small>Sem base mínima</small></button></div>`
+    :`<div class="actions">
+      <button class="act ok" data-dec="aplicar"><span class="ic">✅</span><b>Aplicar</b><small>Registra</small></button>
+      <button class="act warn" data-dec="ajustar"><span class="ic">✎</span><b>Ajustar</b><small>Você decide</small></button>
+      <button class="act no" data-dec="agora-nao"><span class="ic">✕</span><b>Agora não</b><small>Espera</small></button>
+    </div>
+    <div class="valor" style="display:none" data-ajuste>
+      <label>Ajuste</label>
+      <input placeholder="${r.valorDiaSugerido!=null?'Ex: R$ '+r.valorDiaSugerido+'/dia':'Descreva o ajuste'}">
+      <button class="btn-open" style="margin-top:8px" data-conf>Confirmar ajuste</button>
+    </div>`);
+  return `<div class="sug" data-id="${r.id}" style="margin-bottom:12px">
+    <div class="lab">${r.produto} · ${r.publico||''}</div>
+    <div class="tit">${r.titulo}</div>
+    ${r.problema?`<div class="mot" style="margin-top:6px"><b>Problema:</b> ${r.problema}</div>`:''}
+    ${r.oportunidade?`<div class="mot" style="margin-top:6px"><b>Oportunidade:</b> ${r.oportunidade}</div>`:''}
+    <div class="mot" style="margin-top:8px"><b>Evidência</b></div>${ev}
+    <div class="mot" style="margin-top:8px;font-weight:700;color:var(--gold,#d4ac60)">${r.recomendacao||''}</div>
+    <div class="mot">${r.acao||''}</div>
+    ${trava}${acoes}
+  </div>`;
 }
 
 function renderDecisao(){
   const body=$('#decBody');
-  const s=ST.sugestaoPrincipal;
-  const done=jaDecidiuPrincipal();
-
-  if(done){
-    const rot=done.decisao==='aplicar'?'Aplicou':done.decisao==='ajustar'?'Ajustou':'Agora não';
-    body.innerHTML=`
-      <div class="okbox">
-        <div class="big">✅</div>
-        <b>Registrado ✅</b>
-        <p>Sua decisão ficou anotada. Agora é só aplicar na Meta.</p>
-      </div>
-      <div class="mini">No seu relatório: <b>Michel ${rot.toLowerCase()} · ${done.hora||''}</b><br>O sistema registra o fato (modo seguro). Conferência na Meta vem depois.</div>
-      <button class="ghost" id="btnRedo">↺ Ver de novo</button>`;
-    $('#btnRedo').onclick=()=>{VIEW='lista';render();};
-    return;
-  }
-
-  if(!s){
+  const recs=ST.recomendacoes?.recomendacoes;
+  if(!recs?.length){
     const meta=ST.meta||{};
-    const msgErro=meta.confiavel===false
-      ? (meta.mensagem||'Os dados da Meta não foram carregados. Não tome decisão até corrigirmos a leitura.')
-      : 'Sem base clara para recomendar alteração.<br>Olhe as campanhas e volte amanhã.';
-    body.innerHTML=`<div class="empty">${msgErro}</div>
+    body.innerHTML=`<div class="empty">${meta.mensagem||'Sem decisão V4 disponível.'}</div>
       <button class="ghost" id="btnVoltar">← Voltar</button>`;
     $('#btnVoltar').onclick=()=>{VIEW='lista';render();};
     return;
   }
-
-  const semBase = s.tipo==='observar' || (s.leads!=null && s.leads < 10);
-  const travaHtml = semBase ? `
-    <div class="trava">
-      <div class="trava-t">TRAVA 1 — SEM BASE MÍNIMA · BLOQUEADO</div>
-      <div class="trava-s"><b>⚪ SEM BASE - ${s.leads??0} leads, precisa 10</b><br>
-      Não pode recomendar ESCALAR. Ex.: EUA_Americanos com CPL baixo e &lt;10 leads → observar.</div>
-    </div>` : '';
-
-  const acoesHtml = semBase ? `
-    <div class="actions">
-      <button class="act no" data-dec="agora-nao" style="grid-column:1/-1"><span class="ic">⚪</span><b>Observar — não escalar</b><small>Registra que esperou base (≥10 leads)</small></button>
-    </div>` : `
-    <div class="actions">
-      <button class="act ok" data-dec="aplicar"><span class="ic">✅</span><b>Aplicar</b><small>Registra — você aplica na Meta</small></button>
-      <button class="act warn" data-dec="ajustar"><span class="ic">✎</span><b>Ajustar</b><small>Você decide o valor</small></button>
-      <button class="act no" data-dec="agora-nao"><span class="ic">✕</span><b>Agora não</b><small>Registra que esperou</small></button>
-    </div>
-    <div class="valor">
-      <label>Valor por dia — você decide</label>
-      <input id="valDia" type="text" inputmode="numeric" placeholder="Digite quanto quiser · ex: R$ 80" value="${s.valorDia!=null?('R$ '+s.valorDia):''}">
-    </div>`;
-
-  body.innerHTML=`
-    ${travaHtml}
-    <div class="sug">
-      <div class="lab">${s.tipo==='observar'||s.bloqueadoEscalar?'⚪ SEM BASE - BLOQUEADO':(s.semaforo?(s.semaforo.emoji+' '+s.semaforo.label):'Sugestão da IA')}</div>
-      <div class="tit">${s.titulo}</div>
-      ${s.recomendacao?`<div class="mot" style="font-weight:700;color:var(--gold,#d4ac60);margin-top:6px">${s.recomendacao}</div>`:''}
-      <div class="mot" style="white-space:pre-line;margin-top:8px">${s.motivo||''}</div>
-      ${s.alertaPublico?`<div class="mot" style="color:var(--late);margin-top:8px">⚠️ ${s.alertaPublico}</div>`:''}
-      ${s.cidade?`<div class="mot" style="margin-top:6px">Cidade: <b>${s.cidade}</b>${s.publico?' · Público: '+s.publico:''}</div>`:''}
-    </div>
-    ${acoesHtml}
-    <button class="ghost" id="btnVoltar2">← Voltar às campanhas</button>`;
-
-  body.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>decidir(b.dataset.dec)));
+  body.innerHTML=recs.map(cardV4).join('')+`<button class="ghost" id="btnVoltar2">← Voltar às campanhas</button>`;
+  body.querySelectorAll('.sug').forEach(el=>{
+    const id=el.dataset.id;
+    const r=recs.find(x=>x.id===id);
+    el.querySelectorAll('[data-dec]').forEach(b=>{
+      b.onclick=async()=>{
+        const dec=b.dataset.dec;
+        if(dec==='ajustar'){
+          const box=el.querySelector('[data-ajuste]');
+          if(box){box.style.display='block';box.querySelector('input').focus();}
+          return;
+        }
+        await postRec(r,dec,'');
+      };
+    });
+    const conf=el.querySelector('[data-conf]');
+    if(conf) conf.onclick=async()=>{
+      const val=el.querySelector('[data-ajuste] input').value.trim();
+      if(!val){toast('Digite o ajuste');return;}
+      await postRec(r,'ajustar',val);
+    };
+  });
   $('#btnVoltar2').onclick=()=>{VIEW='lista';render();};
 }
 
-async function decidir(decisao){
-  const s=ST.sugestaoPrincipal;if(!s)return;
-  // TRAVA 1 — cliente: não deixa mandar aplicar/escalar sem base
-  if(decisao==='aplicar' && (s.tipo==='escalar'||s.tipo==='mover'||s.tipo==='duplicar_escalar') && (s.leads==null||s.leads<10)){
+async function postRec(r,decisao,ajuste){
+  const leads=r.numeros?.leadsForm??r.numeros?.leadsGerenciador??r.numeros?.leadsApi??null;
+  if(decisao==='aplicar' && /escalar|duplicar/i.test(r.tipo||'') && (r.bloqueadoEscalar || (leads!=null && leads<10))){
     toast('TRAVA 1 — SEM BASE MÍNIMA (precisa 10 leads)');
     return;
   }
-  let ajuste='';
-  if(decisao==='ajustar'){
-    ajuste=($('#valDia')&&$('#valDia').value||'').trim();
-    if(!ajuste){toast('Digite o valor / o que ajustar');return;}
-  } else if(decisao==='aplicar' && s.tipo==='mover' && s.valorDia!=null){
-    ajuste=`mover R$${s.valorDia}/dia ${s.origem} → ${s.destino}`;
-  }
-  const r=await fetch(api('/api/placar-registrar'),{
+  const res=await fetch(api('/api/placar-registrar'),{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({acao:'decisao',id:s.id,campanha:s.campanha,tipo:s.tipo||'mover',decisao,ajuste,leads:s.leads})
+    body:JSON.stringify({
+      acao:'decisao', id:r.id, campanha:`${r.produto} · ${r.titulo}`,
+      tipo:r.tipo||'recomendacao', decisao, ajuste, leads
+    })
   }).then(x=>x.json()).catch(()=>({ok:false}));
-  if(r.ok){toast('Registrado · Bruno avisado');VIEW='decisao';await load();}
-  else toast(r.erro||'Não deu — tenta de novo');
+  if(res.ok){toast('Registrado · Bruno avisado');await load();}
+  else toast(res.erro||'Não deu');
 }
 
 function render(){

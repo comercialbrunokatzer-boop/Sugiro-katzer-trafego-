@@ -3,11 +3,21 @@
 // GET /api/placar-estado?ceo=1  (senha gestor)
 // GET /api/placar-estado?refresh=1  (força Meta, ignora cache curto)
 // GET /api/placar-estado?diag=1     (inventário de action_types — sem token)
+//
+// DECISÃO DO DIA V4: NÃO sugerir EUA_Americanos a R$7.
+// Sugerir: BR_SC trocar criativo + Amanay duplicar R$30/dia.
 import { createHash } from 'node:crypto';
 import { agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes } from './_placar-estado.mjs';
 import { lePlacar, leDecisoes, mensagemMeta } from './_placar-io.mjs';
 import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
 import { enriqueceComQualidade, textoCplBrutoVsBom, calculaCplQualidade } from './_qualidade.mjs';
+import {
+  DECISAO_VERSAO,
+  montaRecomendacoes,
+  placarParaOperacional,
+  sugestaoPrincipalV4,
+  ehPublicoProibidoEscalar,
+} from './_recomendacoes.mjs';
 import { json } from './_infra.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
@@ -43,7 +53,18 @@ export async function handler(event) {
       )),
     };
   });
-  const placarQ = { ...placar, campanhas: campanhasQ };
+  // Defesa V4: público fora do BR nunca entra em escalar do placar
+  const decisao = placar.decisao
+    ? {
+      ...placar.decisao,
+      escalar: (placar.decisao.escalar || []).filter((c) => !ehPublicoProibidoEscalar(c.nome)),
+    }
+    : placar.decisao;
+  const placarQ = {
+    ...placar,
+    campanhas: campanhasQ,
+    decisao,
+  };
 
   const metaOut = {
     status: meta?.status || 'ok',
@@ -54,17 +75,27 @@ export async function handler(event) {
     cacheHit: !!cacheHit,
     usandoCache: !!meta?.usandoCache,
     mensagem: meta?.mensagemPainel || mensagemMeta(meta),
-    // Nunca incluir token
   };
 
-  const sugestaoPrincipal = metaOut.confiavel && metaOut.status === 'ok'
+  // Decisão do dia V4: BR_SC criativo + Amanay — NUNCA EUA_Americanos a R$7
+  const recBundle = metaOut.confiavel
+    ? montaRecomendacoes({ operacional7d: placarParaOperacional(placarQ) })
+    : { ok: false, versao: DECISAO_VERSAO, recomendacoes: [] };
+  const sugestaoV4 = sugestaoPrincipalV4(recBundle.recomendacoes || []);
+  const sugestaoLegado = metaOut.confiavel && metaOut.status === 'ok'
     ? montaSugestaoPrincipal(placarQ)
     : null;
+  let sugestaoPrincipal = sugestaoV4;
+  if (!sugestaoPrincipal && sugestaoLegado
+      && !ehPublicoProibidoEscalar(sugestaoLegado.campanha || sugestaoLegado.destino || '')) {
+    sugestaoPrincipal = sugestaoLegado;
+  }
 
   const body = {
     ok: true,
     metricaPrincipal: 'lead_formulario',
     metricaQualidade: 'cpl_bom = gasto ÷ (bom + comprador)',
+    decisaoVersao: DECISAO_VERSAO,
     data: now.data,
     agora: now.hm,
     ultimaLeitura: ts ? agoraBRT(new Date(ts)).hm : null,
@@ -72,10 +103,10 @@ export async function handler(event) {
     placar: placarQ,
     sugestoes: metaOut.confiavel ? montaSugestoes(placarQ) : [],
     sugestaoPrincipal,
+    recomendacoes: recBundle,
     decisoes: listaDecisoes(decisoes),
     qualidadeAtualizadoEm: qualDoc.atualizadoEm || null,
     meta: metaOut,
-    // Atalhos pro front distinguir cenários
     dadosConfiaveis: metaOut.confiavel && (metaOut.status === 'ok' || metaOut.status === 'sem_gasto' || metaOut.status === 'sem_campanha'),
     integracaoOk: metaOut.confiavel || !!meta?.usandoCache,
   };
@@ -93,6 +124,7 @@ export async function handler(event) {
       ],
       inventario: inventario || null,
       aviso: 'Inventário sem token. Clique/messaging nunca entram como lead.',
+      decisaoV4: 'BR_SC trocar criativo + Amanay R$30/dia. Nunca EUA_Americanos.',
     };
   }
 

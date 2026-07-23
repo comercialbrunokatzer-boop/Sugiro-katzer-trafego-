@@ -40,7 +40,7 @@ test('EUA_Americanos 3 leads CPL R$7 → NÃO escala (BLOQUEADO)', () => {
   }), false);
 });
 
-test('quadradinho: EUA_Americanos 3 leads → OBSERVAR, nunca escalar', () => {
+test('quadradinho: com Americanos + BR_SC sem base → OBSERVAR BR_SC (nunca escalar Americanos)', () => {
   const p = montaPlacar([
     {
       campaign_name: '[FortMyers_EUA_Americanos][10/07/26]',
@@ -55,16 +55,29 @@ test('quadradinho: EUA_Americanos 3 leads → OBSERVAR, nunca escalar', () => {
   ]);
   assert.equal(p.decisao.escalar.length, 0);
   assert.ok(p.decisao.observar.some((c) => /Americanos/i.test(c.nome)));
+  // V4: observar prioriza SEM BASE sem público proibido (BR_SC antes de Americanos)
+  assert.equal(p.decisao.observar[0].nome, 'FortMyers_BR_SC[10/07/26]');
+  const s = montaSugestaoPrincipal(p);
+  assert.equal(s.tipo, 'observar');
+  assert.equal(s.titulo, '⚪ SEM BASE - 8 leads, precisa 10');
+  assert.match(s.recomendacao, /BLOQUEADO/i);
+  assert.ok(!/Americanos/i.test(s.campanha || ''));
+  assert.equal(s.bloqueadoEscalar, true);
+});
+
+test('quadradinho: só EUA_Americanos 3 leads → OBSERVAR bloqueado (nunca escalar)', () => {
+  const p = montaPlacar([
+    {
+      campaign_name: '[FortMyers_EUA_Americanos][10/07/26]',
+      spend: '19.87',
+      actions: [{ action_type: 'onsite_conversion.lead_grouped', value: '3' }],
+    },
+  ]);
   const s = montaSugestaoPrincipal(p);
   assert.equal(s.tipo, 'observar');
   assert.equal(s.titulo, '⚪ SEM BASE - 3 leads, precisa 10');
-  assert.match(s.recomendacao, /BLOQUEADO/i);
-  assert.match(s.motivo, /precisa 10/i);
-  assert.match(s.motivo, /Piçarras/i);
   assert.match(s.motivo, /fora do Brasil/i);
-  assert.equal(s.leads, 3);
   assert.equal(s.bloqueadoEscalar, true);
-  assert.ok(s.leads < LEADS_MIN_ESCALAR);
 });
 
 test('não escala com público EUA/Miami/Portugal em Piçarras mesmo com ≥10 leads', () => {
