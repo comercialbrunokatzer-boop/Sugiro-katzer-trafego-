@@ -38,33 +38,7 @@
   status = 200
   force = true
 
-# Atalhos amigáveis.
-[[redirects]]
-  from = "/painel-michel"
-  to = "/painel-michel.html"
-  status = 200
-[[redirects]]
-  from = "/painel-gestor"
-  to = "/painel-ceo.html"
-  status = 200
-[[redirects]]
-  from = "/guia"
-  to = "/guia.html"
-  status = 200
-[[redirects]]
-  from = "/email-preview"
-  to = "/email-preview.html"
-  status = 200
-[[redirects]]
-  from = "/como-instalar"
-  to = "/como-instalar.html"
-  status = 200
-[[redirects]]
-  from = "/api/placar"
-  to = "/.netlify/functions/placar"
-  status = 200
-  force = true
-
+# Atalhos amigáveis — dois placares (mesma base).
 [[redirects]]
   from = "/placar-michel"
   to = "/painel-michel.html"
@@ -87,6 +61,29 @@
   to = "/painel-ceo.html"
   status = 200
   force = true
+[[redirects]]
+  from = "/campanhas-decisao"
+  to = "/campanhas-decisao.html"
+  status = 200
+[[redirects]]
+  from = "/guia"
+  to = "/guia.html"
+  status = 200
+[[redirects]]
+  from = "/email-preview"
+  to = "/email-preview.html"
+  status = 200
+[[redirects]]
+  from = "/como-instalar"
+  to = "/como-instalar.html"
+  status = 200
+[[redirects]]
+  from = "/api/placar"
+  to = "/.netlify/functions/placar"
+  status = 200
+  force = true
+
+# APIs do quadradinho (aberto a partir de Campanhas no Placar do Michel).
 [[redirects]]
   from = "/api/placar-estado"
   to = "/.netlify/functions/placar-estado"

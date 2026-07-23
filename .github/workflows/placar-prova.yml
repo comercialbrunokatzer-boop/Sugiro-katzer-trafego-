@@ -4,6 +4,8 @@ name: 🧪 Prova do Placar — leads/CPL reais (Meta + _placar.mjs)
 # (_placar.mjs) — prova que os leads que vêm por conversa no WhatsApp agora
 # aparecem, e que o CPL sai completo. NÃO imprime o token.
 on:
+  push:
+    branches: [claude/placar-campanhas]
   workflow_dispatch: {}
 
 permissions:

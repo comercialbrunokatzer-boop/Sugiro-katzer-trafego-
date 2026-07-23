@@ -3,10 +3,11 @@
 // e monta a lista de sugestões a partir do placar. Sem I/O e SEM depender da
 // rotina — o Placar é um quintal independente (facilita o corte #6 depois).
 
-const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao']);
+const DECISOES = new Set(['aplicar', 'ajustar', 'agora-nao', 'desistir', 'manter', 'aumentar']);
 const slug = (s) => String(s || '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'x';
-const brl0 = (v) => `R$ ${Number(v || 0).toFixed(0)}`;
+
+export { slug };
 
 /** Data/hora de Brasília — próprio (o Placar não importa nada da rotina). */
 export function agoraBRT(d = new Date()) {
@@ -29,10 +30,9 @@ export function montaSugestoes(placar = {}) {
 }
 
 /**
- * Mantém a sugestão principal legada usada pela rota oficial de decisão.
- * @param {object} placar placar agregado de campanhas
- * @param {{ valorDia?: number }} options valor sugerido para ajuste diário; 50/dia é o passo pequeno legado do quadradinho oficial
- * @returns {object|null} sugestão principal no formato esperado pelo quadradinho legado
+ * Uma sugestão principal no formato do quadradinho:
+ * "Mover R$ X/dia de ORIGEM → DESTINO" (quando há campanha pra revisar e outra pra escalar).
+ * Sem inventar venda — texto honesto com CPL/gasto.
  */
 export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   const d = (placar && placar.decisao) || {};
@@ -45,8 +45,8 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       origem: origem.nome,
       destino: destino.nome,
       valorDia,
-      titulo: `Mover R$ ${valorDia}/dia de ${origem.nome} → ${destino.nome}`,
-      motivo: `${origem.nome}: ${brl0(origem.gasto)} gastos, ${origem.leads || 0} lead. ${destino.nome} tem melhor CPL (${destino.cpl != null ? `${brl0(destino.cpl)}/lead` : 'abaixo da média'}).`,
+      titulo: `Mover R$ ${valorDia}/dia do ${origem.nome} → ${destino.nome}`,
+      motivo: `${origem.nome}: R$ ${Number(origem.gasto || 0).toFixed(0)} gastos, ${origem.leads || 0} lead. ${destino.nome} tem melhor CPL (${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}/lead` : 'abaixo da média'}).`,
       campanha: `${origem.nome} → ${destino.nome}`,
       gasto: origem.gasto ?? 0,
       leads: origem.leads ?? 0,
@@ -55,13 +55,13 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   }
   if (origem) {
     return {
-      id: `rev-${slug(origem.nome)}`,
+      id: 'rev-' + slug(origem.nome),
       tipo: 'revisar',
       origem: origem.nome,
       destino: null,
       valorDia: null,
       titulo: `Revisar / cortar ${origem.nome}`,
-      motivo: `${brl0(origem.gasto)} gastos · ${origem.leads || 0} lead — queimando verba.`,
+      motivo: `R$ ${Number(origem.gasto || 0).toFixed(0)} gastos · ${origem.leads || 0} lead — queimando verba.`,
       campanha: origem.nome,
       gasto: origem.gasto ?? 0,
       leads: origem.leads ?? 0,
@@ -70,13 +70,13 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   }
   if (destino) {
     return {
-      id: `esc-${slug(destino.nome)}`,
+      id: 'esc-' + slug(destino.nome),
       tipo: 'escalar',
       origem: null,
       destino: destino.nome,
       valorDia,
       titulo: `Escalar ${destino.nome} (+R$ ${valorDia}/dia)`,
-      motivo: `CPL ${destino.cpl != null ? brl0(destino.cpl) : 'bom'} — abaixo da média. Vale mais verba.`,
+      motivo: `CPL ${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}` : 'bom'} — abaixo da média. Vale mais verba.`,
       campanha: destino.nome,
       gasto: destino.gasto ?? 0,
       leads: destino.leads ?? 0,
@@ -95,7 +95,8 @@ export function registraDecisao(decisoes, { id, campanha, tipo, decisao, ajuste,
   decisoes.itens = decisoes.itens || {};
   decisoes.itens[id] = {
     id, campanha: campanha || '', tipo: tipo || '', decisao,
-    ajuste: decisao === 'ajustar' ? String(ajuste || '').slice(0, 300) : '',
+    ajuste: (decisao === 'ajustar' || decisao === 'aumentar')
+      ? String(ajuste || '').slice(0, 300) : '',
     hora: hora || '', min: Number.isFinite(min) ? min : null,
   };
   return decisoes;
@@ -121,8 +122,21 @@ export function garanteAprendizados(decisoes = {}, cartoes = []) {
 
 /** Rótulo curto e honesto de uma decisão (pro WhatsApp/log). */
 export function rotuloDecisao(item = {}) {
-  const acao = item.decisao === 'aplicar' ? '✅ Aplicou' : item.decisao === 'ajustar' ? '✎ Ajustou' : '⏸ Agora não';
-  const alvo = item.tipo === 'escalar' ? 'escalar' : 'revisar';
-  const aj = item.decisao === 'ajustar' && item.ajuste ? ` — ${item.ajuste}` : '';
-  return `${acao} · ${alvo} *${item.campanha}*${aj}`;
+  const map = {
+    aplicar: '✅ Aplicou',
+    ajustar: '✎ Ajustou',
+    'agora-nao': '⏸ Agora não',
+    desistir: '🛑 Desistiu',
+    manter: '➡️ Manteve',
+    aumentar: '⬆ Aumentou',
+  };
+  const acao = map[item.decisao] || `· ${item.decisao || 'Decisão'}`;
+  const alvo = item.tipo === 'mover' ? 'mover'
+    : item.tipo === 'escalar' ? 'escalar'
+      : item.tipo === 'revisar' ? 'revisar'
+        : item.tipo === 'campanha' ? 'campanha'
+          : (item.tipo || '');
+  const aj = item.ajuste ? ` — ${item.ajuste}` : '';
+  const camp = item.campanha ? ` *${item.campanha}*` : '';
+  return `${acao}${alvo ? ` · ${alvo}` : ''}${camp}${aj}`;
 }
