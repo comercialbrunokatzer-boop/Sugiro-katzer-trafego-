@@ -1,6 +1,6 @@
-// Construtor do relatório consolidado (WhatsApp + e-mail) — Rotina + Placar.
+// Construtor do relatório consolidado (WhatsApp + e-mail) — SÓ ROTINA.
+// Painel de Campanhas = produto separado (/campanhas) — nunca misturar aqui.
 import { pontualidade } from './_rotina.mjs';
-import { rotuloDecisao } from './_placar-estado.mjs';
 
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
@@ -10,45 +10,8 @@ export function dataExtenso(data, dow) {
   return `${DIAS[dow]}, ${+d} de ${MESES[+m - 1]} de ${y}`;
 }
 
-function blocoCampanhasWhats(extra = {}) {
-  const linhas = ['', '📣 *Campanhas / decisões*'];
-  const decs = extra.decisoes || [];
-  if (!decs.length) linhas.push('• Nenhuma decisão registrada hoje no Placar.');
-  else decs.forEach((d) => linhas.push(`• ${rotuloDecisao(d)}${d.hora ? ` · ${d.hora}` : ''}`));
-  const alertas = extra.alertas || [];
-  if (alertas.length) {
-    linhas.push('', '⚠️ *Alertas*');
-    alertas.slice(0, 6).forEach((a) => linhas.push(`• ${a}`));
-  }
-  const p = extra.placar;
-  if (p) {
-    linhas.push('', `📈 Gasto 7d: R$ ${Number(p.totalGasto || 0).toFixed(0)} · ${p.totalLeads || 0} leads · CPL méd. ${p.cplMedio != null ? `R$ ${Number(p.cplMedio).toFixed(0)}` : '—'}`);
-  }
-  return linhas.join('\n');
-}
-
-function blocoCampanhasEmail(extra = {}) {
-  const decs = extra.decisoes || [];
-  const alertas = extra.alertas || [];
-  const p = extra.placar;
-  const decHtml = !decs.length
-    ? `<div style="color:#9a9283;font-size:13px;margin-top:6px">Nenhuma decisão registrada hoje.</div>`
-    : decs.map((d) => `<div style="color:#ece5d6;font-size:13px;margin-top:6px"><b>${rotuloDecisao(d)}</b>${d.hora ? ` · ${d.hora}` : ''}</div>`).join('');
-  const alHtml = alertas.length
-    ? `<div style="margin-top:10px;color:#c9a24a;font-size:12px;font-weight:700">ALERTAS</div>${alertas.slice(0, 8).map((a) => `<div style="color:#ece5d6;font-size:13px;margin-top:4px">${a}</div>`).join('')}`
-    : '';
-  const metHtml = p
-    ? `<div style="margin-top:10px;color:#9a9283;font-size:12px">Gasto 7d R$ ${Number(p.totalGasto || 0).toFixed(0)} · ${p.totalLeads || 0} leads · CPL méd. ${p.cplMedio != null ? `R$ ${Number(p.cplMedio).toFixed(0)}` : '—'}</div>`
-    : '';
-  return `
-    <div style="margin:16px 22px 0;border:1px solid #8a6c2e;border-radius:10px;background:rgba(201,162,74,.05);padding:12px 14px">
-      <div style="color:#c9a24a;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700">📣 Campanhas — decisões e métricas</div>
-      ${decHtml}${alHtml}${metHtml}
-    </div>`;
-}
-
-/** Resumo WhatsApp do CEO. */
-export function resumoWhats(estado, now, campanhasExtra = {}) {
+/** Resumo WhatsApp do CEO — só tarefas / pontualidade da Rotina. */
+export function resumoWhats(estado, now) {
   const P = pontualidade(estado, now.min);
   const modoIco = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Jlle/Casa';
   const feitasNoHorario = P.linhas.filter((l) => l.feito && l.difMin <= 0).length;
@@ -65,13 +28,12 @@ export function resumoWhats(estado, now, campanhasExtra = {}) {
     `✅ ${feitasNoHorario} no horário · 💚 ${adiantadas} adiantada(s) · 🔴 ${atrasadas} atrasada(s)${pendentes ? ` · ⏳ ${pendentes} pendente(s)` : ''}`,
     destaques || '',
     obs || '',
-    blocoCampanhasWhats(campanhasExtra),
   ].filter(Boolean);
   return linhas.join('\n');
 }
 
-/** E-mail HTML. */
-export function emailHTML(estado, now, campanhasExtra = {}) {
+/** E-mail HTML — só Rotina. */
+export function emailHTML(estado, now) {
   const P = pontualidade(estado, now.min);
   const modo = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Jlle/Casa';
   const cor = P.pct >= 90 ? '#e0be6e' : (P.pct >= 70 ? '#c9a24a' : '#d67a52');
@@ -98,7 +60,7 @@ export function emailHTML(estado, now, campanhasExtra = {}) {
     <div style="max-width:600px;margin:0 auto;background:#0e0e11;border:1px solid #2a2732;border-radius:14px;overflow:hidden">
       <div style="padding:22px;text-align:center;border-bottom:1px solid #2a2732">
         <div style="letter-spacing:.34em;font-size:13px;color:#c9a24a;text-transform:uppercase;font-family:Georgia,serif">Katzer</div>
-        <div style="color:#9a9283;font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-top:12px">Relatório do dia</div>
+        <div style="color:#9a9283;font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-top:12px">Relatório da Rotina</div>
         <div style="color:#ece5d6;font-size:19px;font-family:Georgia,serif;margin-top:4px">${dataExtenso(estado.data, now.dow)}</div>
         <div style="margin-top:10px"><span style="color:#c9a24a;font-size:12px;border:1px solid #8a6c2e;border-radius:999px;padding:4px 12px">${modo}</span></div>
       </div>
@@ -109,9 +71,8 @@ export function emailHTML(estado, now, campanhasExtra = {}) {
       </div>
       <table style="width:100%;border-collapse:collapse;border-top:1px solid #2a2732">${rows}</table>
       ${obsHtml}
-      ${blocoCampanhasEmail(campanhasExtra)}
       <div style="padding:18px 22px;color:#9a9283;font-size:12px;text-align:center;border-top:1px solid #2a2732;margin-top:16px">
-        Enviado ${horaRodape} · seg–sáb · % e campanhas são do gestor.
+        Enviado ${horaRodape} · seg–sáb · só Rotina (Campanhas = app separado).
       </div>
     </div></body></html>`;
 }

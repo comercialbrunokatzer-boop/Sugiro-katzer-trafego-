@@ -60,27 +60,22 @@ export async function disparaRelatorio(now, { teste = false } = {}) {
 
   const P = pontualidade(estado, now.min);
   const modoTxt = ehKatzer ? '🏢 Katzer' : '🏠 Jlle/Casa';
-  const campanhasExtra = { decisoes: [], placar: null, sugestao: null, alertas: [] };
 
   const w = await enviaWhats(
     process.env.WHATSAPP_CEO,
-    resumoWhats(estado, now, campanhasExtra),
+    resumoWhats(estado, now),
   );
   const e = await enviaEmail(
     process.env.EMAIL_CEO,
     `Relatório · Michel — ${P.pct}% · ${modoTxt}`,
-    emailHTML(estado, now, campanhasExtra),
+    emailHTML(estado, now),
   );
 
   if (!teste) { estado.relatorioEnviado = now.hm; await salvaEstado(estado); }
   return {
     pct: P.pct,
-    decisoes: 0,
     whats: w,
     email: e,
     teste,
   };
 }
-
-// re-export helper for tests
-export { rotuloDecisao };

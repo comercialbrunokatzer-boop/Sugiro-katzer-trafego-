@@ -87,7 +87,7 @@
   status = 200
   force = true
 
-# APIs do quadradinho (aberto a partir de Campanhas no Placar do Michel).
+# APIs do Painel de Campanhas (produto separado da Rotina).
 [[redirects]]
   from = "/api/placar-estado"
   to = "/.netlify/functions/placar-estado"
