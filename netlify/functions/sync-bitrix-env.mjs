@@ -144,7 +144,7 @@ export async function handler(event) {
       'BITRIX_WEBHOOK_WRITE',
       'BITRIX_PORTAL_URL',
       'BITRIX_CATEGORY_ID',
-      'BRUNO_PHONE',
+      // NÃO copiar BRUNO_PHONE — API mascara e quebra o proxy do funil
       'WHATSAPP_CEO',
     ];
     const copiados = [];
@@ -160,6 +160,13 @@ export async function handler(event) {
           continue;
         }
         V = ensureBitrixUrl(V);
+      }
+      if (K === 'WHATSAPP_CEO') {
+        const dig = String(V).replace(/\D+/g, '');
+        if (String(V).includes('*') || dig.length < 10) {
+          erros.push(`${K}: valor origem mascarado/curto — pulado`);
+          continue;
+        }
       }
       try {
         const how = await setEnv(accountSlug, dst.id, K, V);
@@ -177,25 +184,55 @@ export async function handler(event) {
       }
     }
 
+    // Espelho RUNTIME (valor real, não mascarado) → Helena: destrava /api/funil-katzer
+    const runtimeMirror = [];
+    const ceoRuntime = process.env.WHATSAPP_CEO || '';
+    const funilRuntime = process.env.FUNIL_PROXY_KEY || process.env.WHATSAPP_CEO || '';
+    const digCeo = String(ceoRuntime).replace(/\D+/g, '');
+    if (digCeo.length >= 10) {
+      try {
+        runtimeMirror.push(`WHATSAPP_CEO:${await setEnv(accountSlug, src.id, 'WHATSAPP_CEO', ceoRuntime)}`);
+        runtimeMirror.push(`BRUNO_PHONE:${await setEnv(accountSlug, src.id, 'BRUNO_PHONE', ceoRuntime)}`);
+      } catch (e) {
+        erros.push(`mirror CEO→Helena: ${e.message || e}`);
+      }
+    }
+    if (funilRuntime) {
+      try {
+        runtimeMirror.push(`FUNIL_dst:${await setEnv(accountSlug, dst.id, 'FUNIL_PROXY_KEY', funilRuntime)}`);
+        runtimeMirror.push(`FUNIL_src:${await setEnv(accountSlug, src.id, 'FUNIL_PROXY_KEY', funilRuntime)}`);
+      } catch (e) {
+        erros.push(`mirror FUNIL: ${e.message || e}`);
+      }
+    }
+    try {
+      await netlify(`/accounts/${accountSlug}/env/${encodeURIComponent('BRUNO_PHONE')}?site_id=${dst.id}`, {
+        method: 'DELETE',
+      });
+      runtimeMirror.push('BRUNO_PHONE_dst:unset');
+    } catch { /* ausente ok */ }
+
     return json(200, {
-      ok: copiados.length > 0,
-      toast: copiados.length
-        ? `Bitrix env copiado (${copiados.length})`
-        : 'Nenhuma BITRIX_* encontrada na Helena',
+      ok: copiados.length > 0 || runtimeMirror.length > 0,
+      toast: (copiados.length || runtimeMirror.length)
+        ? `Bitrix/funil env ok (${copiados.length + runtimeMirror.length})`
+        : 'Nenhuma BITRIX_* útil na Helena — use mirror runtime',
       origem: srcName,
       destino: dst.name,
       accountSlug,
-      keysNaOrigem: keysDisponiveis.filter((k) => /BITRIX|BRUNO_PHONE|WHATSAPP_CEO/i.test(k)),
+      keysNaOrigem: keysDisponiveis.filter((k) => /BITRIX|BRUNO_PHONE|WHATSAPP_CEO|FUNIL/i.test(k)),
       copiados,
+      runtimeMirror,
       erros,
       bruno: (() => { const raw = pickEnv(envSrc, 'BRUNO_PHONE') || ''; const d=String(raw).replace(/\D+/g,''); return { len: raw.length, digits: d.length, last2: d.slice(-2) }; })(),
+      ceoRuntimeDigits: digCeo.length,
       shapes: {
         read: shapeUrl(pickEnv(envSrc, 'BITRIX_WEBHOOK_READ')),
         write: shapeUrl(pickEnv(envSrc, 'BITRIX_WEBHOOK_WRITE')),
       },
       destinoTemBitrix: !!(pickEnv(await netlify(`/accounts/${accountSlug}/env?site_id=${dst.id}`), 'BITRIX_WEBHOOK_READ')
         || pickEnv(await netlify(`/accounts/${accountSlug}/env?site_id=${dst.id}`), 'BITRIX_WEBHOOK_URL')),
-      dica: 'Redeploy pra functions pegarem as novas env vars',
+      dica: 'Env nova pode valer sem redeploy; se bitrixOk seguir false, redeploy quando houver crédito',
     });
   } catch (e) {
     return json(500, { ok: false, erro: String((e && e.message) || e) });
