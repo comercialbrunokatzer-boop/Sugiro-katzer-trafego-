@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   dataColcheteCampanha,
   inicioFunilISO,
+  inicioEfetivoFunil,
   produtoCampanha,
   dealBateCampanha,
   fasesPorCampanha,
@@ -22,6 +23,15 @@ describe('dataColcheteCampanha / inicioFunilISO', () => {
       '2025-11-22T17:08:58-0300',
     );
     assert.match(funil, /^2026-02-06/);
+  });
+
+  it('janela Meta last_30d corta histórico NOVACONFIG', () => {
+    const efetivo = inicioEfetivoFunil(
+      'FORT MYERS] TESTE PUBLICOS NOVO CONFIG. META',
+      '2026-05-30T08:48:39-0300',
+      '2026-06-23T00:00:00-03:00',
+    );
+    assert.match(efetivo, /^2026-06-23/);
   });
 });
 

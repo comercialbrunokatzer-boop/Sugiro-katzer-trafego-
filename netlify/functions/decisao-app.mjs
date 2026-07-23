@@ -17,7 +17,7 @@ import {
   linkWhatsApp,
 } from './_qualidade-trafego.mjs';
 import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_decisao-feed.mjs';
-import { listaDealsFunil, fasesPorCampanha, inicioFunilISO } from './_bitrix-funil.mjs';
+import { listaDealsFunil, fasesPorCampanha, inicioFunilISO, inicioEfetivoFunil } from './_bitrix-funil.mjs';
 import { metaPauseCampaign, metaActivateCampaign, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
 
@@ -109,7 +109,54 @@ function montaFases(leadsCamp) {
   return { total, fases };
 }
 
-function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = []) {
+/** Decisão Meta Ads do dia (Michel executa). */
+function decisaoMetaAds({ cpl, forms, gasto, qual, fasesInfo, name }) {
+  const fases = fasesInfo?.fases || [];
+  const vivos = fases
+    .filter((f) => !['Perdido', 'Rampage', 'Ganhou'].includes(f.nome))
+    .reduce((s, f) => s + (f.n || 0), 0);
+  const perdidos = fases.filter((f) => f.nome === 'Perdido' || f.nome === 'Rampage')
+    .reduce((s, f) => s + (f.n || 0), 0);
+  const novos = fases.find((f) => f.nome === 'Leads Novos')?.n || 0;
+  const tentando = fases.find((f) => f.nome === 'Tentando Contato')?.n || 0;
+
+  if (/PUBLICOS|NOVACONFIG/i.test(name || '') && /\bTESTE\b/i.test(name || '')) {
+    return {
+      acao: 'pausar_teste',
+      motivo: 'Campanha de teste de público — não compete com as 4 praças ativas. Pausar ou isolar orçamento.',
+    };
+  }
+  if (qual === 'bad' || (cpl != null && cpl >= 70 && (gasto || 0) >= 300)) {
+    return {
+      acao: 'cortar_ou_trocar',
+      motivo: `CPL R$ ${Number(cpl).toFixed(0)} com R$ ${Number(gasto || 0).toFixed(0)} gastos — acima do teto. Reduzir 30–50% ou pausar criativo perdedor; ${novos + tentando} leads ainda no topo do funil pra corretor trabalhar.`,
+    };
+  }
+  if (qual === 'good' || (cpl != null && cpl < 45 && (forms || 0) >= 5)) {
+    return {
+      acao: 'escalar',
+      motivo: `Melhor CPL da praça (R$ ${Number(cpl).toFixed(0)}, ${forms} forms). Subir verba 15–25% se frequência < 2,5 e criativo não saturado.`,
+    };
+  }
+  if ((forms || 0) > 0 && vivos >= forms * 0.7) {
+    return {
+      acao: 'manter_e_ligar',
+      motivo: `${forms} forms · ${vivos} vivos no funil (${novos} novos / ${tentando} tentando). Manter verba; prioridade é contato, não mídia.`,
+    };
+  }
+  if ((perdidos || 0) > (vivos || 0) * 2 && (forms || 0) >= 5) {
+    return {
+      acao: 'revisar_oferta',
+      motivo: `Funil sangrando (mortos ${perdidos} vs vivos ${vivos}). CPL sozinho não explica — revisar lead quality / praça / pitch do corretor.`,
+    };
+  }
+  return {
+    acao: 'manter',
+    motivo: `CPL R$ ${cpl != null ? Number(cpl).toFixed(0) : '—'} · ${forms || 0} forms. Sem sinal forte de corte nem de escala — manter e olhar de novo amanhã.`,
+  };
+}
+
+function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = [], { periodoDesdeISO = null } = {}) {
   const mapaQ = agregaQualidadePorCampanha(leads);
   const rows = (placar.campanhas || []).map((c) => {
     const comCiclo = enrichComCiclo({
@@ -127,15 +174,23 @@ function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = []) {
     const leadsCamp = leadsDaCampanha(leads, c.nome);
     const leadsHot = montaLeadsHot(leadsCamp);
     const inicioMetaISO = comCiclo.ciclo?.inicioISO || null;
-    // Colchete [dd/mm/aa] do nome manda no filtro do funil (created_time Meta pode ser antigo)
-    const inicioISO = inicioFunilISO(c.nome, inicioMetaISO);
+    // Colchete [dd/mm/aa] + teto da janela Meta (last_30d / ranking)
+    const inicioCampanha = inicioFunilISO(c.nome, inicioMetaISO);
+    const inicioISO = inicioEfetivoFunil(c.nome, inicioMetaISO, periodoDesdeISO);
     // Fases do Funil Novo Katzer (Bitrix) — produto certo + fase ATUAL (STAGE_ID)
-    const fasesInfo = fasesPorCampanha(dealsBitrix, c.nome, leadsCamp, { inicioISO });
+    const fasesInfo = fasesPorCampanha(dealsBitrix, c.nome, leadsCamp, {
+      inicioISO: inicioCampanha,
+      periodoDesdeISO,
+    });
+    const metaDecisao = decisaoMetaAds({
+      cpl, forms, gasto: c.gasto, qual, fasesInfo, name: c.nome,
+    });
     return {
       id: c.id || c.nome,
       name: c.nome,
       inicio: comCiclo.dataSubiu || '—',
       inicioISO,
+      inicioCampanha,
       inicioMetaISO,
       gasto: brl(c.gasto),
       gastoNum: c.gasto,
@@ -157,6 +212,7 @@ function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = []) {
       fasesFonte: fasesInfo.fonte,
       // quantos forms Meta vs quantos achamos no funil
       formsVsFases: { formsMeta: forms, noFunil: fasesInfo.total },
+      metaDecisao,
     };
   });
   return rows.sort((a, b) => (b.gastoNum || 0) - (a.gastoNum || 0));
@@ -221,18 +277,37 @@ async function payloadApp({ incluirGestor = false } = {}) {
   ]);
 
   const deals = bitrix.deals || [];
-  const todas = montaCampanhasApp(placar, ciclo.mapa || {}, leadsDoc.leads || [], deals);
+  // Janela das ativas = last_30d (mesmo preset do placar) — funil alinhar com forms Meta
+  const periodoAtivasISO = (() => {
+    const t = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const d = new Date(t - 3 * 60 * 60 * 1000); // BRT approx for label
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}T00:00:00-03:00`;
+  })();
+  const todas = montaCampanhasApp(placar, ciclo.mapa || {}, leadsDoc.leads || [], deals, {
+    periodoDesdeISO: periodoAtivasISO,
+  });
 
   // STRICT: só ACTIVE de verdade na Meta
-  // Exclui campanhas de config com prefixo [TESTE] (Michel opera as 5 reais)
-  const ativas = todas.filter((c) => c.ativa === true && !/\[TESTE\]/i.test(c.name || ''));
+  // Exclui [TESTE] e testes de público/NOVACONFIG (Michel opera as praças reais)
+  const ativas = todas.filter((c) => {
+    if (c.ativa !== true) return false;
+    const n = c.name || '';
+    if (/\[TESTE\]/i.test(n)) return false;
+    if (/PUBLICOS/i.test(n) && /NOVACONFIG|NOVO\s*CONFIG|TESTE/i.test(n)) return false;
+    return true;
+  });
   const ativasMetaBruto = todas.filter((c) => c.ativa === true).length;
 
   // Histórico desde 12/07/2025 (entrada do Michel)
   let historicoRows = [];
   if (histMeta.ok && histMeta.data?.length) {
     const placarHist = montaPlacar(histMeta.data);
-    historicoRows = montaCampanhasApp(placarHist, ciclo.mapa || {}, leadsDoc.leads || [], deals);
+    historicoRows = montaCampanhasApp(placarHist, ciclo.mapa || {}, leadsDoc.leads || [], deals, {
+      periodoDesdeISO: '2025-07-12T00:00:00-03:00',
+    });
   } else {
     historicoRows = todas;
   }
