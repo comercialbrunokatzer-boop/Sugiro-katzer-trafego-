@@ -17,7 +17,7 @@ import {
   linkWhatsApp,
 } from './_qualidade-trafego.mjs';
 import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_decisao-feed.mjs';
-import { listaDealsFunil, fasesPorCampanha } from './_bitrix-funil.mjs';
+import { listaDealsFunil, fasesPorCampanha, inicioFunilISO } from './_bitrix-funil.mjs';
 import { metaPauseCampaign, metaActivateCampaign, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
 
@@ -126,14 +126,17 @@ function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = []) {
     const ativa = comCiclo.ciclo?.ativa === true;
     const leadsCamp = leadsDaCampanha(leads, c.nome);
     const leadsHot = montaLeadsHot(leadsCamp);
-    const inicioISO = comCiclo.ciclo?.inicioISO || null;
-    // Fases do Funil Novo Katzer (Bitrix) — produto certo + período da campanha
+    const inicioMetaISO = comCiclo.ciclo?.inicioISO || null;
+    // Colchete [dd/mm/aa] do nome manda no filtro do funil (created_time Meta pode ser antigo)
+    const inicioISO = inicioFunilISO(c.nome, inicioMetaISO);
+    // Fases do Funil Novo Katzer (Bitrix) — produto certo + fase ATUAL (STAGE_ID)
     const fasesInfo = fasesPorCampanha(dealsBitrix, c.nome, leadsCamp, { inicioISO });
     return {
       id: c.id || c.nome,
       name: c.nome,
       inicio: comCiclo.dataSubiu || '—',
       inicioISO,
+      inicioMetaISO,
       gasto: brl(c.gasto),
       gastoNum: c.gasto,
       forms,
@@ -211,7 +214,7 @@ async function payloadApp({ incluirGestor = false } = {}) {
     leLeadsHoje().catch(() => ({ leads: [] })),
     leFeedDecisao(),
     listaDealsFunil({
-      limit: 300,
+      limit: 400,
       produtos: ['ALICERCE', 'PUNTA', 'GRANT', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'FORT MYERS', 'AMANAY'],
     }).catch(() => ({ ok: false, deals: [] })),
     metaInsightsPeriodo({ since: '2025-07-12' }).catch(() => ({ ok: false, data: [] })),
