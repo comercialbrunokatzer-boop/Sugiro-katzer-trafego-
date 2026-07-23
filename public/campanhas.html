@@ -44,6 +44,7 @@
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#0f2a24;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1}
   .err{color:var(--bad);text-align:center;padding:20px}
+  .trava-topo{background:rgba(212,101,90,.15);border:1px solid rgba(212,101,90,.4);color:#f0c2bc;border-radius:10px;padding:10px 12px;font-size:.78rem;font-weight:700;margin:0 0 12px;line-height:1.35}
   footer{margin-top:16px;text-align:center;color:var(--muted);font-size:.72rem}
 </style>
 </head>
@@ -52,6 +53,7 @@
   <div class="brand">Katzer · Painel de Campanhas</div>
   <h1>Decisão do dia</h1>
   <p class="sub">Lead de formulário · modo seguro · sem escrita automática na Meta</p>
+  <div class="trava-topo">TRAVA 1 — SEM BASE MÍNIMA: nunca escalar com &lt; 10 leads de formulário</div>
   <div class="nav">
     <a href="/ranking-campanhas">Ranking</a>
     <a href="/campanhas">Decisão</a>
@@ -73,6 +75,21 @@ function decOf(id){return (DECS||[]).find(d=>d.id===id)||null;}
 function card(r){
   const done=decOf(r.id);
   const ev=(r.evidencia||[]).map(e=>`<div class="ev">· ${e}</div>`).join('');
+  const leads=r.numeros?.leadsForm??r.numeros?.leadsGerenciador??r.numeros?.leadsApi7d??r.numeros?.leadsApi??null;
+  const escala=/escalar|duplicar/i.test(r.tipo||'');
+  const semBase=escala && leads!=null && leads<10;
+  const trava=semBase?`<div class="trava-topo" style="margin-top:10px">TRAVA 1 — SEM BASE MÍNIMA (${leads} leads · precisa 10). Só observar.</div>`:'';
+  const acoes=done?`<div class="done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:(semBase
+    ?`<div class="acoes"><button class="no" data-dec="agora-nao" style="grid-column:1/-1"><b>Observar — não escalar</b><small>Sem base mínima</small></button></div>`
+    :`<div class="acoes">
+      <button class="ok" data-dec="aplicar"><b>Aplicar</b><small>Registra</small></button>
+      <button class="warn" data-dec="ajustar"><b>Ajustar</b><small>Você decide</small></button>
+      <button class="no" data-dec="agora-nao"><b>Agora não</b><small>Espera</small></button>
+    </div>
+    <div class="ajuste">
+      <input placeholder="${r.valorDiaSugerido!=null?'Ex: R$ '+r.valorDiaSugerido+'/dia · ou descreva':'Descreva o ajuste'}">
+      <button data-conf>Confirmar ajuste</button>
+    </div>`);
   return `<article class="card" data-id="${r.id}">
     <div class="prod">${r.produto} · ${r.publico||''}</div>
     <div class="tit">${r.titulo}</div>
@@ -81,16 +98,7 @@ function card(r){
     <div class="bloco"><div class="lab">Evidência (formulário)</div>${ev}</div>
     <div class="bloco"><div class="lab">Recomendação</div><div class="txt">${r.recomendacao||''}</div></div>
     <div class="bloco"><div class="lab">Ação</div><div class="txt">${r.acao||''}</div></div>
-    ${done?`<div class="done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:`
-    <div class="acoes">
-      <button class="ok" data-dec="aplicar"><b>Aplicar</b><small>Registra</small></button>
-      <button class="warn" data-dec="ajustar"><b>Ajustar</b><small>Você decide</small></button>
-      <button class="no" data-dec="agora-nao"><b>Agora não</b><small>Espera</small></button>
-    </div>
-    <div class="ajuste">
-      <input placeholder="${r.valorDiaSugerido!=null?'Ex: R$ '+r.valorDiaSugerido+'/dia · ou descreva':'Descreva o ajuste'}">
-      <button data-conf>Confirmar ajuste</button>
-    </div>`}
+    ${trava}${acoes}
   </article>`;
 }
 
@@ -122,9 +130,14 @@ const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'h
 const api=(path)=>API_BASE+path;
 
 async function post(r,decisao,ajuste){
+  const leads=r.numeros?.leadsForm??r.numeros?.leadsGerenciador??r.numeros?.leadsApi??r.numeros?.leadsApi7d??null;
+  if(decisao==='aplicar' && /escalar|duplicar/i.test(r.tipo||'') && leads!=null && leads<10){
+    toast('TRAVA 1 — SEM BASE MÍNIMA (precisa 10 leads)');
+    return;
+  }
   const body={
     acao:'decisao', id:r.id, campanha:`${r.produto} · ${r.titulo}`,
-    tipo:r.tipo||'recomendacao', decisao, ajuste
+    tipo:r.tipo||'recomendacao', decisao, ajuste, leads
   };
   const res=await fetch(api('/api/placar-registrar'),{
     method:'POST', headers:{'Content-Type':'application/json'},

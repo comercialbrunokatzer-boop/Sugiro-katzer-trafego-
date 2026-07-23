@@ -70,6 +70,9 @@
   .mini b{color:var(--ink)}
   .ghost{margin-top:12px;border:1px solid var(--hair);background:transparent;color:var(--sub);border-radius:10px;padding:10px;width:100%;font-weight:700;font-family:inherit;cursor:pointer}
   .empty{color:var(--sub);font-size:.85rem;text-align:center;padding:12px}
+  .trava{background:rgba(224,118,92,.12);border:1px solid rgba(224,118,92,.45);border-radius:12px;padding:12px 14px;margin:0 0 12px}
+  .trava-t{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--late,#e0765c)}
+  .trava-s{font-size:.82rem;color:var(--ink);margin-top:6px;line-height:1.4}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#e8edeb;color:#0d1820;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
   .toast.show{opacity:1}
   footer{margin-top:18px;color:var(--sub);font-size:.7rem;text-align:center}
@@ -255,15 +258,18 @@ function renderDecisao(){
     return;
   }
 
-  body.innerHTML=`
-    <div class="sug">
-      <div class="lab">${s.tipo==='observar'?'⚪ SEM BASE - Observar':(s.semaforo?(s.semaforo.emoji+' '+s.semaforo.label):'Sugestão da IA')}</div>
-      <div class="tit">${s.titulo}</div>
-      ${s.recomendacao?`<div class="mot" style="font-weight:700;color:var(--gold,#d4ac60);margin-top:6px">${s.recomendacao}</div>`:''}
-      <div class="mot" style="white-space:pre-line;margin-top:8px">${s.motivo||''}</div>
-      ${s.alertaPublico?`<div class="mot" style="color:var(--late);margin-top:8px">⚠️ ${s.alertaPublico}</div>`:''}
-      ${s.cidade?`<div class="mot" style="margin-top:6px">Cidade: <b>${s.cidade}</b>${s.publico?' · Público: '+s.publico:''}</div>`:''}
-    </div>
+  const semBase = s.tipo==='observar' || (s.leads!=null && s.leads < 10);
+  const travaHtml = semBase ? `
+    <div class="trava">
+      <div class="trava-t">TRAVA 1 — SEM BASE MÍNIMA</div>
+      <div class="trava-s">Base: <b>${s.leads??0} leads</b> de formulário · precisa <b>10</b> pra escalar.<br>
+      Rotina é pra FAZER. Aqui é pra PENSAR. Sem base = <b>observar</b>, não queimar verba.</div>
+    </div>` : '';
+
+  const acoesHtml = semBase ? `
+    <div class="actions">
+      <button class="act no" data-dec="agora-nao" style="grid-column:1/-1"><span class="ic">⚪</span><b>Observar — não escalar</b><small>Registra que esperou base (≥10 leads)</small></button>
+    </div>` : `
     <div class="actions">
       <button class="act ok" data-dec="aplicar"><span class="ic">✅</span><b>Aplicar</b><small>Registra — você aplica na Meta</small></button>
       <button class="act warn" data-dec="ajustar"><span class="ic">✎</span><b>Ajustar</b><small>Você decide o valor</small></button>
@@ -272,7 +278,19 @@ function renderDecisao(){
     <div class="valor">
       <label>Valor por dia — você decide</label>
       <input id="valDia" type="text" inputmode="numeric" placeholder="Digite quanto quiser · ex: R$ 80" value="${s.valorDia!=null?('R$ '+s.valorDia):''}">
+    </div>`;
+
+  body.innerHTML=`
+    ${travaHtml}
+    <div class="sug">
+      <div class="lab">${s.tipo==='observar'?'⚪ SEM BASE - Observar':(s.semaforo?(s.semaforo.emoji+' '+s.semaforo.label):'Sugestão da IA')}</div>
+      <div class="tit">${s.titulo}</div>
+      ${s.recomendacao?`<div class="mot" style="font-weight:700;color:var(--gold,#d4ac60);margin-top:6px">${s.recomendacao}</div>`:''}
+      <div class="mot" style="white-space:pre-line;margin-top:8px">${s.motivo||''}</div>
+      ${s.alertaPublico?`<div class="mot" style="color:var(--late);margin-top:8px">⚠️ ${s.alertaPublico}</div>`:''}
+      ${s.cidade?`<div class="mot" style="margin-top:6px">Cidade: <b>${s.cidade}</b>${s.publico?' · Público: '+s.publico:''}</div>`:''}
     </div>
+    ${acoesHtml}
     <button class="ghost" id="btnVoltar2">← Voltar às campanhas</button>`;
 
   body.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>decidir(b.dataset.dec)));
@@ -281,6 +299,11 @@ function renderDecisao(){
 
 async function decidir(decisao){
   const s=ST.sugestaoPrincipal;if(!s)return;
+  // TRAVA 1 — cliente: não deixa mandar aplicar/escalar sem base
+  if(decisao==='aplicar' && (s.tipo==='escalar'||s.tipo==='mover'||s.tipo==='duplicar_escalar') && (s.leads==null||s.leads<10)){
+    toast('TRAVA 1 — SEM BASE MÍNIMA (precisa 10 leads)');
+    return;
+  }
   let ajuste='';
   if(decisao==='ajustar'){
     ajuste=($('#valDia')&&$('#valDia').value||'').trim();
@@ -290,7 +313,7 @@ async function decidir(decisao){
   }
   const r=await fetch(api('/api/placar-registrar'),{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({acao:'decisao',id:s.id,campanha:s.campanha,tipo:s.tipo||'mover',decisao,ajuste})
+    body:JSON.stringify({acao:'decisao',id:s.id,campanha:s.campanha,tipo:s.tipo||'mover',decisao,ajuste,leads:s.leads})
   }).then(x=>x.json()).catch(()=>({ok:false}));
   if(r.ok){toast('Registrado · Bruno avisado');VIEW='decisao';await load();}
   else toast(r.erro||'Não deu — tenta de novo');
