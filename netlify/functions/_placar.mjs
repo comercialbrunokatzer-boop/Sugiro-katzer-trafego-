@@ -2,6 +2,7 @@
 // Métrica principal: LEAD DE FORMULÁRIO da Meta (cadastro no anúncio).
 // NÃO conta: clique, link_click, conversa WhatsApp, impressão, engajamento.
 // NÃO soma action_types sobrepostos (lead + lead_grouped) — escolhe 1 por prioridade.
+import fs from 'node:fs';
 
 /**
  * Prioridade = o que o Gerenciador mostra como “Lead (formulário)”.
@@ -190,6 +191,24 @@ export function montaPlacar(data = []) {
   const totalLeads = campanhas.reduce((s, c) => s + (c.leadConfirmado ? c.leads : 0), 0);
   const cplMedio = totalLeads > 0 ? round2(totalGasto / totalLeads) : null;
   const inventario = inventariarAcoes(data);
+
+  // Em CI (prova do placar): anexa inventário sem precisar alterar o workflow.
+  if (process.env.CI && process.env.GITHUB_STEP_SUMMARY) {
+    try {
+      let diag = '\n### Inventário action_type (formulário)\n\n';
+      diag += `Fontes usadas: ${(inventario.fontesUsadas || []).join(', ') || '(nenhuma)'}\n\n`;
+      diag += '| action_type form. | soma |\n|---|--:|\n';
+      for (const x of inventario.formulariosNosTotais) {
+        diag += `| \`${x.action_type}\` | ${x.value} |\n`;
+      }
+      diag += '\n| Campanha | form. | fonte |\n|---|--:|---|\n';
+      for (const c of inventario.porCampanha) {
+        diag += `| ${c.nome} | ${c.leadsFormulario} | \`${c.fonteLead || '—'}\` |\n`;
+      }
+      fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, diag);
+      console.log(diag);
+    } catch { /* ignore */ }
+  }
 
   return {
     campanhas,
