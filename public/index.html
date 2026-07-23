@@ -232,8 +232,9 @@ function render(){
           ? `<button class="btn ghost" data-undo="${t.id}">desfazer</button>`
           : `<button class="btn" data-feito="${t.id}">Feito</button>`}
       </div>
+      ${t.id==='garimpo'&&!t.feito?`<div style="margin-top:8px;font-size:.8rem;color:var(--run);font-weight:700">⛏️ Meta Garimpo: 0 a 5+ leads · <u>NOME obrigatório</u></div>`:''}
       ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
-      ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
+      ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="${t.id==='garimpo'?'Nome do lead/cliente (OBRIGATÓRIO)':'Miniresumo (opcional) — o que rolou'}">`:''}`;
     }
     box.appendChild(el);
   });
@@ -261,7 +262,15 @@ document.addEventListener('click',async(e)=>{
     return;
   }
   const f=e.target.closest('[data-feito]');const u=e.target.closest('[data-undo]');
-  if(f){f.disabled=true;const id=f.dataset.feito;const nt=document.querySelector(`[data-note="${id}"]`);const nota=nt?nt.value:'';const r=await api({acao:'feito',tarefa:id,nota});if(r.ok){toast('✅ Registrado');load();}else{f.disabled=false;toast('Erro, tenta de novo');}}
+  if(f){
+    f.disabled=true;const id=f.dataset.feito;const nt=document.querySelector(`[data-note="${id}"]`);const nota=nt?nt.value.trim():'';
+    if(id==='garimpo' && nota.length<3){
+      f.disabled=false;toast('⛏️ Garimpo: digite o NOME do lead (obrigatório)');if(nt)nt.focus();return;
+    }
+    const r=await api({acao:'feito',tarefa:id,nota});
+    if(r.ok){toast(id==='garimpo'?'⛏️ Garimpo + nome registrados':'✅ Registrado');load();}
+    else{f.disabled=false;toast(r.erro||'Erro, tenta de novo');}
+  }
   if(u){const r=await api({acao:'desfazer',tarefa:u.dataset.undo});if(r.ok)load();}
 });
 document.querySelectorAll('#modo button').forEach(b=>b.addEventListener('click',async()=>{const r=await api({acao:'modo',modo:b.dataset.modo});if(r.ok)load();}));

@@ -4,6 +4,8 @@
 import { montaRanking, contaDiasNoAr, payloadPainelRanking } from './_ranking.mjs';
 import { montaRecomendacoes } from './_recomendacoes.mjs';
 import { classificaMetaResultado } from './_meta-status.mjs';
+import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
+import { enriqueceComQualidade } from './_qualidade.mjs';
 
 const GRAPH = () => process.env.META_GRAPH || 'https://graph.facebook.com/v20.0';
 const CONTA = () => process.env.META_AD_ACCOUNT || 'act_1150648749960943';
@@ -102,17 +104,57 @@ export async function rankingPreset(preset, { comDias = false } = {}) {
   return { ranking, meta: camp.meta };
 }
 
+function aplicaCplBomNoRanking(ranking, mapa) {
+  if (!ranking || !ranking.ok) return ranking;
+  const enriquecer = (rows) => (rows || []).map((r) => {
+    const e = enriqueceComQualidade({
+      nome: r.campanha,
+      id: r.campaignId || r.id,
+      gasto: r.gasto,
+      leads: r.leadsForm,
+      cpl: r.cplForm,
+    }, mapa);
+    return {
+      ...r,
+      cplBom: e.cplBom ?? null,
+      leadsBons: e.leadsBons ?? null,
+      cplBruto: e.cplBruto ?? r.cplForm,
+      semaforoBom: e.semaforoBom || null,
+    };
+  });
+  const rankingCpl = enriquecer(ranking.rankingCpl);
+  const rankingCplBom = [...rankingCpl]
+    .sort((a, b) => {
+      const ca = a.cplBom != null ? a.cplBom : (a.cplForm ?? Infinity);
+      const cb = b.cplBom != null ? b.cplBom : (b.cplForm ?? Infinity);
+      return ca - cb;
+    })
+    .map((r, i) => ({ ...r, pos: i + 1, metricaRank: r.cplBom != null ? 'cpl_bom' : 'cpl_form' }));
+  return {
+    ...ranking,
+    rankingCpl,
+    rankingCplBom,
+    top10Cpl: rankingCpl.slice(0, 10),
+    top10CplBom: rankingCplBom.slice(0, 10),
+    rankingVolumeCpl: enriquecer(ranking.rankingVolumeCpl),
+    amostraPequena: enriquecer(ranking.amostraPequena),
+  };
+}
+
 /**
  * Payload do painel:
  * - contaMaxima = ranking real (prints / histórico longo)
  * - operacional7d / historico30d = operação
+ * - ranking ordenado por CPL BOM (V6)
  */
 export async function montaPayloadRanking({ conferencia = true } = {}) {
-  const [max, op, hi] = await Promise.all([
+  const [max, op, hi, qualDoc] = await Promise.all([
     rankingPreset('maximum', { comDias: false }),
     rankingPreset('last_7d', { comDias: true }),
     rankingPreset('last_30d', { comDias: false }),
+    leQualidade().catch(() => ({ campanhas: [] })),
   ]);
+  const mapa = mapaQualidade(qualDoc);
 
   let conferenciaOut = null;
   if (conferencia) {
@@ -144,9 +186,9 @@ export async function montaPayloadRanking({ conferencia = true } = {}) {
   }
 
   const payload = payloadPainelRanking({
-    contaMaxima: max.ranking,
-    operacional: op.ranking,
-    historico: hi.ranking,
+    contaMaxima: aplicaCplBomNoRanking(max.ranking, mapa),
+    operacional: aplicaCplBomNoRanking(op.ranking, mapa),
+    historico: aplicaCplBomNoRanking(hi.ranking, mapa),
     conferencia: conferenciaOut,
   });
   payload.recomendacoes = montaRecomendacoes({

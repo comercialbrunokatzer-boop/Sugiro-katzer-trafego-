@@ -100,6 +100,7 @@ export function normalizaLead(l = {}) {
     marcadoPor: l.marcadoPor || null,
     fonte: l.fonte || 'demo',
     bitrixUrl: l.bitrixUrl || null,
+    corretor: l.corretor || l.corretorResponsavel || null,
   };
 }
 
@@ -107,7 +108,7 @@ export function normalizaLead(l = {}) {
  * Aplica 1 toque de qualidade num lead e recalcula totais por campanha.
  * @returns {{ lead, totaisCampanha, toast }}
  */
-export function marcaLead(leads = [], { leadId, qualidade, quem = 'Michel' } = {}) {
+export function marcaLead(leads = [], { leadId, qualidade, quem = 'Michel', corretor = null } = {}) {
   if (!QUALIDADE_TIPOS.includes(qualidade)) {
     throw new Error(`qualidade inválida (use ${QUALIDADE_TIPOS.join(' / ')})`);
   }
@@ -117,11 +118,13 @@ export function marcaLead(leads = [], { leadId, qualidade, quem = 'Michel' } = {
 
   const regra = qualidadeComRegraIngles(qualidade, lista[idx].campanha);
   const ant = lista[idx].qualidade;
+  const corretorFinal = String(corretor || quem || 'Michel').trim() || 'Michel';
   lista[idx] = {
     ...lista[idx],
     qualidade: regra.qualidade,
     marcadoEm: new Date().toISOString(),
     marcadoPor: quem,
+    corretor: corretorFinal,
     inglesForcouCurioso: regra.forcouCurioso || null,
   };
 
@@ -175,8 +178,9 @@ export function payloadCacador(leads = [], { agora = Date.now() } = {}) {
   return {
     ok: true,
     titulo: 'CAÇAR LEADS DE HOJE - 2 TOQUES (vai pro Bitrix)',
-    aviso: '1 toque marca qualidade · alimenta CPL BOM · Bitrix na sequência · sem EN = Curioso',
+    aviso: '1 toque marca qualidade · corretor responsável · alimenta CPL BOM · Bitrix · pling até marcar',
     toastOk: 'Registrado - CPL BOM recalculado',
+    corretores: ['Michel', 'Helena', 'Carol', 'Bruno'],
     regraIngles: 'Sem estrutura pra atender em inglês → lead EN continua Curioso',
     leads: lista.map((l) => ({
       ...l,

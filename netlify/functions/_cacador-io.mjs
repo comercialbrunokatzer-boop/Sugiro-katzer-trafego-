@@ -48,9 +48,9 @@ export async function salvaLeadsHoje(leads, { fonte = 'blobs' } = {}) {
 /**
  * 1 toque: marca lead + sincroniza totais da campanha em qualidade-v1.
  */
-export async function marcaLeadESincroniza({ leadId, qualidade, quem = 'Michel' } = {}) {
+export async function marcaLeadESincroniza({ leadId, qualidade, quem = 'Michel', corretor = null } = {}) {
   const { leads } = await leLeadsHoje();
-  const result = marcaLead(leads, { leadId, qualidade, quem });
+  const result = marcaLead(leads, { leadId, qualidade, quem, corretor });
   await salvaLeadsHoje(result.leads, { fonte: 'cacador' });
 
   // Sincroniza contagem da campanha → CPL BOM

@@ -3,115 +3,102 @@ Katzer OS · Tráfego · Rotina + Painel + Gestor
 ================================================
 NÃO inventar. NÃO usar link embed.fbsbx.com/playables (não é ZIP).
 NÃO criar site Netlify aleatório. NÃO queimar token em chat.
+NÃO MUDAR MAIS depois deste V6.0 FINAL.
 
-ORDEM DO BRUNO (colar pro executor):
-  "Sobe a pasta MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/index.html como
-   index.html na raiz do Netlify e o resto conforme pastas. Prompt dentro."
+ORDEM DO BRUNO (WhatsApp do executor):
+  1) Baixa ZIP: KATZER-V6-FINAL-TUDO-PUBLICO.zip
+  2) MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/index.html → index.html na raiz
+     do Netlify rotina-produtiva-michel.netlify.app (corrige 404)
+  3) MICHEL-PAINEL-2-E-3/painel.html → /painel.html
+  4) BRUNO-GESTOR/gestor.html → /gestor.html
+  5) Lê este prompt. Manda link público sem 404.
 
 ────────────────────────────────────────
 0. RESPOSTAS FECHADAS (não reperguntar)
 ────────────────────────────────────────
 
-1) Rotina do Michel atualiza automática?
-   SIM. Persistência automática (store do dia). Gestor /gestor.html
-   atualiza sozinho (poll). Você NÃO precisa mandar nada.
-
-2) Como gestor ficou?
-   /gestor.html — público no celular.
-   Vê ao vivo · modifica campanha (pausar/escalar) · edita Garimpo ·
-   relatório de tarde auto (clica 16h e olha).
-
-3) Recado WhatsApp a cada movimento?
-   SIM, automático via webhook.
-   Cada Feito · cada BOM · cada Garimpo (com nome/nota) → WhatsApp do Bruno.
-   LIGAR Evolution API (env):
-     EVOLUTION_API_URL · EVOLUTION_API_KEY · EVOLUTION_INSTANCE
-     WHATSAPP_CEO
-   Fallback: Z-API (ZAPI_INSTANCE / ZAPI_TOKEN) se Evolution ausente.
-
-4) Relatório dos clientes / tarde?
-   Auto no gestor. Bruno clica 16h e olha — Michel NÃO precisa mandar.
-   Botão opcional: "Enviar relatório 16h no WhatsApp".
+1) Rotina atualiza automática? SIM (store + poll do gestor).
+2) Gestor = /gestor.html (ao vivo, pausar/escalar, editar Garimpo, relatório 16h).
+3) WhatsApp a cada movimento? SIM (Feito · BOM · Garimpo com nome).
+4) Relatório 16h auto no gestor + botão enviar WA.
 
 ────────────────────────────────────────
-1. ESTRUTURA DO ZIP (pastas)
+1. ESTRUTURA DO ZIP
 ────────────────────────────────────────
 
-PASTA MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/
-  → index.html
-  DESTINO: raiz do site Netlify rotina-produtiva-michel.netlify.app
-  CONTEÚDO:
-    1. Rotina diária do Michel (sem buraco; Garimpo 10:15)
-    2. Quadradinho 1 da campanha = SÓ OLHAR → abre Painel 2
+PASTA MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/ → index.html (raiz Rotina)
+  · Rotina diária sem buraco · Garimpo 10:15 · meta 0–5+ · NOME obrigatório
+  · Quadradinho 1 campanha = SÓ OLHAR → abre Painel 2
 
-PASTA MICHEL-PAINEL-2-E-3/
-  → painel.html
-  DESTINO: campanhas-katzer / dashing-elf-41a723  em /painel.html (e /campanhas)
-  CONTEÚDO:
-    Painel 2 Execução: filtros Total | Julho | Ativas + insights + decisão
-    Painel 3 Caçador flutuante com som (pling/bipe) até marcar qualidade
+PASTA MICHEL-PAINEL-2-E-3/ → painel.html
+  · Painel 2: filtros SÓ Total | Julho | Ativas + insights + decisão
+  · Ranking por CPL BOM (gasto ÷ Bom+Comprador)
+  · Painel 3: Caçador flutuante + som pling + corretor responsável
 
-PASTA BRUNO-GESTOR/
-  → gestor.html
-  DESTINO: rotina-produtiva-michel.netlify.app/gestor.html
-  CONTEÚDO:
-    - Ao vivo Michel agora
-    - Rotina do Michel (acompanhar / modificar · editar Garimpo)
-    - Gestor de tráfego: fez / não fez + Pausar / Escalar + Abrir Painel 2
-    - Relatório de tarde auto + botão Enviar 16h no WhatsApp
-
-PROMPT-FINAL-V6-EXECUTOR.txt = este arquivo
+PASTA BRUNO-GESTOR/ → gestor.html
+  · Ao vivo · Pausar/Escalar · editar Garimpo · relatório 16h + botão WA
 
 ────────────────────────────────────────
-2. DEPLOY (ordem fixa)
+2. WEBHOOKS / AUTO (já no código + env)
+────────────────────────────────────────
+
+WhatsApp gestor (cada movimento):
+  Evolution: EVOLUTION_API_URL · EVOLUTION_API_KEY · EVOLUTION_INSTANCE
+  Fallback Z-API: ZAPI_INSTANCE · ZAPI_TOKEN · WHATSAPP_CEO
+
+Bitrix → Caçador:
+  POST /api/webhook-bitrix
+  Header: x-bitrix-secret = BITRIX_WEBHOOK_SECRET
+  Body: { nome, telefone, campanha, cidade?, bitrixUrl? }
+
+Persistência auto (gestor atualiza sozinho):
+  Netlify Blobs (produção atual).
+  Opcional Supabase espelho: SUPABASE_URL · SUPABASE_SERVICE_KEY
+  (se setado no futuro — hoje Blobs basta; Bruno não manda nada).
+
+────────────────────────────────────────
+3. DEPLOY (ordem fixa)
 ────────────────────────────────────────
 
 Repo: comercialbrunokatzer-boop/Sugiro-katzer-trafego-
-Branch: cursor/ranking-cpl-formulario-f7d6  (ou a que Bruno apontar)
+Branch: cursor/ranking-cpl-formulario-f7d6
 
-1) Copiar/alinhar arquivos do ZIP em public/ do repo:
-   - MICHEL-ROTINA…/index.html  →  public/index.html (hub Rotina)
-   - MICHEL-PAINEL…/painel.html →  public/painel.html (+ redirect /painel)
-   - BRUNO-GESTOR/gestor.html   →  public/gestor.html (+ redirect /gestor)
+Alinhar ZIP → public/ e:
+  gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=rotina-produtiva-michel
+  gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=dashing-elf-41a723
 
-2) Deploy DOS DOIS sites (não inventar slug):
-   gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=rotina-produtiva-michel
-   gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=dashing-elf-41a723
-
-3) Env WhatsApp (Netlify site Rotina + Campanhas):
-   EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE, WHATSAPP_CEO
-   (ou Z-API já existente como fallback)
-
-4) Testar (tem que ser HTTP 200, NÃO Page Not Found):
-   https://rotina-produtiva-michel.netlify.app/
-   https://rotina-produtiva-michel.netlify.app/gestor.html
-   https://dashing-elf-41a723.netlify.app/painel.html
+Testar HTTP 200:
+  https://rotina-produtiva-michel.netlify.app/
+  https://rotina-produtiva-michel.netlify.app/gestor.html
+  https://dashing-elf-41a723.netlify.app/painel.html
 
 ────────────────────────────────────────
-3. REGRAS DE PRODUTO (não negociar)
+4. REGRAS DE PRODUTO
 ────────────────────────────────────────
 
-Rotina = DISCIPLINA · visualizar (sem Aplicar / sem escalar / sem Caçador)
-Painel isolado = EXECUTAR (2+3: decisão + caçador flutuante)
-Lead = formulário Meta OU WhatsApp (cliente chamou). Clique NUNCA.
-CPL BOM = gasto ÷ (Bom + Comprador). Sem caça = volume vazio.
-TRAVA SEM BASE: <10 leads não escala.
-PUBLICO EXTERNO: EUA/MIAMI/PORTUGAL não escala.
-Sem estrutura EN → lead EN = Curioso.
-Nome campanha: [PRODUTO]_[CIDADE]_[CONSTRUTORA]_[PÚBLICO]_[DATA]_[TIPO]
-Fort Myers = Penha · Amanay = Itapoá · Barra View = Santer · Grant Home = Barra Velha/Rogga
-Mix 80%: Amanay 30 · FortMyers 20 · BarraView 15 · GrantHome 15
+Rotina = DISCIPLINA · visualizar
+Painel isolado = EXECUTAR (2+3)
+Lead = form Meta OU WhatsApp (cliente chamou). Clique NUNCA.
+CPL BOM = gasto ÷ (Bom + Comprador)
+Ranking = por CPL BOM (fallback form)
+Filtros painel = só Total | Julho | Ativas
+Garimpo 10:15 · meta 0–5+ · NOME obrigatório no Feito
+Caçador = flutuante + pling + corretor responsável
+TRAVA <10 leads não escala · PUBLICO EXTERNO não escala
+Fort Myers=Penha · Amanay=Itapoá · Barra View=Santer · Grant Home=Barra Velha
 
 ────────────────────────────────────────
-4. CHECKLIST ANTES DE AVISAR BRUNO
+5. CHECKLIST
 ────────────────────────────────────────
 
-[ ] / na Rotina não dá 404
-[ ] Placar Michel: 8 tarefas, Garimpo 10:15, Campanhas = só olhar
-[ ] Painel: Total|Julho|Ativas + Decisão + Caçador float com som
-[ ] /gestor.html: ao vivo + Pausar/Escalar + editar Garimpo + relatório 16h + botão WA
-[ ] WhatsApp: Feito + BOM + Garimpo (Evolution → Z-API)
+[ ] / Rotina sem 404
+[ ] Garimpo 10:15 + nome obrigatório + meta 0–5+
+[ ] Painel Total|Julho|Ativas + Caçador pling + corretor
+[ ] Ranking por CPL BOM
+[ ] /gestor.html completo
+[ ] WhatsApp Feito/BOM/Garimpo
+[ ] /api/webhook-bitrix
 [ ] npm test passa
-[ ] Status final: PRONTO PARA TESTE DO BRUNO
+[ ] PRONTO PARA TESTE DO BRUNO
 
 FIM.

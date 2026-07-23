@@ -35,6 +35,7 @@ export async function handler(event) {
         leadId,
         qualidade,
         quem: body.quem || 'Michel',
+        corretor: body.corretor || body.corretorResponsavel || body.quem || 'Michel',
       });
       const payload = payloadCacador(result.leads);
       let whats = { enviado: false, motivo: 'não BOM' };

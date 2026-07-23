@@ -113,7 +113,9 @@ export function montaRanking(data = [], {
       erro: 'Dados da Meta indisponíveis.',
       totais: null,
       rankingCpl: [],
+      rankingCplBom: [],
       top10Cpl: [],
+      top10CplBom: [],
       rankingVolumeCpl: [],
       amostraPequena: [],
       fora: [],
@@ -153,8 +155,19 @@ export function montaRanking(data = [], {
       veredito: vereditoLinha(r, { pos: i + 1, noVolume: true }),
     }));
 
+  // Ranking principal V6: por CPL BOM quando houver qualidade; senão CPL form.
+  const rankingCplBom = rankingBase
+    .map((r) => ({ ...r }))
+    .sort((a, b) => {
+      const ca = a.cplBom != null ? a.cplBom : (a.cplForm ?? Infinity);
+      const cb = b.cplBom != null ? b.cplBom : (b.cplForm ?? Infinity);
+      return ca - cb;
+    })
+    .map((r, i) => ({ ...r, pos: i + 1, metricaRank: r.cplBom != null ? 'cpl_bom' : 'cpl_form' }));
+
   const top10Cpl = rankingBase.slice(0, 10);
   const topVolume = rankingVolumeCpl.slice(0, 10);
+  const top10CplBom = rankingCplBom.slice(0, 10);
 
   const fora = comGasto.filter((r) => !r.leadConfirmado || r.leadsForm === 0);
 
@@ -188,7 +201,9 @@ export function montaRanking(data = [], {
       cplMedioForm: cplMedio,
     },
     rankingCpl: rankingBase,
+    rankingCplBom,
     top10Cpl,
+    top10CplBom,
     rankingVolumeCpl: topVolume,
     amostraPequena,
     fora: fora.map((r) => ({
@@ -207,8 +222,8 @@ export function payloadPainelRanking({ operacional, historico, contaMaxima, conf
   return {
     ok: !!(operacional?.ok || historico?.ok || contaMaxima?.ok),
     geradoEm: new Date().toISOString(),
-    metricaPrincipal: 'lead_formulario',
-    regra: 'Conta form OU WhatsApp (cliente chamou) · nunca clique · CPL = spend / resultados',
+    metricaPrincipal: 'cpl_bom',
+    regra: 'Ranking por CPL BOM (gasto÷Bom+Comprador) quando houver caça · senão CPL form · nunca clique',
     /** Ranking real da conta (presets longos) — o que os prints do Gerenciador mostram. */
     contaMaxima: contaMaxima || null,
     operacional7d: operacional || null,

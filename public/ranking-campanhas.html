@@ -50,8 +50,8 @@
 <body>
 <header>
   <div class="brand">Katzer · Tráfego</div>
-  <h1>Ranking · CPL formulário</h1>
-  <p class="sub" id="subModo">Lead de formulário Meta · nunca clique</p>
+  <h1>Ranking · CPL BOM</h1>
+  <p class="sub" id="subModo">Ordenado por CPL BOM (Bom+Comprador) · fallback form · nunca clique</p>
 </header>
   <div class="nav" id="navModo" style="display:flex;gap:8px;padding:0 16px 8px;max-width:720px;margin:0 auto"></div>
   <div class="tabs">
@@ -83,11 +83,13 @@ function bloco(titulo, rows, {volume=false}={}){
           <div class="nome"><span class="pos">${r.pos}º</span> ${r.campanha}</div>
           <div class="meta">${r.cidadeProduto||'—'} · ${r.diasNoAr!=null?(r.diasNoAr+' dia(s)'):'máx. conta'}</div>
         </div>
-        <div class="cpl ${stClass(r.status)}">${brl(r.cplForm)}</div>
+        <div class="cpl ${stClass(r.status)}">${brl(r.cplBom!=null?r.cplBom:r.cplForm)}</div>
       </div>
       <div class="chips">
         <span class="chip">${r.leadsForm} form.</span>
+        ${r.leadsBons!=null?`<span class="chip">${r.leadsBons} BOM</span>`:''}
         <span class="chip">${brl(r.gasto)}</span>
+        ${r.cplBom!=null?`<span class="chip">CPL BOM ${brl(r.cplBom)}</span>`:`<span class="chip">CPL form ${brl(r.cplForm)}</span>`}
         <span class="chip ${stClass(r.status)}">${r.veredito||r.status}</span>
         ${volume?'<span class="chip">CPL ≤ R$ 40</span>':''}
       </div>
@@ -128,18 +130,18 @@ function render(){
     confHtml=`<div class="conf"><b>Conferência BR_SC (7d):</b> API ${br?.leads??'—'} form. · ref. 9
       · ${conf.notaBrSc||''}</div>`;
   }
-  const rowsCpl = (blk.top10Cpl && blk.top10Cpl.length) ? blk.top10Cpl : (blk.rankingCpl||[]).slice(0,10);
+  const rowsBom = (blk.top10CplBom && blk.top10CplBom.length) ? blk.top10CplBom : ((blk.rankingCplBom||blk.top10Cpl||blk.rankingCpl||[]).slice(0,10));
   app.innerHTML = confHtml + `
     <div class="totais">
       <div class="t"><span>Gasto</span><b>${brl(t.totalGasto)}</b></div>
       <div class="t"><span>Leads form.</span><b>${t.totalLeadsForm??0}</b></div>
       <div class="t"><span>CPL méd.</span><b>${brl(t.cplMedioForm)}</b></div>
     </div>
-    ${bloco('TOP 10 · melhor CPL formulário', rowsCpl)}
+    ${bloco('TOP 10 · melhor CPL BOM', rowsBom)}
     ${bloco('Volume com CPL saudável (≤ R$ 40)', blk.rankingVolumeCpl, {volume:true})}
     ${blk.amostraPequena?.length?bloco('Amostra pequena (&lt; 3 leads)', blk.amostraPequena.slice(0,5)):''}
   `;
-  $('#ft').textContent = `${blk.periodo} · leitura ${blk.horarioLeitura||'—'} · ${blk.conta||''} · lead = formulário`;
+  $('#ft').textContent = `${blk.periodo} · leitura ${blk.horarioLeitura||'—'} · ranking por CPL BOM · ${blk.conta||''}`;
 }
 
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';

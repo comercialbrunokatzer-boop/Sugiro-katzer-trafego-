@@ -158,6 +158,13 @@ export async function handler(event) {
     const t = TAREFAS.find((x) => x.id === body.tarefa);
     if (!t) return json(400, { ok: false, erro: 'tarefa desconhecida' });
     const nota = (body.nota || '').toString().slice(0, 400);
+    // V6 FINAL: Garimpo 10:15 — meta 0–5+ · NOME obrigatório
+    if (t.id === 'garimpo' && nota.trim().length < 3) {
+      return json(400, {
+        ok: false,
+        erro: 'Garimpo exige NOME do lead/cliente (mín. 3 caracteres). Meta: 0 a 5+ leads.',
+      });
+    }
     estado.tarefas[t.id] = { min: now.min, hora: now.hm, nota };
     await salvaEstado(estado);
     const dif = now.min - previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
@@ -165,9 +172,7 @@ export async function handler(event) {
     // V6 fechado: CADA Feito pinga WhatsApp (não só atraso).
     let msg = `✅ Michel — *${t.nome}* · feito ${now.hm} · ${emojiDif(dif)} ${modoIco}`;
     if (t.id === 'garimpo') {
-      msg += nota
-        ? `\n⛏️ Garimpo: ${nota}`
-        : '\n⛏️ Garimpo concluído — registre o nome do lead/cliente na nota quando houver';
+      msg += `\n⛏️ Garimpo (meta 0–5+): *${nota.trim()}*`;
     } else if (nota) {
       msg += `\n📝 ${nota}`;
     }

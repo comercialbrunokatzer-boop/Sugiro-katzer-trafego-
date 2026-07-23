@@ -48,6 +48,9 @@
   /* Caçador */
   .cac-head{font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin:18px 0 8px}
   .cac-sub{font-size:.75rem;color:var(--muted);margin:0 0 10px}
+  .corretor-bar{display:flex;gap:8px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+  .corretor-bar label{font-size:.72rem;color:var(--muted);font-weight:700}
+  .corretor-bar select{border:1px solid var(--line);background:#122c26;color:var(--ink);border-radius:10px;padding:8px 10px;font-family:inherit;font-size:.8rem}
   .lead{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:0 0 10px}
   .lead .ln{font-size:.88rem;font-weight:700;line-height:1.35}
   .lead .meta{font-size:.72rem;color:var(--muted);margin-top:4px}
@@ -97,6 +100,15 @@
 
   <div class="qbox" id="quad2">
     <div class="qhead">③ Painel 3 — Caçador flutuante (pling)</div>
+    <div class="corretor-bar" id="corretorBar">
+      <label for="corretorSel">Corretor responsável</label>
+      <select id="corretorSel">
+        <option value="Michel">Michel</option>
+        <option value="Helena">Helena</option>
+        <option value="Carol">Carol</option>
+        <option value="Bruno">Bruno</option>
+      </select>
+    </div>
     <div id="cacador"></div>
   </div>
 
@@ -176,6 +188,10 @@ function bipeChato(){
   }catch(_){}
 }
 
+function corretorAtual(){
+  const s=document.getElementById('corretorSel');
+  return (s&&s.value)||'Michel';
+}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
 function decOf(id){return (DECS||[]).find(d=>d.id===id)||null;}
@@ -251,7 +267,7 @@ function leadCard(l){
   ).join('');
   return `<article class="lead ${l.qualidade?'done-mark':''}" data-lead="${l.id}">
     <div class="ln">${l.linha||l.nome}</div>
-    <div class="meta">${l.cidade||''}${l.qualidade?' · marcado: '+l.qualidade:''}${l.bitrixUrl?' · <a href="'+l.bitrixUrl+'" style="color:var(--gold)">Bitrix</a>':''}</div>
+    <div class="meta">${l.cidade||''}${l.corretor?' · corretor '+l.corretor:''}${l.qualidade?' · marcado: '+l.qualidade:''}${l.bitrixUrl?' · <a href="'+l.bitrixUrl+'" style="color:var(--gold)">Bitrix</a>':''}</div>
     <div class="btns">${btns}</div>
   </article>`;
 }
@@ -270,7 +286,7 @@ function bindQualidade(root, after){
         el.querySelectorAll('button').forEach(x=>x.disabled=true);
         const res=await fetch(api('/api/cacador'),{
           method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({leadId:id,qualidade,quem:'Michel'})
+          body:JSON.stringify({leadId:id,qualidade,quem:'Michel',corretor:corretorAtual()})
         }).then(x=>x.json()).catch(()=>({ok:false}));
         if(res.ok){
           toast(res.toast||'Registrado - CPL BOM recalculado');
@@ -297,7 +313,7 @@ function renderFloatLead(){
   box.innerHTML=`
     <div class="fl-t">🔔 Lead ao vivo · ${pend.length} pendente(s)</div>
     <div class="fl-n">${l.nome||'Lead'}</div>
-    <div class="fl-s">${l.campanha||''}${l.cidade?' · '+l.cidade:''} · marca qualidade</div>
+    <div class="fl-s">${l.campanha||''}${l.cidade?' · '+l.cidade:''} · corretor: ${corretorAtual()}</div>
     <div class="fl-btns" data-lead="${l.id}">
       ${(l.botoes||[{tipo:'bom',label:'🟢 Bom'},{tipo:'curioso',label:'🟡 Curioso'},{tipo:'errado',label:'🔴 Errado'},{tipo:'comprador',label:'💰 Comprador'}]).map(b=>
         `<button type="button" data-q="${b.tipo}">${b.label}</button>`
