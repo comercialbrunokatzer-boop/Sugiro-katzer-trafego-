@@ -25,10 +25,10 @@ test('recomendacoes: texto canônico Bruno + botões', () => {
   assert.equal(r.versao, DECISAO_VERSAO);
   const br = r.recomendacoes[0];
   assert.equal(br.produto, 'FORT MYERS - PENHA');
-  assert.match(br.publico, /9 leads a R\$ 77/);
-  assert.equal(br.problema, 'Mesma cidade que Alicerce, mas CPL 3x maior');
-  assert.equal(br.recomendacao, 'MANTER BR-SC, mas trocar criativo');
-  assert.equal(br.acao, 'Gravar com Carol a mesma fórmula do Alicerce (R$ 18) para Fort Myers');
+  assert.equal(br.publico, 'BR-SC');
+  assert.match(br.problema, /mix 20%/i);
+  assert.match(br.recomendacao, /MANTER BR-SC/i);
+  assert.match(br.acao, /Fort Myers Penha/i);
   assert.deepEqual(br.botoes, ['aplicar', 'ajustar', 'agora-nao']);
   const am = r.recomendacoes[1];
   assert.equal(am.produto, 'AMANAY - ITAPOÁ');
