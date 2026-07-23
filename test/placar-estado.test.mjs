@@ -6,8 +6,8 @@ import {
 } from '../netlify/functions/_placar-estado.mjs';
 
 const data = [
-  // messaging só — form não confirmado
-  { campaign_name: 'FortMyers_MSG', spend: '100',
+  // WhatsApp conta (cliente chamou) — CPL alto, não escala vs BR_SC
+  { campaign_name: 'FortMyers_MSG', spend: '500',
     actions: [{ action_type: 'onsite_conversion.messaging_conversation_started_7d', value: '10' }] },
   // BR_SC com base (>=10) e CPL bom → pode escalar
   { campaign_name: 'FortMyers_BR_SC', spend: '200',
@@ -15,7 +15,7 @@ const data = [
   // Portugal 10 leads mas público fora do BR em Piçarras → NÃO escala
   { campaign_name: 'FortMyers PORTUGAL', spend: '162.20',
     actions: [{ action_type: 'lead', value: '10' }] },
-  // gastou, 0 form → revisar
+  // gastou, 0 form/wa → revisar
   { campaign_name: 'FortMyers ESPANHA', spend: '55.99', actions: [] },
   // 3 leads CPL barato → observar SEM BASE
   { campaign_name: '[FortMyers_EUA_Americanos]', spend: '21',
@@ -24,6 +24,9 @@ const data = [
 
 test('montaSugestoes: escala só com base; Portugal/Americanos não escalam', () => {
   const p = montaPlacar(data);
+  const msg = p.campanhas.find((c) => c.nome === 'FortMyers_MSG');
+  assert.equal(msg.leads, 10); // WhatsApp conta
+  assert.equal(msg.tipoResultado, 'whatsapp');
   const sug = montaSugestoes(p);
   const esc = sug.filter((s) => s.tipo === 'escalar').map((s) => s.campanha);
   const obs = sug.filter((s) => s.tipo === 'observar').map((s) => s.campanha);

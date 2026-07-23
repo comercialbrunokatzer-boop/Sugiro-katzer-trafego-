@@ -128,8 +128,9 @@ export async function handler(event) {
 
   const body = {
     ok: true,
-    metricaPrincipal: 'lead_formulario',
+    metricaPrincipal: 'formulario_ou_whatsapp',
     metricaQualidade: 'cpl_bom = gasto ÷ (bom + comprador)',
+    regraResultado: 'Conta: formulário OU conversa WhatsApp (cliente chamou). Clique não.',
     decisaoVersao: DECISAO_VERSAO,
     modoCplDefault: 'bom',
     data: now.data,

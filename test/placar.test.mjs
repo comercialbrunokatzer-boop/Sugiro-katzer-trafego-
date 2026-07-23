@@ -5,7 +5,7 @@ import {
 } from '../netlify/functions/_placar.mjs';
 
 const data = [
-  // messaging NÃO conta; lead_grouped sim (não soma os dois)
+  // form ganha do WhatsApp; não soma os dois
   { campaign_name: 'FortMyers_BR_SC', spend: '731.91',
     actions: [
       { action_type: 'onsite_conversion.messaging_conversation_started_7d', value: '10' },
@@ -29,22 +29,38 @@ const data = [
     ] },
 ];
 
-test('extraiLeadsFormulario: prioridade lead_grouped; IGNORA messaging e clique; NÃO soma lead+grouped', () => {
-  assert.equal(extraiLeadsFormulario(data[0]).leads, 9); // não 9+9+10
+test('extraiLeadsFormulario: form OU WhatsApp; IGNORA clique; NÃO soma form+wa', () => {
+  assert.equal(extraiLeadsFormulario(data[0]).leads, 9); // form ganha do messaging 10
   assert.equal(extraiLeadsFormulario(data[0]).fonte, 'onsite_conversion.lead_grouped');
+  assert.equal(extraiLeadsFormulario(data[0]).tipo, 'formulario');
   assert.equal(extraiLeadsFormulario(data[0]).confirmado, true);
   assert.equal(extraiLeadsFormulario(data[1]).leads, 0);
   assert.equal(extraiLeadsFormulario(data[1]).confirmado, false); // só clique
-  assert.match(extraiLeadsFormulario(data[1]).aviso, /Não foi possível confirmar/);
+  assert.match(extraiLeadsFormulario(data[1]).aviso, /Só clique/);
   assert.equal(extraiLeadsFormulario(data[2]).leads, 16);
   assert.equal(extraiLeadsFormulario(data[5]).leads, 2);
   assert.equal(extraiLeadsFormulario(data[5]).fonte, 'lead');
   assert.equal(extraiLeads(data[5]), 2);
 });
 
-test('montaPlacar: CPL só com formulário confirmado; clique não entra', () => {
+test('WhatsApp conta quando cliente chamou (sem form)', () => {
+  const r = extraiLeadsFormulario({
+    campaign_name: 'Lead Michel WA',
+    spend: '100',
+    actions: [
+      { action_type: 'link_click', value: '80' },
+      { action_type: 'onsite_conversion.messaging_conversation_started_7d', value: '14' },
+    ],
+  });
+  assert.equal(r.leads, 14);
+  assert.equal(r.tipo, 'whatsapp');
+  assert.equal(r.confirmado, true);
+  assert.ok(!/click/i.test(r.fonte));
+});
+
+test('montaPlacar: CPL com form ou WhatsApp; clique não entra', () => {
   const p = montaPlacar(data);
-  assert.equal(p.metrica, 'lead_formulario');
+  assert.equal(p.metrica, 'formulario_ou_whatsapp');
   const brsc = p.campanhas.find((c) => c.nome === 'FortMyers_BR_SC');
   assert.equal(brsc.leads, 9);
   assert.equal(brsc.cpl, 81.32); // 731.91/9
@@ -54,7 +70,6 @@ test('montaPlacar: CPL só com formulário confirmado; clique não entra', () =>
   const portugal = p.campanhas.find((c) => c.nome === 'FortMyers cidades PORTUGAL');
   assert.equal(portugal.leads, 0);
   assert.equal(portugal.cpl, null); // não CPL com clique
-  // total confirmado: 9 + 0 + 16 + 0 + 0 + 2 = 27
   assert.equal(p.totalLeads, 27);
   assert.ok(p.fontesLead.includes('onsite_conversion.lead_grouped'));
 });
@@ -78,7 +93,7 @@ test('campanha inativa filtrada; CPL null sem formulário', () => {
   assert.equal(soClique.leads, 0);
   assert.equal(soClique.cpl, null);
   assert.equal(soClique.leadConfirmado, false);
-  assert.match(soClique.avisoLead, /Não foi possível confirmar/);
+  assert.match(soClique.avisoLead, /Só clique/);
 });
 
 test('inventariarAcoes lista action_types sem misturar', () => {
@@ -88,9 +103,9 @@ test('inventariarAcoes lista action_types sem misturar', () => {
   assert.ok(inv.fontesUsadas.includes('onsite_conversion.lead_grouped'));
 });
 
-test('resumoPlacarWhats fala em cadastro form., não clique', () => {
+test('resumoPlacarWhats: form ou WhatsApp, nunca clique', () => {
   const txt = resumoPlacarWhats(montaPlacar(data));
-  assert.match(txt, /cadastro/);
-  assert.match(txt, /formulário/);
+  assert.match(txt, /form OU WhatsApp|cliente chamou/i);
+  assert.match(txt, /clique não/i);
   assert.doesNotMatch(txt, /muitos cliques/i);
 });

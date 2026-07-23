@@ -174,7 +174,11 @@ export function montaRanking(data = [], {
     ok: true,
     periodo,
     metrica: 'lead_formulario',
-    actionTypesAceitos: ['onsite_conversion.lead_grouped', 'lead'],
+    actionTypesAceitos: [
+      'onsite_conversion.lead_grouped', 'lead',
+      'onsite_conversion.messaging_conversation_started_7d',
+      'onsite_conversion.messaging_first_reply',
+    ],
     horarioLeitura,
     conta,
     totais: {
@@ -204,7 +208,7 @@ export function payloadPainelRanking({ operacional, historico, contaMaxima, conf
     ok: !!(operacional?.ok || historico?.ok || contaMaxima?.ok),
     geradoEm: new Date().toISOString(),
     metricaPrincipal: 'lead_formulario',
-    regra: 'CPL_FORM = spend / leads_de_formulario · nunca clique',
+    regra: 'Conta form OU WhatsApp (cliente chamou) · nunca clique · CPL = spend / resultados',
     /** Ranking real da conta (presets longos) — o que os prints do Gerenciador mostram. */
     contaMaxima: contaMaxima || null,
     operacional7d: operacional || null,

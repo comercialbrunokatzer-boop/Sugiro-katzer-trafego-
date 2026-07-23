@@ -1,13 +1,15 @@
 // Núcleo do PLACAR DE CAMPANHAS (arquivo "_" = NÃO vira função).
-// Métrica principal: LEAD DE FORMULÁRIO da Meta (cadastro no anúncio).
-// NÃO conta: clique, link_click, conversa WhatsApp, impressão, engajamento.
-// NÃO soma action_types sobrepostos (lead + lead_grouped) — escolhe 1 por prioridade.
+// Métrica que CONTA (Bruno):
+//   1) Cadastro de formulário Meta  OU
+//   2) Conversa WhatsApp (cliente chamou / iniciou conversa)
+// NÃO conta: clique, link_click, view, engajamento.
+// NÃO soma action_types sobrepostos — escolhe 1 por prioridade (form antes de WhatsApp).
 import fs from 'node:fs';
 import { enriqueceCampanha, podeEscalar, LEADS_MIN_ESCALAR } from './_campanhas-regras.mjs';
 
 /**
- * Prioridade = o que o Gerenciador mostra como “Lead (formulário)”.
- * Preferir onsite_conversion.lead_grouped; só cair pro próximo se o anterior não vier.
+ * Prioridade: formulário primeiro → depois conversa WhatsApp (cliente chamou).
+ * Nunca clique.
  */
 export const PRIORIDADE_LEAD_FORMULARIO = [
   'onsite_conversion.lead_grouped',
@@ -17,9 +19,23 @@ export const PRIORIDADE_LEAD_FORMULARIO = [
   'lead',
 ];
 
-export const TIPOS_LEAD_FORMULARIO = new Set(PRIORIDADE_LEAD_FORMULARIO);
+/** Conversa WhatsApp real — conta. Clique pra abrir chat NÃO. */
+export const PRIORIDADE_WHATSAPP = [
+  'onsite_conversion.messaging_conversation_started_7d',
+  'onsite_conversion.messaging_first_reply',
+  'onsite_conversion.total_messaging_connection',
+];
 
-/** Explicitamente NÃO são lead de formulário (mesmo se a API mandar). */
+export const PRIORIDADE_RESULTADO = [
+  ...PRIORIDADE_LEAD_FORMULARIO,
+  ...PRIORIDADE_WHATSAPP,
+];
+
+export const TIPOS_LEAD_FORMULARIO = new Set(PRIORIDADE_LEAD_FORMULARIO);
+export const TIPOS_WHATSAPP = new Set(PRIORIDADE_WHATSAPP);
+export const TIPOS_RESULTADO_VALIDO = new Set(PRIORIDADE_RESULTADO);
+
+/** Clique / view / engajamento — NUNCA contam. */
 export const TIPOS_NAO_FORMULARIO = new Set([
   'link_click',
   'inline_link_click',
@@ -28,21 +44,20 @@ export const TIPOS_NAO_FORMULARIO = new Set([
   'post_engagement',
   'video_view',
   'omni_landing_page_view',
-  'onsite_conversion.messaging_conversation_started_7d',
-  'onsite_conversion.messaging_first_reply',
-  'onsite_conversion.total_messaging_connection',
   'onsite_conversion.messaging_block',
   'click_to_call_call_confirm',
   'outbound_click',
 ]);
+export const TIPOS_NAO_RESULTADO = TIPOS_NAO_FORMULARIO;
 
-function indicadorEhFormulario(indicator = '') {
+function indicadorEhValido(indicator = '') {
   const s = String(indicator).toLowerCase();
   if (!s) return false;
-  if (s.includes('messaging') || s.includes('click') || s.includes('view') || s.includes('engage')) {
-    return false;
-  }
-  return s.includes('lead');
+  if (s.includes('click') || s.includes('view') || s.includes('engage')) return false;
+  if (s.includes('lead') || s.includes('form')) return true;
+  if (s.includes('messaging_conversation') || s.includes('messaging_first_reply')
+      || s.includes('messaging_connection') || s.includes('whatsapp')) return true;
+  return false;
 }
 
 function mapaAcoes(c = {}) {
@@ -55,66 +70,76 @@ function mapaAcoes(c = {}) {
   return map;
 }
 
-function temSinalNaoFormulario(c = {}, mapa) {
-  for (const t of TIPOS_NAO_FORMULARIO) {
+function temSinalSoClique(c = {}, mapa) {
+  for (const t of TIPOS_NAO_RESULTADO) {
     if ((mapa.get(t) || 0) > 0) return true;
   }
   const clicks = Number(c.clicks) || 0;
   if (clicks > 0) return true;
   if (Array.isArray(c.results) && c.results[0]) {
     const ind = String(c.results[0].indicator || '').toLowerCase();
-    if (ind && (ind.includes('click') || ind.includes('messaging') || ind.includes('view'))) return true;
+    if (ind && (ind.includes('click') || ind.includes('view') || ind.includes('engage'))) return true;
   }
   return false;
 }
 
 /**
- * Conta só cadastros de formulário Meta (1 action_type por campanha, por prioridade).
- * @returns {{ leads:number, fonte:string|null, aviso:string|null, confirmado:boolean }}
+ * Conta formulário OU conversa WhatsApp (1 tipo por campanha, por prioridade).
+ * Clique nunca entra.
+ * @returns {{ leads:number, fonte:string|null, aviso:string|null, confirmado:boolean, tipo:'formulario'|'whatsapp'|null }}
  */
 export function extraiLeadsFormulario(c = {}) {
   const mapa = mapaAcoes(c);
 
-  for (const tipo of PRIORIDADE_LEAD_FORMULARIO) {
+  for (const tipo of PRIORIDADE_RESULTADO) {
     const v = mapa.get(tipo);
     if (v != null && v > 0) {
-      return { leads: v, fonte: tipo, aviso: null, confirmado: true };
+      const ehWa = TIPOS_WHATSAPP.has(tipo);
+      return {
+        leads: v,
+        fonte: tipo,
+        aviso: null,
+        confirmado: true,
+        tipo: ehWa ? 'whatsapp' : 'formulario',
+      };
     }
   }
 
-  // Fallback results: só se o indicador for de lead/formulário (não messaging/clique).
   if (Array.isArray(c.results) && c.results[0]) {
     const r0 = c.results[0];
-    if (indicadorEhFormulario(r0.indicator) && Array.isArray(r0.values)) {
+    if (indicadorEhValido(r0.indicator) && Array.isArray(r0.values)) {
       const n = Number(r0.values[0] && r0.values[0].value) || 0;
       if (n > 0) {
+        const ind = String(r0.indicator || '').toLowerCase();
+        const ehWa = ind.includes('messaging') || ind.includes('whatsapp');
         return {
           leads: n,
           fonte: `results:${r0.indicator || 'lead'}`,
           aviso: null,
           confirmado: true,
+          tipo: ehWa ? 'whatsapp' : 'formulario',
         };
       }
     }
   }
 
-  // Tipo de formulário presente com zero, ou sem sinal de clique → 0 cadastros reais.
-  const temTipoFormZero = PRIORIDADE_LEAD_FORMULARIO.some((t) => mapa.has(t));
-  if (temTipoFormZero || !temSinalNaoFormulario(c, mapa)) {
+  const temTipoValidoZero = PRIORIDADE_RESULTADO.some((t) => mapa.has(t));
+  if (temTipoValidoZero || !temSinalSoClique(c, mapa)) {
     return {
       leads: 0,
       fonte: null,
-      aviso: '0 cadastros de formulário.',
+      aviso: '0 formulários / conversas WhatsApp.',
       confirmado: true,
+      tipo: null,
     };
   }
 
-  // API trouxe clique/mensagem, mas nenhum action_type de formulário confirmado.
   return {
     leads: 0,
     fonte: null,
-    aviso: 'Não foi possível confirmar os leads de formulário desta campanha.',
+    aviso: 'Só clique — não conta. Precisa formulário ou conversa WhatsApp (cliente chamou).',
     confirmado: false,
+    tipo: null,
   };
 }
 
@@ -146,6 +171,7 @@ export function inventariarAcoes(data = []) {
       gasto: spend,
       leadsFormulario: form.leads,
       fonteLead: form.fonte,
+      tipoResultado: form.tipo,
       confirmado: form.confirmado,
       avisoLead: form.aviso,
       actions: acts.filter((a) => /lead|messaging|click|form/i.test(a.action_type)),
@@ -157,6 +183,9 @@ export function inventariarAcoes(data = []) {
     formulariosNosTotais: [...totais.entries()]
       .filter(([t]) => TIPOS_LEAD_FORMULARIO.has(t))
       .map(([action_type, value]) => ({ action_type, value })),
+    whatsappNosTotais: [...totais.entries()]
+      .filter(([t]) => TIPOS_WHATSAPP.has(t))
+      .map(([action_type, value]) => ({ action_type, value })),
     fontesUsadas: [...new Set(porCampanha.map((c) => c.fonteLead).filter(Boolean))],
     porCampanha,
   };
@@ -167,12 +196,12 @@ const round2 = (v) => Math.round(v * 100) / 100;
 
 /**
  * Monta o placar a partir do array `data` do Meta Insights.
- * leads / CPL = somente formulário. CPL só se confirmado e leads > 0.
+ * leads / CPL = formulário OU conversa WhatsApp. Clique nunca. CPL só se confirmado e leads > 0.
  */
 export function montaPlacar(data = []) {
   const campanhas = (Array.isArray(data) ? data : []).map((c) => {
     const gasto = round2(num(c.spend));
-    const { leads, fonte, aviso, confirmado } = extraiLeadsFormulario(c);
+    const { leads, fonte, aviso, confirmado, tipo } = extraiLeadsFormulario(c);
     const cpl = (confirmado && leads > 0) ? round2(gasto / leads) : null;
     return enriqueceCampanha({
       nome: c.campaign_name || '(sem nome)',
@@ -183,6 +212,7 @@ export function montaPlacar(data = []) {
       fonteLead: fonte,
       avisoLead: aviso,
       leadConfirmado: confirmado,
+      tipoResultado: tipo,
     });
   })
     .filter((c) => c.gasto > 0)
@@ -193,16 +223,15 @@ export function montaPlacar(data = []) {
   const cplMedio = totalLeads > 0 ? round2(totalGasto / totalLeads) : null;
   const inventario = inventariarAcoes(data);
 
-  // Em CI (prova do placar): anexa inventário sem precisar alterar o workflow.
   if (process.env.CI && process.env.GITHUB_STEP_SUMMARY) {
     try {
-      let diag = '\n### Inventário action_type (formulário)\n\n';
+      let diag = '\n### Inventário action_type (form + WhatsApp)\n\n';
       diag += `Fontes usadas: ${(inventario.fontesUsadas || []).join(', ') || '(nenhuma)'}\n\n`;
-      diag += '| action_type form. | soma |\n|---|--:|\n';
-      for (const x of inventario.formulariosNosTotais) {
+      diag += '| action_type | soma |\n|---|--:|\n';
+      for (const x of [...(inventario.formulariosNosTotais || []), ...(inventario.whatsappNosTotais || [])]) {
         diag += `| \`${x.action_type}\` | ${x.value} |\n`;
       }
-      diag += '\n| Campanha | form. | fonte |\n|---|--:|---|\n';
+      diag += '\n| Campanha | resultados | fonte |\n|---|--:|---|\n';
       for (const c of inventario.porCampanha) {
         diag += `| ${c.nome} | ${c.leadsFormulario} | \`${c.fonteLead || '—'}\` |\n`;
       }
@@ -216,17 +245,18 @@ export function montaPlacar(data = []) {
     totalGasto,
     totalLeads,
     cplMedio,
-    metrica: 'lead_formulario',
+    metrica: 'formulario_ou_whatsapp',
+    regra: 'Conta: formulário OU conversa WhatsApp (cliente chamou). Clique não.',
     fontesLead: inventario.fontesUsadas,
     decisao: decideDoDia(campanhas, cplMedio),
   };
 }
 
 /**
- * Decisão do dia — formulário only.
+ * Decisão do dia — form ou WhatsApp.
  *  - ESCALAR: leads >= 10, CPL ok, sem público fora do BR em Piçarras.
  *  - OBSERVAR: tem lead mas < 10 (SEM BASE) — NÃO entra em escalar.
- *  - REVISAR: gastou (>= R$50) e ZERO cadastro de formulário confirmado.
+ *  - REVISAR: gastou (>= R$50) e ZERO resultado confirmado.
  */
 export function decideDoDia(campanhas = [], cplMedio = null, { gastoMinRevisar = 50 } = {}) {
   const escalar = campanhas
@@ -259,27 +289,28 @@ export function decideDoDia(campanhas = [], cplMedio = null, { gastoMinRevisar =
 
 const brl = (v) => (v == null ? '—' : `R$ ${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 
-/** Texto do Placar pro WhatsApp — cadastros de formulário, nunca clique. */
+/** Texto do Placar pro WhatsApp — form ou conversa, nunca clique. */
 export function resumoPlacarWhats(placar, { periodo = 'últimos 7 dias' } = {}) {
   const p = placar || {};
   const linhas = (p.campanhas || []).slice(0, 6).map((c) => {
     let cpl;
-    if (c.cpl != null) cpl = `CPL form. ${brl(c.cpl)}`;
-    else if (c.leadConfirmado === false) cpl = '⚠️ form. não confirmado';
-    else if (c.gasto >= 50) cpl = '⚠️ 0 cadastro form.';
-    else cpl = 'sem cadastro form. ainda';
-    return `• *${c.nome}*\n   ${brl(c.gasto)} · ${c.leads} cadastro(s) form. · ${cpl}`;
+    if (c.cpl != null) cpl = `CPL ${brl(c.cpl)}`;
+    else if (c.leadConfirmado === false) cpl = '⚠️ só clique (não conta)';
+    else if (c.gasto >= 50) cpl = '⚠️ 0 form/WhatsApp';
+    else cpl = 'sem resultado ainda';
+    const tipo = c.tipoResultado === 'whatsapp' ? 'WhatsApp' : 'form.';
+    return `• *${c.nome}*\n   ${brl(c.gasto)} · ${c.leads} ${tipo} · ${cpl}`;
   });
-  const esc = (p.decisao?.escalar || []).map((c) => `🟢 escalar *${c.nome}* (CPL form. ${brl(c.cpl)} · ${c.leads} form.)`);
+  const esc = (p.decisao?.escalar || []).map((c) => `🟢 escalar *${c.nome}* (CPL ${brl(c.cpl)} · ${c.leads})`);
   const obs = (p.decisao?.observar || []).slice(0, 2).map((c) => `⚪ SEM BASE - ${c.leads} leads, precisa ${LEADS_MIN_ESCALAR} · *${c.nome}*`);
-  const rev = (p.decisao?.revisar || []).map((c) => `🔴 revisar *${c.nome}* (${brl(c.gasto)} · 0 cadastro form.)`);
+  const rev = (p.decisao?.revisar || []).map((c) => `🔴 revisar *${c.nome}* (${brl(c.gasto)} · 0 form/WhatsApp)`);
   return [
     '📊 *Placar de Campanhas — Michel*',
-    `_${periodo} · leads = cadastro de formulário Meta · min ${LEADS_MIN_ESCALAR} pra escalar_`,
+    `_${periodo} · conta form OU WhatsApp (cliente chamou) · min ${LEADS_MIN_ESCALAR} pra escalar · clique não_`,
     '',
     linhas.join('\n'),
     '',
-    `*Total:* ${brl(p.totalGasto)} · ${p.totalLeads || 0} cadastros form. · CPL form. médio ${brl(p.cplMedio)}`,
+    `*Total:* ${brl(p.totalGasto)} · ${p.totalLeads || 0} resultados · CPL médio ${brl(p.cplMedio)}`,
     '',
     '*Decisão do dia:*',
     ...(esc.length ? esc : ['— sem campanha com base pra escalar']),
