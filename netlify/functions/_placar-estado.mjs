@@ -27,7 +27,12 @@ export function montaSugestoes(placar = {}) {
   return [...map(d.escalar, 'escalar'), ...map(d.revisar, 'revisar')];
 }
 
-/** Mantém a sugestão principal do quadradinho legada para a rota oficial de decisão. */
+/**
+ * Mantém a sugestão principal legada usada pela rota oficial de decisão.
+ * @param {object} placar placar agregado de campanhas
+ * @param {{ valorDia?: number }} options valor sugerido para ajuste diário
+ * @returns {object|null} sugestão principal no formato esperado pelo quadradinho legado
+ */
 export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
   const d = (placar && placar.decisao) || {};
   const origem = (d.revisar && d.revisar[0]) || null;
@@ -39,7 +44,7 @@ export function montaSugestaoPrincipal(placar = {}, { valorDia = 50 } = {}) {
       origem: origem.nome,
       destino: destino.nome,
       valorDia,
-      titulo: `Mover R$ ${valorDia}/dia do ${origem.nome} → ${destino.nome}`,
+      titulo: `Mover R$ ${valorDia}/dia de ${origem.nome} → ${destino.nome}`,
       motivo: `${origem.nome}: R$ ${Number(origem.gasto || 0).toFixed(0)} gastos, ${origem.leads || 0} lead. ${destino.nome} tem melhor CPL (${destino.cpl != null ? `R$ ${Number(destino.cpl).toFixed(0)}/lead` : 'abaixo da média'}).`,
       campanha: `${origem.nome} → ${destino.nome}`,
       gasto: origem.gasto ?? 0,
