@@ -56,21 +56,45 @@
   .lead .btns button.on{outline:2px solid var(--gold);background:#1a3d33}
   .lead .btns button:disabled{opacity:.55}
   .lead.done-mark{border-color:rgba(61,186,126,.45)}
+  .qhead{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:4px 0 10px}
+  .qbox{border:1px solid var(--line);border-radius:16px;padding:12px;margin:0 0 14px;background:rgba(18,44,38,.5)}
+  .float-lead{
+    position:fixed;right:12px;bottom:72px;z-index:20;max-width:min(320px,calc(100vw - 24px));
+    background:#1a1008;border:2px solid #c4a35a;border-radius:16px;padding:12px 14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.55);display:none;animation:pulseLead 1.1s ease-in-out infinite;
+  }
+  .float-lead.on{display:block}
+  .float-lead .fl-t{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#c4a35a}
+  .float-lead .fl-n{font-weight:800;font-size:.95rem;margin-top:4px;line-height:1.3}
+  .float-lead .fl-s{font-size:.75rem;color:var(--muted);margin-top:4px}
+  .float-lead .fl-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+  .float-lead button{border:1px solid var(--line);background:#122c26;color:var(--ink);border-radius:10px;padding:9px 4px;font-size:.72rem;font-weight:700;font-family:inherit;cursor:pointer}
+  @keyframes pulseLead{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
   footer{margin-top:16px;text-align:center;color:var(--muted);font-size:.72rem}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="brand" id="brandLine">Katzer · Painel de Campanhas</div>
-  <h1 id="h1Title">Decisão do dia · V4</h1>
-  <p class="sub" id="subModo">Aqui o Michel EXECUTA · insights · Caçador. Rotina é só olhar.</p>
+  <h1 id="h1Title">Campanhas · 2 quadradinhos</h1>
+  <p class="sub" id="subModo">① Decisão · ② Caçador. Lead ao vivo sobe flutuando com bipe até marcar qualidade.</p>
   <div class="trava-topo" id="travaTopo">V4 — NÃO sugerir EUA_Americanos / MIAMI / PORTUGAL. TRAVA 1: sem 10 leads não escala.</div>
   <div class="nav" id="navModo"></div>
   <div id="ctaVisual" style="display:none" class="trava-topo"></div>
-  <div id="app"><div class="sub">Carregando…</div></div>
-  <div id="cacador"></div>
+
+  <div class="qbox" id="quad1">
+    <div class="qhead">① Decisão do dia</div>
+    <div id="app"><div class="sub">Carregando…</div></div>
+  </div>
+
+  <div class="qbox" id="quad2">
+    <div class="qhead">② Caçador · qualidade (alimenta CPL BOM)</div>
+    <div id="cacador"></div>
+  </div>
+
   <footer id="ft">Michel executa na Meta · Bruno acompanha</footer>
 </div>
+<div class="float-lead" id="floatLead" aria-live="assertive"></div>
 <div class="toast" id="toast"></div>
 <script>
 const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
@@ -78,18 +102,19 @@ const $= (s)=>document.querySelector(s);
 const IS_EXECUTA=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname);
 const EXEC_URL='https://dashing-elf-41a723.netlify.app';
 let DATA=null, DECS=[], CAC=null;
+let AUDIOok=false, audioCtx=null, beepTimer=null, seenLeadIds=new Set();
 
 (function modoHeader(){
   if(IS_EXECUTA){
-    $('#brandLine').textContent='Katzer · EXECUTA';
-    $('#subModo').textContent='Painel isolado · Aplicar · Ajustar · Caçador. Disciplina (Rotina) só visualiza.';
+    $('#brandLine').textContent='Katzer · EXECUTA · 2 quadradinhos';
+    $('#subModo').textContent='① Decisão · ② Caçador. Lead novo flutua + bipe chato até registrar qualidade.';
     $('#navModo').innerHTML=
       '<a href="/ranking-campanhas">Ranking</a><a href="/campanhas">Decisão</a><a href="/qualidade">Caçador</a><a href="/campanhas-decisao">Lista</a>';
-    $('#ft').textContent='Michel executa na Meta · Bruno acompanha';
+    $('#ft').textContent='2 quadradinhos · lead ao vivo com bipe · Bruno acompanha';
   } else {
     $('#brandLine').textContent='Katzer · Disciplina · visualizar';
-    $('#h1Title').textContent='Decisão do dia · só olhar';
-    $('#subModo').textContent='👁 Visualizar na Rotina. Executar = painel isolado.';
+    $('#h1Title').textContent='Decisão · só olhar';
+    $('#subModo').textContent='👁 Visualizar na Rotina. Executar = painel isolado (2 quadradinhos + bipe).';
     $('#travaTopo').textContent='Sem botão de escalar aqui — abre o Painel pra executar.';
     $('#navModo').innerHTML=
       '<a href="/ranking-campanhas">Ranking</a><a href="'+EXEC_URL+'/campanhas">▶ Executar</a>';
@@ -97,10 +122,42 @@ let DATA=null, DECS=[], CAC=null;
     cta.style.display='block';
     cta.style.borderColor='rgba(196,163,90,.5)';
     cta.style.color='#e8d5a3';
-    cta.innerHTML='Painel isolado é pra <b>executar</b>. <a href="'+EXEC_URL+'/campanhas" style="color:#c4a35a;font-weight:800">Abrir app Campanhas →</a>';
+    cta.innerHTML='Painel isolado = <b>2 quadradinhos + lead flutuante</b>. <a href="'+EXEC_URL+'/campanhas" style="color:#c4a35a;font-weight:800">Abrir →</a>';
     $('#ft').textContent='Disciplina = visualizar · Painel isolado = executar';
+    $('#quad2').style.display='none';
   }
 })();
+
+function unlockAudio(){
+  if(AUDIOok) return;
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(); const g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination); g.gain.value=0.0001; o.start(); o.stop(audioCtx.currentTime+0.01);
+    AUDIOok=true;
+  }catch(_){}
+}
+document.addEventListener('pointerdown', unlockAudio, {once:false});
+
+/** Bipe chato — 3 tons agudos rápidos. */
+function bipeChato(){
+  if(!AUDIOok||!audioCtx) return;
+  try{
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const now=audioCtx.currentTime;
+    [880, 990, 1175].forEach((freq,i)=>{
+      const o=audioCtx.createOscillator();
+      const g=audioCtx.createGain();
+      o.type='square';
+      o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001, now+i*0.12);
+      g.gain.exponentialRampToValueAtTime(0.18, now+i*0.12+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+i*0.12+0.11);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(now+i*0.12); o.stop(now+i*0.12+0.12);
+    });
+  }catch(_){}
+}
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
