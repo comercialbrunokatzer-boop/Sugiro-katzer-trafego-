@@ -4,7 +4,9 @@
 |---|---|
 | **Status** | OFICIAL (decisão do CEO · 2026-07-23) |
 | **Repo** | `Sugiro-katzer-trafego-` |
-| **Dono operacional** | Michel (mão na Meta) · IA trabalha PARA ele |
+| **Dono operacional** | Michel (**gestor**) — mão na Meta · IA trabalha PARA ele |
+| **Parecer final** | Bruno Katzer (**sócio** / CEO) |
+| **Corretores ativos** | Elyas · Leandro · Edsel — ver `TIME-ATUAL-KATZER.md` |
 
 ---
 
