@@ -152,7 +152,15 @@ export async function handler(event) {
     for (const K of keys) {
       let V = pickEnv(envSrc, K);
       if (!V) continue;
-      if (/BITRIX_WEBHOOK/i.test(K)) V = ensureBitrixUrl(V);
+      // Netlify API às vezes devolve segredo mascarado/curto — NÃO sobrescrever com lixo
+      if (/BITRIX_WEBHOOK/i.test(K)) {
+        const sh = shapeUrl(V);
+        if (!sh.looksBitrix || sh.len < 40) {
+          erros.push(`${K}: valor origem suspeito (len=${sh.len||0}, host=${sh.host||'?'}) — pulado`);
+          continue;
+        }
+        V = ensureBitrixUrl(V);
+      }
       try {
         const how = await setEnv(accountSlug, dst.id, K, V);
         copiados.push(`${K}:${how}`);
@@ -180,6 +188,7 @@ export async function handler(event) {
       keysNaOrigem: keysDisponiveis.filter((k) => /BITRIX|BRUNO_PHONE|WHATSAPP_CEO/i.test(k)),
       copiados,
       erros,
+      bruno: (() => { const raw = pickEnv(envSrc, 'BRUNO_PHONE') || ''; const d=String(raw).replace(/\D+/g,''); return { len: raw.length, digits: d.length, last2: d.slice(-2) }; })(),
       shapes: {
         read: shapeUrl(pickEnv(envSrc, 'BITRIX_WEBHOOK_READ')),
         write: shapeUrl(pickEnv(envSrc, 'BITRIX_WEBHOOK_WRITE')),

@@ -145,9 +145,9 @@ async function telefonesPorContato(contactIds = []) {
 async function listaDealsViaHelena({ limit = 250 } = {}) {
   const base = (process.env.HELENA_FUNIL_URL || 'https://regal-chaja-662035.netlify.app').replace(/\/+$/, '');
   const key = process.env.FUNIL_PROXY_KEY
+    || process.env.BRUNO_PHONE
     || process.env.WHATSAPP_CEO
     || process.env.WHATSAPP_MICHEL
-    || process.env.BRUNO_PHONE
     || '';
   if (!key) return { ok: false, deals: [], motivo: 'sem key p/ Helena funil' };
   try {
