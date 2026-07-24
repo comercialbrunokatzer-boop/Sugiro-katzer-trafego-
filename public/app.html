@@ -81,7 +81,12 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
 <body>
 <div class="header">
   <h1>Katzer OS • App Decisão</h1>
-  <p>Meta API + Bitrix · atualiza na hora · WhatsApp Helena na hora · E-mail 14h</p>
+  <p>Só o <b>Michel</b> clica Manter / R$ / Parar na Meta · Bruno é avisado</p>
+  <div id="michelGate" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input id="michelPwd" class="input" type="password" placeholder="Chave do Michel (Meta)" autocomplete="current-password" style="margin:0;flex:1;min-width:160px;max-width:240px">
+    <button class="btn primary" type="button" onclick="unlockMichel()" style="flex:0">Desbloquear Meta</button>
+    <span id="michelStatus" style="font-size:11px;color:#888">Meta bloqueada</span>
+  </div>
 </div>
 <div class="tabs">
   <button class="tab active" data-tab="ativas" onclick="showTab('ativas')">1 · Ativas</button>
@@ -164,12 +169,40 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
 const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
 const api=(p)=>API_BASE+p;
 let DATA=null, ATIVAS=[], MELHORES=[], PIORES=[], currentCamp=null, GESTOR_KEY='';
+let MICHEL_KEY=sessionStorage.getItem('michelKey')||'';
 let lastLeadsHoje=null;
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3800);}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function acha(id){return [...ATIVAS,...MELHORES,...PIORES].find(c=>String(c.id)===String(id)||c.name===id);}
+
+function refreshMichelGate(){
+  const st=document.getElementById('michelStatus');
+  if(!st) return;
+  if(MICHEL_KEY){
+    st.textContent='✅ Michel autorizado · Meta liberada';
+    st.style.color='#166534';
+  }else{
+    st.textContent='Meta bloqueada — só Michel desbloqueia';
+    st.style.color='#888';
+  }
+}
+function unlockMichel(){
+  const pwd=(document.getElementById('michelPwd')?.value||'').trim();
+  if(!pwd){toast('Digite a chave do Michel');return;}
+  if(pwd==='Davi2026@'){toast('Senha do gestor não executa Meta — só o Michel');return;}
+  MICHEL_KEY=pwd;
+  sessionStorage.setItem('michelKey', pwd);
+  refreshMichelGate();
+  toast('Michel autorizado · pode clicar na Meta');
+}
+function exigeMichel(){
+  if(MICHEL_KEY) return true;
+  toast('Desbloqueie com a chave do Michel antes de clicar na Meta');
+  document.getElementById('michelPwd')?.focus();
+  return false;
+}
 
 function showTab(t){
   ['ativas','ranking','gestor'].forEach(k=>{
@@ -187,8 +220,8 @@ function unlock(){
     loadGestor();
   }else alert('Senha incorreta');
 }
-function openStop(id){currentCamp=id;document.getElementById('modalStop').style.display='flex';}
-function openBudget(id){currentCamp=id;document.getElementById('budgetInput').value='';document.getElementById('modalBudget').style.display='flex';}
+function openStop(id){if(!exigeMichel())return;currentCamp=id;document.getElementById('modalStop').style.display='flex';}
+function openBudget(id){if(!exigeMichel())return;currentCamp=id;document.getElementById('budgetInput').value='';document.getElementById('modalBudget').style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
 function toggleFase(btn, key){
@@ -308,8 +341,17 @@ function updateLeadsAlert(n){
 }
 
 async function postAcao(body){
-  const res=await fetch(api('/api/decisao-app'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()).catch(()=>({ok:false}));
-  if(!res.ok){toast(res.erro||'Falhou');return res;}
+  if(!exigeMichel())return {ok:false};
+  const res=await fetch(api('/api/decisao-app'),{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-michel-key':MICHEL_KEY},
+    body:JSON.stringify({...body,michelKey:MICHEL_KEY,quem:'Michel'}),
+  }).then(r=>r.json()).catch(()=>({ok:false}));
+  if(!res.ok){
+    if(res.precisaMichel){MICHEL_KEY='';sessionStorage.removeItem('michelKey');refreshMichelGate();}
+    toast(res.erro||'Falhou');
+    return res;
+  }
   toast(res.toast||'Registrado');
   if(res.alertaMichel){const el=document.getElementById('alertMichel');el.style.display='block';el.textContent=res.alertaMichel;}
   if(res.alertaGestor){const el=document.getElementById('alertGestor');if(el){el.style.display='block';el.textContent=res.alertaGestor;}}
@@ -319,6 +361,7 @@ async function postAcao(body){
   return res;
 }
 async function doAction(act,id){
+  if(!exigeMichel())return;
   const cam=acha(id); if(!cam) return;
   await postAcao({acao:'manter',campanha:cam.name,campanhaId:cam.id,cpl:cam.cpl,custo:cam.custo,detail:cam.detail,qual:cam.qual,forms:cam.forms,gastoNum:cam.gastoNum});
 }
@@ -372,6 +415,7 @@ async function loadGestor(){
 }
 
 loadMichel();
+refreshMichelGate();
 setInterval(loadMichel, 45000);
 </script>
 </body>
