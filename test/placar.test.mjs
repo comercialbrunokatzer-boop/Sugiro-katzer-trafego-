@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  extraiLeads, extraiLeadsFormulario, montaPlacar, decideDoDia, resumoPlacarWhats, inventariarAcoes,
+  extraiLeads, extraiLeadsFormulario, montaPlacar, decideDoDia, resumoPlacarWhats, montaCartoesCopiloto, inventariarAcoes,
 } from '../netlify/functions/_placar.mjs';
 
 const data = [
@@ -103,9 +103,22 @@ test('inventariarAcoes lista action_types sem misturar', () => {
   assert.ok(inv.fontesUsadas.includes('onsite_conversion.lead_grouped'));
 });
 
-test('resumoPlacarWhats: form ou WhatsApp, nunca clique', () => {
-  const txt = resumoPlacarWhats(montaPlacar(data));
+test('resumoPlacarWhats: cartão Copiloto 8 blocos · form/WhatsApp · clique não', () => {
+  const p = montaPlacar(data);
+  const txt = resumoPlacarWhats(p);
+  assert.match(txt, /Copiloto de Tráfego/i);
   assert.match(txt, /form OU WhatsApp|cliente chamou/i);
   assert.match(txt, /clique não/i);
+  assert.match(txt, /CAMPANHA:/);
+  assert.match(txt, /AÇÃO PARA O MICHEL:/);
+  assert.match(txt, /APRENDIZADO DO DIA:/);
+  assert.match(txt, /PRECISA DE APROVAÇÃO DO BRUNO\?/);
+  assert.match(txt, /NÃO ALTERE HOJE:/);
   assert.doesNotMatch(txt, /muitos cliques/i);
+
+  const { cartoes, naoAltere } = montaCartoesCopiloto(p);
+  assert.ok(cartoes.length >= 1);
+  assert.ok(cartoes[0].situacao);
+  assert.ok(Array.isArray(cartoes[0].acaoMichel));
+  assert.ok(Array.isArray(naoAltere));
 });
