@@ -32,6 +32,8 @@ test('BRIEFING: pendências vencidas e agenda do dia', () => {
 test('SCRIPT: cada estágio tem uma abertura personalizada', () => {
   assert.match(scriptSugerido('Negociação', 'Ana'), /Ana/);
   assert.ok(scriptSugerido('Lead Novo').length > 5);
+  assert.ok(scriptSugerido('Leads Novos').length > 5, 'funil oficial #47');
+  assert.match(scriptSugerido('Mapeamento', 'João'), /João/);
 });
 
 test('PAINEL MICHEL: calcula conversão, não-distribuídos e tempo médio', () => {
@@ -59,4 +61,15 @@ test('PARECER BRUNO: só oportunidade/travada/receita — nada operacional', () 
   assert.equal(p.negociacoes_travadas[0].cliente, 'Ana', 'Negociação parada 5d = travada');
   assert.ok(p.receita_prevista > 0);
   assert.equal(p.decisoes_solicitadas.length, 1);
+});
+
+test('FUNIL #47: Leads Novos não sobe como oportunidade comum; Proposta sobe', () => {
+  const p = parecerBruno({
+    leads: [
+      { cliente: 'João', estagio: 'Leads Novos', valor: 400000, ultimo_contato_dias: 0 },
+      { cliente: 'Lia', estagio: 'Proposta', valor: 950000, ultimo_contato_dias: 1 },
+    ],
+  });
+  assert.ok(!p.oportunidades_quentes.find((o) => o.cliente === 'João'));
+  assert.ok(p.oportunidades_quentes.find((o) => o.cliente === 'Lia'));
 });
