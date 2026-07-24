@@ -3,6 +3,13 @@
 import { json, enviaWhats } from './_infra.mjs';
 import { leLeadsHoje, marcaLeadESincroniza, marcaAuditoriaESincroniza } from './_cacador-io.mjs';
 import { payloadCacador, QUALIDADE_TIPOS } from './_cacador.mjs';
+import {
+  mensagemTravaSaiuSemQualidadeReal,
+  mensagemCacadorMarca,
+  isDemoLead,
+} from './_whatsapp-mensagens.mjs';
+import { agoraBRT } from './_rotina.mjs';
+import { leTravaEnviados, filtrarTravaPendentes, marcaTravaEnviados } from './_trava-whats-io.mjs';
 
 export async function handler(event) {
   if (event.httpMethod === 'OPTIONS') {
@@ -40,13 +47,29 @@ export async function handler(event) {
         });
         const payload = payloadCacador(result.leads);
         let whats = { enviado: false };
-        if (result.vermelho) {
+        if (result.vermelho && !isDemoLead(result.lead)) {
           const ceo = process.env.WHATSAPP_CEO || '';
           if (ceo) {
-            whats = await enviaWhats(
-              ceo,
-              `🔴 TRAVA · *${result.lead.nome}* Saiu sem Qualidade Real\nCorretor: ${result.lead.corretor || body.quem || '—'}\nPreencher A/B/C/D Real no Painel.`,
+            const now = agoraBRT();
+            const enviadosDoc = await leTravaEnviados().catch(() => ({ chaves: {} }));
+            const { pendentes, chaves } = filtrarTravaPendentes(
+              [{ id: result.lead.id, nome: result.lead.nome, campanha: result.lead.campanha, corretor: result.lead.corretor || body.quem }],
+              enviadosDoc.chaves || {},
+              now.data,
             );
+            if (pendentes.length) {
+              whats = await enviaWhats(
+                ceo,
+                mensagemTravaSaiuSemQualidadeReal({
+                  leads: pendentes,
+                  hm: now.hm,
+                  data: now.data,
+                }),
+              );
+              if (whats.enviado) await marcaTravaEnviados(chaves);
+            } else {
+              whats = { enviado: false, motivo: 'já avisado hoje (dedupe)' };
+            }
           }
         }
         return json(200, {
@@ -75,21 +98,20 @@ export async function handler(event) {
       if (qualidade === 'bom' || qualidade === 'comprador') {
         const ceo = process.env.WHATSAPP_CEO || '';
         const lead = result.lead || {};
-        const nome = lead.nome || lead.linha || leadId;
-        const camp = lead.campanha || '';
-        const ico = qualidade === 'comprador' ? '💰' : '🟢';
-        const label = qualidade === 'comprador' ? 'COMPRADOR' : 'BOM';
-        const isDemo = lead.fonte === 'demo' || String(lead.id || '').startsWith('demo-');
+        const now = agoraBRT();
+        const isDemo = isDemoLead(lead);
         whats = ceo
           ? await enviaWhats(
             ceo,
-            [
-              isDemo
-                ? '⚠️ *TESTE/DEMO* — lead seed · *não está no Bitrix*'
-                : (lead.fonte === 'bitrix' ? '✅ Lead *Bitrix* (real)' : null),
-              `${ico} Caçador -- *${label}* - ${nome}${camp ? ` - ${camp}` : ''}`,
-              lead.telefone && lead.telefone !== '—' ? `Tel: ${lead.telefone}` : null,
-            ].filter(Boolean).join('\n'),
+            mensagemCacadorMarca({
+              qualidade,
+              nome: lead.nome || lead.linha || leadId,
+              campanha: lead.campanha || '',
+              telefone: lead.telefone,
+              isDemo,
+              fonte: lead.fonte,
+              hm: now.hm,
+            }),
           )
           : { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
       }

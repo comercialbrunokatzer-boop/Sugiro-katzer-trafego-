@@ -7,6 +7,9 @@ import {
   QUAL_TRAFEGO_ROTULO,
 } from './_qualidade-trafego.mjs';
 import { enviaWhats } from './_infra.mjs';
+import { mensagemTravaSaiuSemQualidadeReal, isDemoLead } from './_whatsapp-mensagens.mjs';
+import { leTravaEnviados, filtrarTravaPendentes, marcaTravaEnviados } from './_trava-whats-io.mjs';
+import { agoraBRT } from './_rotina.mjs';
 
 export function classificaHeuristicaTrafego(lead = {}) {
   const q = lead.qualidade;
@@ -151,12 +154,25 @@ export async function rodaCicloAuditora(leads, {
   let whats = { enviado: false };
   if (avisarVermelhos && resumo.vermelhos > 0) {
     const ceo = process.env.WHATSAPP_CEO || '';
-    if (ceo) {
-      const linhas = resumo.leadsVermelhos.slice(0, 8).map((l) => `· ${l.nome}`);
-      whats = await enviaWhats(
-        ceo,
-        [`🔴 *TRAVA* — ${resumo.vermelhos} lead(s) Saiu sem Qualidade Real`, ...linhas].join('\n'),
-      );
+    // Nunca avisar demo / seed (Carlos Vermelho etc.)
+    const reais = (resumo.leadsVermelhos || []).filter((l) => !isDemoLead(l));
+    if (ceo && reais.length) {
+      const now = agoraBRT();
+      const enviadosDoc = await leTravaEnviados().catch(() => ({ chaves: {} }));
+      const { pendentes, chaves } = filtrarTravaPendentes(reais, enviadosDoc.chaves || {}, now.data);
+      if (pendentes.length) {
+        const texto = mensagemTravaSaiuSemQualidadeReal({
+          leads: pendentes,
+          hm: now.hm,
+          data: now.data,
+        });
+        whats = await enviaWhats(ceo, texto);
+        if (whats.enviado) await marcaTravaEnviados(chaves);
+      } else {
+        whats = { enviado: false, motivo: 'já avisado hoje (dedupe)' };
+      }
+    } else if (!reais.length) {
+      whats = { enviado: false, motivo: 'só demo/seed — sem WhatsApp' };
     }
   }
 
