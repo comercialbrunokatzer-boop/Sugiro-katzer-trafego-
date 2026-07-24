@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test test/*.mjs test/*.test.mjs",
     "postinstall": "node scripts/netlify-postinstall-funil.mjs && node scripts/deploy-helena-ship.mjs"
   },
   "dependencies": {
