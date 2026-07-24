@@ -20,6 +20,7 @@ import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_dec
 import { listaDealsFunil, fasesPorCampanha, inicioFunilISO, inicioEfetivoFunil } from './_bitrix-funil.mjs';
 import { metaPauseCampaign, metaActivateCampaign, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
+import { mensagemAcaoMichel } from './_alerta-ceo-campanhas.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 
@@ -463,26 +464,28 @@ export async function handler(event) {
       meta: metaAcao,
     });
 
+    // Aviso OBRIGATÓRIO ao Bruno — toda ação do Michel (meta / campanha / orçamento)
     const ceo = process.env.WHATSAPP_CEO || '';
-    let whats = { enviado: false };
+    let whats = { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
     if (ceo) {
-      const linhas = [
-        `📋 *Michel · App Decisão* · ${now.hm}`,
+      const texto = mensagemAcaoMichel({
+        acao,
         textoFeed,
-      ];
-      if (alerta) {
-        linhas.unshift('⚠️ *ALERTA GESTOR*');
-        linhas.push(`Custo ${body.custo || brl(cpl)} · Fake/Ruim: ${(detail.fake || 0) + (detail.ruim || 0)}`);
-        linhas.push('Michel manteve campanha com performance ruim');
-      }
-      whats = await enviaWhats(ceo, linhas.join('\n'));
+        campanhaId,
+        metaOk: metaAcao?.ok === true ? true : (metaAcao?.skipped ? null : false),
+        hm: now.hm,
+        alertaManterRuim: alerta,
+        custo: body.custo || brl(cpl),
+        fakeRuim: (detail.fake || 0) + (detail.ruim || 0),
+      });
+      whats = await enviaWhats(ceo, texto);
     }
 
     const toastOk = acao === 'parar' && metaAcao.ok
       ? `🛑 Pausada na Meta · ${nome}`
       : (alerta
-        ? `⚠️ Alerta: manteve campanha ruim — Helena avisou o gestor`
-        : `Registrado! ${textoFeed}`);
+        ? `⚠️ Alerta: manteve campanha ruim — Bruno avisado no WhatsApp`
+        : `Registrado! Bruno avisado · ${textoFeed}`);
 
     return json(200, {
       ok: true,
@@ -492,9 +495,7 @@ export async function handler(event) {
       alertaMichel: alerta
         ? `⚠️ Alerta: ${nome} está com performance ruim e foi mantida`
         : null,
-      alertaGestor: alerta
-        ? `⚠️ Alerta Gestor: Michel manteve ${nome} com custo alto + Fake/Ruim — via Helena`
-        : null,
+      alertaGestor: `📲 Bruno avisado no WhatsApp · ${acao}${alerta ? ' · campanha ruim/cara mantida' : ''}`,
       feed: {
         hoje: itensHoje(feed, now.data).length,
         acumulado: feed.acumulado,
