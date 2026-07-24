@@ -37,12 +37,35 @@ export function qualidadeComRegraIngles(qualidade, campanhaNome = '') {
  * Decide o que o Caçador mostra no dia — PURO (testável).
  * Demo NÃO entra por padrão (lead falso polui CPL/Bitrix).
  * Só com allowDemo=true (CACADOR_ALLOW_DEMO=1) para treino/homolog.
+ *
+ * Importante: blob antigo pode ter fonte "helena-auditora" / "cacador"
+ * mas ainda carregar ids demo-* (Carlos Vermelho). Purga sempre.
  */
+export function isLeadDemoSeed(lead = {}) {
+  const id = String(lead?.id || '');
+  const fonte = String(lead?.fonte || '');
+  const nome = String(lead?.nome || '');
+  return fonte === 'demo'
+    || id.startsWith('demo-')
+    || /^(carlos\s+vermelho|jo[aã]o\s+silva|maria|lead\s+ruim\s+br|ana\s+interessada)$/i.test(nome.trim());
+}
+
 export function resolveLeadsDoDia({ hoje, doc = null, allowDemo = false } = {}) {
   const temLeads = doc && doc.data === hoje && Array.isArray(doc.leads) && doc.leads.length;
   if (temLeads) {
     const fonte = doc.fonte || 'blobs';
-    // Blob antigo com seed demo: não servir como se fosse lead real
+    if (!allowDemo) {
+      const limpos = doc.leads.filter((l) => !isLeadDemoSeed(l));
+      // Blob só com seed (Carlos etc.) OU mistura → limpa e persiste
+      if (limpos.length !== doc.leads.length) {
+        return {
+          data: hoje,
+          leads: limpos,
+          fonte: limpos.length ? (fonte === 'demo' ? 'blobs' : fonte) : 'vazio',
+          persistir: true,
+        };
+      }
+    }
     if (fonte === 'demo' && !allowDemo) {
       return { data: hoje, leads: [], fonte: 'vazio', persistir: true };
     }

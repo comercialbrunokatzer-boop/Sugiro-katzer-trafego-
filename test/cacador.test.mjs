@@ -21,6 +21,37 @@ test('blob antigo fonte=demo sem allowDemo: limpa (não mostra João falso)', ()
   assert.equal(r.persistir, true);
 });
 
+test('blob helena-auditora ainda com Carlos demo-*: purga (caso produção)', () => {
+  const r = resolveLeadsDoDia({
+    hoje: '2026-07-24',
+    doc: {
+      data: '2026-07-24',
+      fonte: 'helena-auditora',
+      leads: [
+        { id: 'demo-vermelho-saiu', nome: 'Carlos Vermelho', fonte: 'FACEBOOK ADS' },
+        { id: 'demo-joao-silva', nome: 'João Silva', fonte: 'demo' },
+        { id: 'bitrix-99', nome: 'Lead Real', fonte: 'bitrix' },
+      ],
+    },
+    allowDemo: false,
+  });
+  assert.equal(r.persistir, true);
+  assert.equal(r.leads.length, 1);
+  assert.equal(r.leads[0].id, 'bitrix-99');
+  assert.equal(r.fonte, 'helena-auditora');
+});
+
+test('blob só com seed demo sob fonte helena-auditora: vira vazio', () => {
+  const r = resolveLeadsDoDia({
+    hoje: '2026-07-24',
+    doc: { data: '2026-07-24', fonte: 'helena-auditora', leads: leadsDemoHoje() },
+    allowDemo: false,
+  });
+  assert.equal(r.fonte, 'vazio');
+  assert.equal(r.leads.length, 0);
+  assert.equal(r.persistir, true);
+});
+
 test('sem allowDemo: dia vazio NÃO planta João Silva falso', () => {
   const r = resolveLeadsDoDia({ hoje: '2026-07-24', doc: null, allowDemo: false });
   assert.equal(r.fonte, 'vazio');
