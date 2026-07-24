@@ -1,4 +1,4 @@
-// Ações Meta — pausar / reativar campanha (Graph API).
+// Ações Meta — só no clique do Michel (App Decisão). Nunca automático.
 const GRAPH = () => process.env.META_GRAPH || 'https://graph.facebook.com/v20.0';
 
 export async function metaSetCampaignStatus(campaignId, status = 'PAUSED') {
@@ -37,6 +37,67 @@ export async function metaPauseCampaign(campaignId) {
 
 export async function metaActivateCampaign(campaignId) {
   return metaSetCampaignStatus(campaignId, 'ACTIVE');
+}
+
+/**
+ * Converte R$/dia (número ou "50" / "R$ 50,00") → centavos da Meta (inteiro).
+ * Ex.: 50 → 5000 ; 30.5 → 3050
+ */
+export function reaisParaCentavosMeta(valor) {
+  if (valor == null || valor === '') return null;
+  let s = String(valor).trim();
+  s = s.replace(/R\$\s?/gi, '').replace(/\s/g, '');
+  if (s.includes(',') && s.includes('.')) {
+    // 1.234,56 → 1234.56
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.');
+  }
+  const n = Number(s);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100);
+}
+
+/**
+ * Altera orçamento diário da campanha na Meta (só clique do Michel).
+ * daily_budget na Graph API = centavos.
+ */
+export async function metaSetCampaignDailyBudget(campaignId, valorReais) {
+  const token = process.env.META_SYSTEM_TOKEN;
+  const id = String(campaignId || '').trim();
+  const cents = reaisParaCentavosMeta(valorReais);
+  if (!token) return { ok: false, motivo: 'META_SYSTEM_TOKEN ausente' };
+  if (!id || !/^\d+$/.test(id)) return { ok: false, motivo: 'campaignId inválido' };
+  if (cents == null) return { ok: false, motivo: 'orçamento inválido (informe R$/dia > 0)' };
+  try {
+    const url = `${GRAPH()}/${id}`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        daily_budget: String(cents),
+        access_token: token,
+      }),
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok || body.error) {
+      return {
+        ok: false,
+        motivo: body.error?.message || `HTTP ${r.status}`,
+        body,
+        daily_budget_cents: cents,
+      };
+    }
+    return {
+      ok: true,
+      id,
+      daily_budget_cents: cents,
+      daily_budget_reais: cents / 100,
+      result: body,
+    };
+  } catch (e) {
+    return { ok: false, motivo: String(e.message || e), daily_budget_cents: cents };
+  }
 }
 
 /** Insights de campanha num intervalo (ex.: desde 12/07/2025). */

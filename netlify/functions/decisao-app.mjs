@@ -18,7 +18,7 @@ import {
 } from './_qualidade-trafego.mjs';
 import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_decisao-feed.mjs';
 import { listaDealsFunil, fasesPorCampanha, inicioFunilISO, inicioEfetivoFunil } from './_bitrix-funil.mjs';
-import { metaPauseCampaign, metaActivateCampaign, metaInsightsPeriodo } from './_meta-acoes.mjs';
+import { metaPauseCampaign, metaActivateCampaign, metaSetCampaignDailyBudget, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
@@ -424,10 +424,17 @@ export async function handler(event) {
     let textoFeed = '';
     if (acao === 'manter') {
       textoFeed = `Manteve ${nome} às ${now.hm}`;
-      if (campanhaId) {
-        metaAcao = await metaActivateCampaign(campanhaId);
-        if (metaAcao.ok) textoFeed += ' · Meta ACTIVE';
-        else if (metaAcao.motivo) textoFeed += ` · Meta: ${metaAcao.motivo}`;
+      if (!campanhaId) {
+        return json(400, { ok: false, erro: 'Sem campaignId numérico — não dá pra reativar na Meta' });
+      }
+      metaAcao = await metaActivateCampaign(campanhaId);
+      if (metaAcao.ok) textoFeed += ' · Meta ACTIVE';
+      else {
+        return json(502, {
+          ok: false,
+          erro: `Não reativou na Meta: ${metaAcao.motivo || 'erro'}`,
+          meta: metaAcao,
+        });
       }
     } else if (acao === 'parar') {
       textoFeed = `Parou ${nome} às ${now.hm}`;
@@ -445,8 +452,23 @@ export async function handler(event) {
         return json(400, { ok: false, erro: 'Sem campaignId numérico — não dá pra pausar na Meta' });
       }
     } else {
+      // orcamento / budget — clique do Michel tem que acertar a Meta (não “em breve”)
       const val = body.orcamento ?? body.valor ?? body.ajuste;
-      textoFeed = `Alterou ${nome} para R$${val}/dia às ${now.hm} (registro; budget Meta em breve)`;
+      if (!campanhaId) {
+        return json(400, { ok: false, erro: 'Sem campaignId numérico — não dá pra mudar orçamento na Meta' });
+      }
+      metaAcao = await metaSetCampaignDailyBudget(campanhaId, val);
+      if (!metaAcao.ok) {
+        return json(502, {
+          ok: false,
+          erro: `Não alterou orçamento na Meta: ${metaAcao.motivo || 'erro'}`,
+          meta: metaAcao,
+        });
+      }
+      const reais = metaAcao.daily_budget_reais != null
+        ? metaAcao.daily_budget_reais
+        : val;
+      textoFeed = `Alterou ${nome} para R$${reais}/dia às ${now.hm} · Meta daily_budget OK`;
     }
 
     const feed = await registraFeedDecisao({
@@ -463,13 +485,19 @@ export async function handler(event) {
       meta: metaAcao,
     });
 
+    // Aviso obrigatório ao Bruno (CEO) — toda ação do Michel no clique
     const ceo = process.env.WHATSAPP_CEO || '';
     let whats = { enviado: false };
     if (ceo) {
+      const acaoLabel = acao === 'parar' ? '🛑 PAROU'
+        : (acao === 'manter' ? '▶️ MANTEVE / REATIVOU'
+          : '💰 ORÇAMENTO');
       const linhas = [
-        `📋 *Michel · App Decisão* · ${now.hm}`,
+        `${acaoLabel} · *Michel · App Decisão* · ${now.hm}`,
         textoFeed,
-      ];
+        campanhaId ? `Meta ID: ${campanhaId}` : '',
+        metaAcao?.ok ? '✅ Meta confirmou' : '',
+      ].filter(Boolean);
       if (alerta) {
         linhas.unshift('⚠️ *ALERTA GESTOR*');
         linhas.push(`Custo ${body.custo || brl(cpl)} · Fake/Ruim: ${(detail.fake || 0) + (detail.ruim || 0)}`);
@@ -480,9 +508,13 @@ export async function handler(event) {
 
     const toastOk = acao === 'parar' && metaAcao.ok
       ? `🛑 Pausada na Meta · ${nome}`
-      : (alerta
-        ? `⚠️ Alerta: manteve campanha ruim — Helena avisou o gestor`
-        : `Registrado! ${textoFeed}`);
+      : (acao === 'manter' && metaAcao.ok
+        ? `▶️ Ativa na Meta · ${nome}`
+        : ((acao === 'orcamento' || acao === 'budget') && metaAcao.ok
+          ? `💰 Orçamento na Meta · R$${metaAcao.daily_budget_reais}/dia`
+          : (alerta
+            ? `⚠️ Alerta: manteve campanha ruim — Helena avisou o gestor`
+            : `Registrado! ${textoFeed}`)));
 
     return json(200, {
       ok: true,
