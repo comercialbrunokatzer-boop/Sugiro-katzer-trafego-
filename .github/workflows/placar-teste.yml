@@ -1,16 +1,15 @@
 name: 📊 Placar do Michel — TESTE (Meta → WhatsApp)
 
-# Puxa os números REAIS da Meta (últimos 7 dias) e envia um Placar de teste no
-# WhatsApp (via Z-API). É TESTE: a inteligência da sugestão é básica; o objetivo
-# é provar o cano — dado real entrando e mensagem saindo pros destinatários.
+# Puxa os números REAIS da Meta (últimos 7 dias) e envia o Placar no WhatsApp
+# (via Z-API). Usa o cérebro novo `_placar.mjs` — leads reais (form + clique-pro-
+# WhatsApp) + CPL + Decisão do dia. Conserta o "s/ dado" do placar antigo.
 # Rodar pela aba Actions → "Run workflow" (escolhe quem recebe).
-
 on:
   workflow_dispatch:
     inputs:
       para:
         description: "Quem recebe (separado por vírgula): ceo, carol, michel"
-        default: "ceo,carol"
+        default: "ceo,michel"
         required: true
       zapi_instance:
         description: "Z-API instance ID (opcional — se vazio usa o secret)"
@@ -43,6 +42,11 @@ jobs:
       WA_MICHEL: ${{ secrets.WHATSAPP_MICHEL }}
       PARA: ${{ github.event.inputs.para }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Mascara segredos nos logs
         run: |
           for v in "$META_TOKEN" "$ZAPI_INSTANCE" "$ZAPI_TOKEN" "$ZAPI_CLIENT_TOKEN" "$WA_CEO" "$WA_CAROL" "$WA_MICHEL"; do
@@ -62,31 +66,26 @@ jobs:
           [ -z "$ZAPI_CLIENT_TOKEN" ] && echo "Aviso: sem ZAPI_CLIENT_TOKEN — vou tentar sem ele (se a Z-API exigir, aí criamos)."
           echo "Credenciais mínimas presentes ✅"
 
-      - name: Puxa a Meta e monta o Placar
+      - name: Puxa a Meta e monta o Placar (cérebro novo _placar.mjs)
         run: |
           set -euo pipefail
           curl -sS -G "${GRAPH}/${AD_ACCOUNT}/insights" \
             --data-urlencode "level=campaign" \
             --data-urlencode "date_preset=last_7d" \
-            --data-urlencode "fields=campaign_name,spend,results,cost_per_result" \
+            --data-urlencode "fields=campaign_name,spend,actions,results" \
+            --data-urlencode "limit=500" \
             --data-urlencode "access_token=${META_TOKEN}" \
             -o /tmp/meta.json
           if jq -e '.error' /tmp/meta.json >/dev/null 2>&1; then
             echo "::error::Meta: $(jq -r '.error.message' /tmp/meta.json)"; exit 2
           fi
-          {
-            echo "📊 *Placar do Michel — TESTE*"
-            echo "_últimos 7 dias · dados reais da Meta_"
-            echo ""
-            jq -r '.data | sort_by(-(.spend|tonumber)) | .[:6][] |
-              "• \(.campaign_name)\n   gasto R$ \(.spend) · resultados \((.results[0].values[0].value) // "s/ dado")"' /tmp/meta.json
-            echo ""
-            TOP=$(jq -r '.data | sort_by(-(.spend|tonumber)) | .[0].campaign_name' /tmp/meta.json)
-            TOPS=$(jq -r '.data | sort_by(-(.spend|tonumber)) | .[0].spend' /tmp/meta.json)
-            echo "🔎 *Sugestão do dia (teste):* olhar de perto a \"${TOP}\" — maior gasto (R$ ${TOPS}) nos últimos 7 dias."
-            echo ""
-            echo "_Placar automático · Katzer OS · IA de Tráfego (TESTE)_"
-          } > /tmp/msg.txt
+          node --input-type=module -e '
+            import { montaPlacar, resumoPlacarWhats } from "./netlify/functions/_placar.mjs";
+            import fs from "fs";
+            const d = JSON.parse(fs.readFileSync("/tmp/meta.json","utf8")).data || [];
+            const p = montaPlacar(d);
+            fs.writeFileSync("/tmp/msg.txt", resumoPlacarWhats(p, { periodo: "últimos 7 dias" }));
+          '
           echo "----- prévia -----"; cat /tmp/msg.txt; echo "------------------"
 
       - name: Envia no WhatsApp (Z-API)

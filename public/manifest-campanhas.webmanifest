@@ -1,0 +1,16 @@
+{
+  "name": "Campanhas Katzer",
+  "short_name": "Campanhas",
+  "description": "Painel de Campanhas Katzer — Meta, formulário, CPL BOM, decisão. App separado da Rotina.",
+  "start_url": "/app.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fcfcfc",
+  "theme_color": "#111111",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-katzer.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

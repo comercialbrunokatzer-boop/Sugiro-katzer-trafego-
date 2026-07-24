@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Gestor Bruno — V6</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="/manifest-gestor.webmanifest">
+<meta name="theme-color" content="#0d1820">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Placar Gestor">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-gestor.png">
+<link rel="icon" type="image/png" href="/icon-gestor.png">
+<style>
+  :root{
+    --ground:#eef1f0;--panel:#fff;--ink:#14252f;--sub:#5c6b74;--hair:#dbe2e0;--gold:#a8792a;--sea:#1f6f66;
+    --ok:#1f9d57;--ok-bg:#e4f2ea;--late:#c0492f;--late-bg:#f7e7e2;--obs:#6b4bb0;--obs-bg:#efeafa;
+    --run:#1f6f66;--run-bg:#e3f1ef;
+    --shadow:0 1px 2px rgba(18,34,44,.06),0 10px 30px rgba(18,34,44,.09);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{--ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;--gold:#d4ac60;--sea:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;--late:#e0765c;--late-bg:#331f1a;--obs:#b49ae8;--obs-bg:#241d38;--run:#4fb3a6;--run-bg:#14342a;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.45}
+  .wrap{max-width:640px;margin:0 auto;padding:clamp(16px,4vw,28px)}
+  .eyebrow{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0}
+  h1{font-size:clamp(1.3rem,4vw,1.7rem);font-weight:800;letter-spacing:-.02em;margin:.3rem 0 .2rem}
+  .date{color:var(--sub);font-size:.9rem;margin:0 0 14px}
+  .live{display:inline-flex;align-items:center;gap:.35rem;font-size:.68rem;font-weight:700;color:var(--sea)}
+  .live .dot{width:8px;height:8px;border-radius:50%;background:var(--sea);animation:p 1.4s infinite}@keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
+  .hero{background:var(--panel);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px;display:flex;align-items:center;gap:18px;margin-bottom:6px}
+  .pct{font-family:var(--mono);font-weight:800;font-size:2.6rem;letter-spacing:-.02em;line-height:1}
+  .pct.hi{color:var(--ok)}.pct.mid{color:var(--gold)}.pct.lo{color:var(--late)}
+  .hero .meta{flex:1}.hero .meta .t{font-weight:800}.hero .meta .s{font-size:.82rem;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
+  .modo-badge{font-size:.72rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:var(--ground);color:var(--sub)}
+  .row{background:var(--panel);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);padding:11px 14px;margin-top:9px}
+  .row.late{border-left:3px solid var(--late)}.row.ok{border-left:3px solid var(--ok)}.row.wait{opacity:.72}.row.run{border-left:3px solid var(--run)}
+  .row-main{display:flex;align-items:center;gap:11px}
+  .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:.78rem;flex:none}
+  .ic.ok{background:var(--ok-bg);color:var(--ok)}.ic.late{background:var(--late-bg);color:var(--late)}.ic.wait{background:var(--ground);color:var(--sub)}.ic.run{background:var(--run-bg);color:var(--run)}
+  .nm{flex:1;min-width:0}.nm b{font-weight:700;font-size:.95rem}.nm small{display:block;color:var(--sub);font-size:.74rem;font-variant-numeric:tabular-nums}
+  .tag{font-weight:800;font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}.tag.late{color:var(--late)}.tag.ok{color:var(--ok)}.tag.run{color:var(--run)}
+  .camp{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair);font-size:.84rem}
+  .camp .metrica{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);line-height:1.4}
+  .camp .bom{margin-top:8px;font-size:.8rem;color:var(--ok);font-weight:700;background:var(--ok-bg);border-radius:8px;padding:7px 10px;display:inline-block}
+  .camp .bom.soft{color:var(--gold);background:rgba(168,121,42,.12)}
+  .camp .pend{margin-top:8px;font-size:.8rem;color:var(--sub);line-height:1.35}
+  .camp .pend.ok{color:var(--ok);font-weight:600}
+  .camp .cta{margin-top:10px}
+  .camp .cta a{display:inline-block;text-decoration:none;background:var(--sea);color:#fff;font-weight:800;font-size:.86rem;border-radius:9px;padding:9px 15px}
+  .obsbox{margin-top:18px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:13px 15px}
+  .obsbox h3{margin:0 0 8px;font-size:.88rem;color:var(--obs)}
+  .obsentry{background:var(--panel);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:7px}
+  .obsentry .who{font-size:.62rem;font-weight:800;text-transform:uppercase;color:var(--obs);background:var(--obs-bg);padding:.15rem .45rem;border-radius:999px;margin-right:6px}
+  .note{margin-top:16px;font-size:.78rem;color:var(--sub);text-align:center}
+  footer{margin-top:14px;color:var(--sub);font-size:.72rem;text-align:center}
+</style>
+</head>
+<body>
+<div id="lock" style="display:none;position:fixed;inset:0;z-index:99;background:#0b1622;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">
+  <div style="letter-spacing:.34em;font-size:13px;color:#d4ac60;text-transform:uppercase;font-family:Georgia,serif">Katzer</div>
+  <div style="font-size:44px;margin:14px 0 4px">🔒</div>
+  <div style="color:#e8edeb;font-size:1.1rem;font-weight:700;margin-bottom:4px">Placar do Gestor</div>
+  <div style="color:#9fb1b3;font-size:.85rem;margin-bottom:18px">Digite sua senha pra acompanhar o Michel ao vivo.</div>
+  <input id="lockPw" type="password" placeholder="senha" autocomplete="current-password"
+    style="width:min(280px,80vw);border:1px solid #263742;background:#14232d;color:#e8edeb;border-radius:10px;padding:12px 14px;font-size:1rem;text-align:center;font-family:inherit">
+  <div id="lockErr" style="color:#e0765c;font-size:.8rem;height:18px;margin-top:8px"></div>
+  <button id="lockBtn" style="margin-top:6px;border:0;background:linear-gradient(150deg,#1f6f66,#134f49);color:#fff;font-weight:800;border-radius:10px;padding:12px 26px;font-size:1rem;font-family:inherit;cursor:pointer">Entrar</button>
+  <label style="color:#9fb1b3;font-size:.78rem;margin-top:14px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="lockSave" checked> Manter conectado neste aparelho</label>
+</div>
+<div class="wrap">
+  <p class="eyebrow">Katzer OS · Placar do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
+  <h1>Dashboard Gestor · ao vivo</h1>
+  <p class="date" id="date">carregando…</p>
+
+  <div class="hero">
+    <div class="pct" id="pct">—</div>
+    <div class="meta"><div class="t">Meta do dia</div><div class="s" id="saldo">—</div></div>
+    <div class="modo-badge" id="modo">—</div>
+  </div>
+
+  <div id="rows"></div>
+
+  <div class="obsbox" id="obsbox" style="display:none">
+    <h3>🔔 Interrupções (pedidas por você/Carol)</h3>
+    <div id="obsList"></div>
+  </div>
+
+  <div class="obsbox" id="trafBox" style="margin-top:14px">
+    <h3>📊 Gestor de tráfego</h3>
+    <div id="trafFez" style="font-size:.85rem;margin-top:6px">Carregando o que Michel fez / não fez…</div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+      <button type="button" id="btnPausar" style="border:0;background:var(--late);color:#fff;font-weight:800;border-radius:9px;padding:10px 12px;font-family:inherit;cursor:pointer">Pausar campanha</button>
+      <button type="button" id="btnEscalar" style="border:0;background:var(--ok);color:#fff;font-weight:800;border-radius:9px;padding:10px 12px;font-family:inherit;cursor:pointer">Escalar campanha</button>
+      <button type="button" id="btnModGestor" style="border:0;background:var(--sea);color:#fff;font-weight:800;border-radius:9px;padding:10px 12px;font-family:inherit;cursor:pointer">Abrir Painel 2</button>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--hair)">
+      <div style="font-size:.78rem;font-weight:800;color:var(--obs);margin-bottom:6px">⛏️ Editar Garimpo (hoje)</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="garimpoHm" type="time" value="10:15" style="border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:8px;padding:8px 10px;font-family:inherit">
+        <button type="button" id="btnGarimpo" style="border:0;background:var(--obs);color:#fff;font-weight:800;border-radius:9px;padding:9px 12px;font-family:inherit;cursor:pointer">Salvar horário</button>
+      </div>
+      <div id="garimpoMsg" style="font-size:.75rem;color:var(--sub);margin-top:6px"></div>
+    </div>
+  </div>
+  <div class="obsbox" id="relTarde" style="margin-top:14px">
+    <h3>🕔 Relatório de tarde (auto · 16h)</h3>
+    <div id="relTardeBody" style="font-size:.85rem;margin-top:6px;line-height:1.4">Atualiza sozinho — só olhar. Não precisa o Michel mandar.</div>
+    <button type="button" id="btnRel16h" style="margin-top:10px;border:0;background:var(--gold);color:#1a1408;font-weight:800;border-radius:9px;padding:10px 14px;font-family:inherit;cursor:pointer">Enviar relatório 16h no WhatsApp</button>
+    <div id="rel16msg" style="font-size:.75rem;color:var(--sub);margin-top:6px"></div>
+  </div>
+  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Auto: cada movimento do Michel pinga seu WhatsApp. Persistência automática — você só abre /gestor.html.</p>
+  <footer>Katzer OS · Placar do Gestor · V6</footer>
+</div>
+
+<script>
+const $=(s)=>document.querySelector(s);let ST=null,tick=null;
+function getKey(){try{return localStorage.getItem('gk')||sessionStorage.getItem('gk')||'';}catch(e){return '';}}
+function showLock(msg){const l=$('#lock');l.style.display='flex';if(msg)$('#lockErr').textContent=msg;$('#lockPw').focus();}
+function hideLock(){$('#lock').style.display='none';}
+async function load(){
+  const key=getKey();
+  if(!key){showLock('');return;}
+  try{
+    const r=await fetch('/api/estado?ceo=1',{headers:{'x-gestor-key':key}});
+    if(r.status===401){try{localStorage.removeItem('gk');sessionStorage.removeItem('gk');}catch(e){}showLock('Senha incorreta. Tente de novo.');return;}
+    ST=await r.json();hideLock();render();
+  }catch(e){}
+}
+async function tentarSenha(){
+  const pw=$('#lockPw').value;if(!pw){$('#lockErr').textContent='Digite a senha.';return;}
+  try{
+    const r=await fetch('/api/estado?ceo=1',{headers:{'x-gestor-key':pw}});
+    if(r.status===401){$('#lockErr').textContent='Senha incorreta.';$('#lockPw').select();return;}
+    const store=$('#lockSave').checked?localStorage:sessionStorage;
+    try{store.setItem('gk',pw);}catch(e){}
+    $('#lockPw').value='';$('#lockErr').textContent='';hideLock();load();
+  }catch(e){$('#lockErr').textContent='Sem conexão, tente de novo.';}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  $('#lockBtn').addEventListener('click',tentarSenha);
+  $('#lockPw').addEventListener('keydown',e=>{if(e.key==='Enter')tentarSenha();});
+});
+function diaSemana(d){const[y,m,dd]=d.split('-').map(Number);return['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][new Date(Date.UTC(y,m-1,dd)).getUTCDay()];}
+function fmtData(d){const[y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return`${diaSemana(d)}, ${+dd} de ${mes} de ${y}`;}
+function nowMin(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o=Object.fromEntries(p.map(x=>[x.type,x.value]));return(+o.hour%24)*60+(+o.minute);}
+function hm2min(h){const[a,b]=h.split(':').map(Number);return a*60+b;}
+function rotuloEstado(l){
+  if(l.estado==='bloqueado')return`<span class="tag" style="color:var(--sub)">bloqueado</span>`;
+  if(l.estado==='nao_realizado')return`<span class="tag late">não realizado</span>`;
+  if(l.estado==='em_andamento')return`<span class="tag run">em andamento</span>`;
+  if(l.feito){
+    if(l.difMin>0)return`<span class="tag late">atrasou ${l.difMin}′</span>`;
+    if(l.difMin<0)return`<span class="tag ok">+${-l.difMin}′ 💚</span>`;
+    return`<span class="tag ok">concluído</span>`;
+  }
+  if(l.estado==='atrasado')return`<span class="tag late atraso" data-prev="${l.previsto}">atrasando…</span>`;
+  return`<span class="tag" style="color:var(--sub)">aguardando</span>`;
+}
+function blocoCampanhas(l){
+  if(l.id!=='campanhas')return'';
+  const C=ST.campanhas||{};
+  const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
+  const bom=C.cplBom||'';
+  const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
+  const pend=C.statusDecisao||'Decisão do dia: análises pendentes no painel de campanhas';
+  const pendCls=C.pendente===false?'pend ok':'pend';
+  const link=C.link||'https://dashing-elf-41a723.netlify.app/';
+  const cta=C.cta||'▶ Abrir Painel de Campanhas';
+  return`<div class="camp">
+    <div class="metrica">${metrica}</div>
+    ${bom?`<div class="${bomCls}">${bom}</div>`:''}
+    <div class="${pendCls}">${pend}</div>
+    <div class="cta"><a href="${link}" target="_blank" rel="noopener">${cta}</a></div>
+  </div>`;
+}
+function render(){
+  if(!ST||!ST.ok)return;const P=ST.pontualidade;
+  $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga do Michel 🎉':'');
+  $('#modo').textContent=ST.modo==='katzer'?'🏢 Katzer':'🏠 Casa';
+  const pe=$('#pct');pe.textContent=(P?P.pct:100)+'%';pe.className='pct '+(P&&P.pct>=90?'hi':(P&&P.pct>=70?'mid':'lo'));
+  const sal=P?P.saldoMin:0;$('#saldo').textContent=sal>0?`saldo −${sal}′ (atrasado)`:(sal<0?`saldo +${-sal}′ (adiantado)`:'no ritmo');
+  const box=$('#rows');box.innerHTML='';
+  P.linhas.forEach(l=>{
+    const el=document.createElement('div');
+    let cls='wait';
+    if(l.estado==='concluido'||(l.feito&&l.difMin<=0))cls='ok';
+    else if(l.estado==='em_andamento')cls='run';
+    else if(l.estado==='atrasado'||l.estado==='nao_realizado'||(l.feito&&l.difMin>0))cls='late';
+    el.className='row '+cls;
+    const ic=cls==='ok'?'ok':(cls==='late'?'late':(cls==='run'?'run':'wait'));
+    const mark=l.feito?'✓':(l.estado==='em_andamento'?'▶':(cls==='late'?'!':'·'));
+    el.innerHTML=`<div class="row-main">
+      <div class="ic ${ic}">${mark}</div>
+      <div class="nm"><b>${l.nome}</b><small>previsto ${l.previsto}${l.feito?' · feito '+l.hora:''}${l.nota?' · 📝 '+l.nota:''}</small></div>
+      ${rotuloEstado(l)}
+    </div>${blocoCampanhas(l)}`;
+    box.appendChild(el);
+  });
+  const ob=ST.obs||[];if(ob.length){$('#obsbox').style.display='';const ol=$('#obsList');ol.innerHTML='';ob.forEach(o=>{const e=document.createElement('div');e.className='obsentry';e.innerHTML=`<span class="who">${o.quem}</span><b>${o.nome}</b> — ${o.inicio}${o.duracao?' · '+o.duracao+' min':''}`;ol.appendChild(e);});}else{$('#obsbox').style.display='none';}
+  startTick();
+}
+function startTick(){if(tick)clearInterval(tick);const upd=()=>{document.querySelectorAll('.atraso').forEach(s=>{const d=nowMin()-hm2min(s.dataset.prev);if(d>0)s.textContent='atrasando '+Math.floor(d)+' min';});};upd();tick=setInterval(upd,10000);}
+
+function fillTrafego(){
+  const box=$('#trafFez'); if(!box||!ST) return;
+  const ts=ST.tarefas||[];
+  const feitos=ts.filter(t=>t.feito||t.estado==='concluido');
+  const pend=ts.filter(t=>!t.feito && (t.estado==='atrasado'||t.estado==='nao_realizado'||t.estado==='em_andamento'));
+  const C=ST.campanhas||{};
+  const g=ts.find(t=>t.id==='garimpo');
+  if(g && $('#garimpoHm') && document.activeElement!==$('#garimpoHm')) $('#garimpoHm').value=g.previsto||'10:15';
+  const gMeta=g&&g.garimpo?g.garimpo:null;
+  const gLinha=gMeta
+    ? `Qtd ${gMeta.qtd}${gMeta.nome?' · '+gMeta.nome:''}${gMeta.telefone?' · '+gMeta.telefone:''}`
+    : (g&&g.feito?(g.nota||'feito sem linha'):'—');
+  const per=C.periodo?`<br><span style="font-size:.78rem">📅 ${C.periodo.label||''}</span>`:'';
+  box.innerHTML=`<b>Fez:</b> ${feitos.map(t=>t.nome).join(', ')||'—'}<br>
+    <b>Não fez / atrasou:</b> ${pend.map(t=>t.nome).join(', ')||'—'}<br>
+    <b>Garimpo:</b> ${gLinha}<br>
+    <b>Campanhas (só olhar na Rotina):</b> ${C.resumo||C.metrica||'—'}${per}<br>
+    <span style="color:var(--sub);font-size:.78rem">${C.statusDecisao||'Decisão no Painel 2'}</span>`;
+  const rel=$('#relTardeBody');
+  if(rel){
+    const pct=ST.pontualidade&&ST.pontualidade.pct;
+    const linhas=(ST.pontualidade&&ST.pontualidade.linhas)||[];
+    const atras=linhas.filter(l=>l.feito&&l.difMin>0).map(l=>`${l.nome} −${l.difMin}′`).join(' · ')||'—';
+    rel.innerHTML=`Atualizado <b>${ST.agora||'—'}</b> · pontualidade <b>${pct!=null?pct+'%':'—'}</b><br>
+      Tarefas ok: ${feitos.length}/${ts.length||8} · Obs: ${(ST.obs||[]).length}<br>
+      Atrasos: ${atras}<br>
+      <i>16h: só olhar aqui. Ou manda no WhatsApp com o botão.</i>`;
+  }
+}
+async function apiGestor(body){
+  const key=getKey();
+  const r=await fetch('/api/registrar',{method:'POST',headers:{'Content-Type':'application/json','x-gestor-key':key},body:JSON.stringify(body)});
+  return r.json();
+}
+const _render0=typeof render==='function'?render:null;
+if(_render0){
+  window.render=function(){ _render0(); fillTrafego(); };
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const painelUrl=/dashing-elf-41a723|campanhas-katzer/i.test(location.hostname)
+    ? '/painel.html'
+    : 'https://dashing-elf-41a723.netlify.app/painel.html';
+  const b=document.getElementById('btnModGestor');
+  if(b) b.onclick=()=>{ if(confirm('Abrir Painel 2 (execução)?')) location.href=painelUrl; };
+  const pausar=$('#btnPausar');
+  if(pausar) pausar.onclick=async()=>{
+    const camp=prompt('Nome da campanha pra PAUSAR:','');
+    if(camp==null) return;
+    if(!camp.trim()){alert('Digite o nome da campanha');return;}
+    pausar.disabled=true;
+    const r=await apiGestor({acao:'gestor-decisao',decisao:'pausar',campanha:camp.trim(),tipo:'pausar'});
+    pausar.disabled=false;
+    alert(r.ok?'Registrado: PAUSAR · WhatsApp avisado':(r.erro||'Falhou'));
+    load();
+  };
+  const esc=$('#btnEscalar');
+  if(esc) esc.onclick=async()=>{
+    const camp=prompt('Nome da campanha pra ESCALAR:','');
+    if(camp==null) return;
+    if(!camp.trim()){alert('Digite o nome da campanha');return;}
+    esc.disabled=true;
+    const r=await apiGestor({acao:'gestor-decisao',decisao:'escalar',campanha:camp.trim(),tipo:'escalar'});
+    esc.disabled=false;
+    alert(r.ok?'Registrado: ESCALAR · WhatsApp avisado':(r.erro||'Falhou'));
+    load();
+  };
+  const bg=$('#btnGarimpo');
+  if(bg) bg.onclick=async()=>{
+    const hm=$('#garimpoHm').value;
+    if(!hm){alert('Escolha o horário');return;}
+    bg.disabled=true;
+    const r=await apiGestor({acao:'ajuste-horario',tarefa:'garimpo',hm});
+    bg.disabled=false;
+    $('#garimpoMsg').textContent=r.ok?`Garimpo hoje → ${r.previsto}`:(r.erro||'erro');
+    load();
+  };
+  const br=$('#btnRel16h');
+  if(br) br.onclick=async()=>{
+    br.disabled=true;$('#rel16msg').textContent='Enviando…';
+    try{
+      const r=await fetch('/api/relatorio-16h',{method:'POST',headers:{'Content-Type':'application/json','x-gestor-key':getKey()},body:'{}'});
+      const j=await r.json();
+      $('#rel16msg').textContent=j.ok?(j.whats&&j.whats.enviado?'✅ Relatório 16h no WhatsApp':'Prévia ok — confira envio WA'):(j.erro||'Falhou');
+    }catch(e){$('#rel16msg').textContent='Sem conexão';}
+    br.disabled=false;
+  };
+});
+
+load();setInterval(load,15000);
+</script>
+</body>
+</html>
