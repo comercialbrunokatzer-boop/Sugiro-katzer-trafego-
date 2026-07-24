@@ -97,16 +97,16 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
 </div>
 
 <div id="tab-ranking" style="display:none">
-  <div class="info" id="infoRanking">Desde <b>12/07/2025</b> (entrada do Michel) até hoje · Top 10 melhores + Top 10 piores por CPL · com fases Bitrix e WhatsApp.</div>
+  <div class="info" id="infoRanking">Desde <b>12/07/2025</b> (entrada do Michel) até hoje · Top 10 por <b>qualidade do funil Bitrix</b> (fase + contato + comentários) · CPL só desempatando.</div>
   <div class="fb-box" id="fbRanking">
     <div><b>Por que as 10 melhores converteram</b><span id="fbMelhores">—</span></div>
     <div><b>Por que as 10 piores travaram</b><span id="fbPiores">—</span></div>
   </div>
-  <div class="sec-title">🏆 Top 10 melhores · menor CPL</div>
-  <div class="sec-sub" id="subMelhores">Custo de lead + forms + fase no funil</div>
+  <div class="sec-title">🏆 Top 10 melhores · maior nota no funil</div>
+  <div class="sec-sub" id="subMelhores">Nota Bitrix (fase/contato/comentários) · CPL só desempatando</div>
   <div id="listMelhores"></div>
-  <div class="sec-title">⚠️ Top 10 piores · maior CPL</div>
-  <div class="sec-sub">Mesma régua — para comparar avanço no funil</div>
+  <div class="sec-title">⚠️ Top 10 piores · menor nota no funil</div>
+  <div class="sec-sub">Mesma régua — barato sem avanço no funil cai aqui</div>
   <div id="listPiores"></div>
 </div>
 
@@ -127,7 +127,7 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
       <div class="row"><div class="col"><span id="qualTotais">…</span></div></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>Top 10 melhores · menor custo</h3></div>
+      <div class="card-head"><h3>Top 10 melhores · nota do funil</h3></div>
       <div class="row" id="topMelhores" style="flex-direction:column;gap:4px;font-size:12px"></div>
     </div>
     <div class="card">
@@ -247,6 +247,8 @@ function htmlFases(cam){
 function cardHtml(cam,{showPos=false, showActions=true}={}){
   const cls=cam.alertaVisual==='ruim'?'ruim':(cam.alertaVisual==='oportunidade'?'oportunidade':'');
   const badgeTxt=cam.qual==='bad'?'RUIM · '+cam.custo:(cam.qual==='good'?'OPORTUNIDADE · '+cam.custo:cam.custo+' /lead');
+  const nf=cam.notaFunil||{};
+  const notaTxt=nf.nota!=null?`Nota funil ${nf.selo||''} ${nf.nota}`:null;
   return `<div class="card ${cls}">
     <div class="card-head">
       <h3>${showPos&&cam.pos?`<span class="pos">${cam.pos}º</span>`:''}${esc(cam.name)}${cam.ativa===false?' <span style="color:#999;font-size:10px">· pausada</span>':''}</h3>
@@ -258,7 +260,9 @@ function cardHtml(cam,{showPos=false, showActions=true}={}){
       <div class="col"><b>${esc(cam.imp)}</b><span>Impressões</span></div>
       <div class="col"><b>${cam.forms??0}</b><span>Forms</span></div>
       <div class="col"><b>${esc(cam.custo)}</b><span>Custo/Lead</span></div>
+      ${notaTxt?`<div class="col"><b>${esc(notaTxt)}</b><span title="${esc(nf.motivo||'')}">Qualidade Bitrix</span></div>`:''}
     </div>
+    ${nf.motivo?`<div class="fase-meta" style="margin:4px 0 8px;color:#555">${esc(nf.motivo)}</div>`:''}
     ${cam.metaDecisao?`<div class="meta-decisao ${escAttr(cam.metaDecisao.acao||'')}"><b>Meta · ${esc((cam.metaDecisao.acao||'').replace(/_/g,' '))}</b>${esc(cam.metaDecisao.motivo||'')}</div>`:''}
     <div class="row"><div class="col"><b>Qualidade IA + fases Bitrix</b>
       <div class="quality">
@@ -343,7 +347,7 @@ async function loadMichel(){
   const info=document.getElementById('infoAtivas');
   if(info) info.innerHTML=`Só campanhas <b>ACTIVE</b> na Meta (sem [TESTE]) · <b>${ATIVAS.length}</b> agora. ${esc(DATA.avisoAbas||'')}${DATA.bitrixOk===false?' · <span style="color:#b91c1c">Bitrix: webhook ainda não ligado — fases parciais</span>':(DATA.bitrixOk?' · Bitrix OK':'')}`;
   const ir=document.getElementById('infoRanking');
-  if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> até <b>${esc(DATA.rankingAte||'hoje')}</b> · Top 10 melhores + Top 10 piores por CPL · fases Bitrix + WhatsApp por lead.`;
+  if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> até <b>${esc(DATA.rankingAte||'hoje')}</b> · Top 10 por <b>qualidade do funil Bitrix</b> (fase + contato + comentários) · CPL só desempatando.`;
   const fbM=document.getElementById('fbMelhores');
   const fbP=document.getElementById('fbPiores');
   if(fbM) fbM.innerHTML='<br>'+(DATA.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>');
@@ -365,7 +369,7 @@ async function loadGestor(){
   const itens=(g.feed||[]).map(i=>`<div class="feed-item">${esc(i.texto||'')}</div>`).join('')||'<div class="feed-item">Aguardando ações do Michel hoje...</div>';
   feed.innerHTML=`<div class="small-card">Hoje: ${g.hoje||0} · Acumulado desde 12/07/2025: ${g.acumulado||127} · ${esc(g.email14h||'E-mail 14h')}</div>${itens}`;
   document.getElementById('qualTotais').textContent=g.qualidadeTexto||'';
-  document.getElementById('topMelhores').innerHTML=(g.melhores||[]).map(m=>`<div>${m.pos}. ${esc(m.nome)} — ${esc(m.custo)} — ${m.forms} forms</div>`).join('')||'—';
+  document.getElementById('topMelhores').innerHTML=(g.melhores||[]).map(m=>`<div>${m.pos}. ${esc(m.nome)} — nota ${m.nota??'—'} (${m.selo||'—'}) — ${esc(m.custo)} — ${m.forms} forms</div>`).join('')||'—';
   document.getElementById('feedbackBox').innerHTML=`
     <div class="col"><b>Melhores em comum</b><br><span>${(g.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>
     <div class="col"><b>Piores</b><br><span>${(g.feedbackPiores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>`;

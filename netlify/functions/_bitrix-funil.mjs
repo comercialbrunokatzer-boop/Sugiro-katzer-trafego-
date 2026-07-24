@@ -461,12 +461,20 @@ function dealDentroDoPeriodo(deal, inicioISO) {
   return cri >= (ini - 3 * 24 * 60 * 60 * 1000);
 }
 
-export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], {
+/** Deals do Funil Novo casados com a campanha na janela efetiva (colchete ∪ Meta). */
+export function dealsPorCampanha(deals, nomeCampanha, {
   inicioISO = null,
   periodoDesdeISO = null,
 } = {}) {
   const inicio = inicioEfetivoFunil(nomeCampanha, inicioISO, periodoDesdeISO);
-  const matched = (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha) && dealDentroDoPeriodo(d, inicio));
+  return (deals || []).filter((d) => dealBateCampanha(d, nomeCampanha) && dealDentroDoPeriodo(d, inicio));
+}
+
+export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], {
+  inicioISO = null,
+  periodoDesdeISO = null,
+} = {}) {
+  const matched = dealsPorCampanha(deals, nomeCampanha, { inicioISO, periodoDesdeISO });
   const map = new Map();
   for (const nome of [...ORDEM_FUNIL, ...FASES_TERMINAIS]) {
     map.set(nome, { nome, n: 0, leads: [] });
@@ -487,6 +495,11 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], {
       whatsappUrl: d.whatsappUrl || null,
       telefone: d.telefone || null,
       form: d.titleForm || null,
+      // p/ nota de qualidade (COMMENTS + contato)
+      comments: d.comments || '',
+      sourceDescription: d.sourceDescription || '',
+      nomeContato: d.nomeContato || null,
+      titleForm: d.titleForm || null,
     });
   }
 
