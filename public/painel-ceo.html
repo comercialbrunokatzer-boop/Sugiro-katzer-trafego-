@@ -2,14 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Painel do Gestor — Rotina do Michel</title>
+<title>Placar do Gestor — Rotina do Michel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- App na tela (PWA) — ícone PRÓPRIO do Gestor (📊), diferente do KZ do Michel -->
 <link rel="manifest" href="/manifest-gestor.webmanifest">
 <meta name="theme-color" content="#0d1820">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Painel Gestor">
+<meta name="apple-mobile-web-app-title" content="Placar Gestor">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icon-gestor.png">
 <link rel="icon" type="image/png" href="/icon-gestor.png">
@@ -17,10 +16,11 @@
   :root{
     --ground:#eef1f0;--panel:#fff;--ink:#14252f;--sub:#5c6b74;--hair:#dbe2e0;--gold:#a8792a;--sea:#1f6f66;
     --ok:#1f9d57;--ok-bg:#e4f2ea;--late:#c0492f;--late-bg:#f7e7e2;--obs:#6b4bb0;--obs-bg:#efeafa;
+    --run:#1f6f66;--run-bg:#e3f1ef;
     --shadow:0 1px 2px rgba(18,34,44,.06),0 10px 30px rgba(18,34,44,.09);
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;
   }
-  @media (prefers-color-scheme:dark){:root{--ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;--gold:#d4ac60;--sea:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;--late:#e0765c;--late-bg:#331f1a;--obs:#b49ae8;--obs-bg:#241d38;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}}
+  @media (prefers-color-scheme:dark){:root{--ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;--gold:#d4ac60;--sea:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;--late:#e0765c;--late-bg:#331f1a;--obs:#b49ae8;--obs-bg:#241d38;--run:#4fb3a6;--run-bg:#14342a;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.45}
   .wrap{max-width:640px;margin:0 auto;padding:clamp(16px,4vw,28px)}
@@ -34,14 +34,28 @@
   .pct.hi{color:var(--ok)}.pct.mid{color:var(--gold)}.pct.lo{color:var(--late)}
   .hero .meta{flex:1}.hero .meta .t{font-weight:800}.hero .meta .s{font-size:.82rem;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
   .modo-badge{font-size:.72rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;background:var(--ground);color:var(--sub)}
-  .row{background:var(--panel);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);padding:11px 14px;margin-top:9px;display:flex;align-items:center;gap:11px}
-  .row.late{border-left:3px solid var(--late)}.row.ok{border-left:3px solid var(--ok)}.row.wait{opacity:.6}
+  .row{background:var(--panel);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);padding:11px 14px;margin-top:9px}
+  .row.late{border-left:3px solid var(--late)}.row.ok{border-left:3px solid var(--ok)}.row.wait{opacity:.72}.row.run{border-left:3px solid var(--run)}
+  .row-main{display:flex;align-items:center;gap:11px}
   .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:.78rem;flex:none}
-  .ic.ok{background:var(--ok-bg);color:var(--ok)}.ic.late{background:var(--late-bg);color:var(--late)}.ic.wait{background:var(--ground);color:var(--sub)}
-  .row .nm{flex:1;min-width:0}.row .nm b{font-weight:700;font-size:.95rem}.row .nm small{display:block;color:var(--sub);font-size:.74rem;font-variant-numeric:tabular-nums}
-  .tag{font-weight:800;font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}.tag.late{color:var(--late)}.tag.ok{color:var(--ok)}
+  .ic.ok{background:var(--ok-bg);color:var(--ok)}.ic.late{background:var(--late-bg);color:var(--late)}.ic.wait{background:var(--ground);color:var(--sub)}.ic.run{background:var(--run-bg);color:var(--run)}
+  .nm{flex:1;min-width:0}.nm b{font-weight:700;font-size:.95rem}.nm small{display:block;color:var(--sub);font-size:.74rem;font-variant-numeric:tabular-nums}
+  .tag{font-weight:800;font-size:.8rem;font-variant-numeric:tabular-nums;white-space:nowrap}.tag.late{color:var(--late)}.tag.ok{color:var(--ok)}.tag.run{color:var(--run)}
+  .camp{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair);font-size:.84rem}
+  .camp .metrica{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);line-height:1.4}
+  .camp .bom{margin-top:8px;font-size:.8rem;color:var(--ok);font-weight:700;background:var(--ok-bg);border-radius:8px;padding:7px 10px;display:inline-block}
+  .camp .bom.soft{color:var(--gold);background:rgba(168,121,42,.12)}
+  .camp .pend{margin-top:8px;font-size:.8rem;color:var(--sub);line-height:1.35}
+  .camp .pend.ok{color:var(--ok);font-weight:600}
+  .camp .cta{margin-top:10px}
+  .camp .cta a{display:inline-block;text-decoration:none;background:var(--sea);color:#fff;font-weight:800;font-size:.86rem;border-radius:9px;padding:9px 15px}
   .obsbox{margin-top:18px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:13px 15px}
   .obsbox h3{margin:0 0 8px;font-size:.88rem;color:var(--obs)}
+  .campbox{margin-top:18px;background:var(--panel);border:1px solid var(--hair);border-radius:14px;padding:13px 15px;box-shadow:var(--shadow)}
+  .campbox h3{margin:0 0 4px;font-size:.88rem;color:var(--gold)}
+  .campbox .hint{font-size:.74rem;color:var(--sub);margin:0 0 8px}
+  .campentry{background:var(--ground);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:7px}
+  .campentry b{font-weight:700}
   .obsentry{background:var(--panel);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:7px}
   .obsentry .who{font-size:.62rem;font-weight:800;text-transform:uppercase;color:var(--obs);background:var(--obs-bg);padding:.15rem .45rem;border-radius:999px;margin-right:6px}
   .note{margin-top:16px;font-size:.78rem;color:var(--sub);text-align:center}
@@ -49,11 +63,11 @@
 </style>
 </head>
 <body>
-<div id="lock" style="display:none;position:fixed;inset:0;z-index:99;background:#0b1622;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">
+<div id="lock" style="display:none;position:fixed;inset:0;z-index:99;background:#0b1622;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">
   <div style="letter-spacing:.34em;font-size:13px;color:#d4ac60;text-transform:uppercase;font-family:Georgia,serif">Katzer</div>
   <div style="font-size:44px;margin:14px 0 4px">🔒</div>
-  <div style="color:#e8edeb;font-size:1.1rem;font-weight:700;margin-bottom:4px">Painel do Gestor</div>
-  <div style="color:#9fb1b3;font-size:.85rem;margin-bottom:18px">Digite sua senha pra ver o desempenho (%).</div>
+  <div style="color:#e8edeb;font-size:1.1rem;font-weight:700;margin-bottom:4px">Placar do Gestor</div>
+  <div style="color:#9fb1b3;font-size:.85rem;margin-bottom:18px">Digite sua senha pra acompanhar o Michel ao vivo.</div>
   <input id="lockPw" type="password" placeholder="senha" autocomplete="current-password"
     style="width:min(280px,80vw);border:1px solid #263742;background:#14232d;color:#e8edeb;border-radius:10px;padding:12px 14px;font-size:1rem;text-align:center;font-family:inherit">
   <div id="lockErr" style="color:#e0765c;font-size:.8rem;height:18px;margin-top:8px"></div>
@@ -61,8 +75,8 @@
   <label style="color:#9fb1b3;font-size:.78rem;margin-top:14px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="lockSave" checked> Manter conectado neste aparelho</label>
 </div>
 <div class="wrap">
-  <p class="eyebrow">Katzer OS · Painel do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
-  <h1>Rotina do Michel</h1>
+  <p class="eyebrow">Katzer OS · Placar do Gestor <span class="live"><span class="dot"></span>AO VIVO</span></p>
+  <h1>Acompanhamento do Michel</h1>
   <p class="date" id="date">carregando…</p>
 
   <div class="hero">
@@ -73,13 +87,19 @@
 
   <div id="rows"></div>
 
+  <div class="campbox" id="campbox">
+    <h3>📣 Campanhas — lembrete do dia</h3>
+    <p class="hint">O que o Michel tocou no Placar (Aplicar / Ajustar / Agora não). Só você vê.</p>
+    <div id="campList"></div>
+  </div>
+
   <div class="obsbox" id="obsbox" style="display:none">
     <h3>🔔 Interrupções (pedidas por você/Carol)</h3>
     <div id="obsList"></div>
   </div>
 
-  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.</p>
-  <footer>Katzer OS · atualiza sozinho · contadores rodam ao vivo</footer>
+  <p class="note">O <b>%</b> e o saldo são <b>seus</b> — o Michel não vê a nota, só o próprio atraso.<br>Em Campanhas na Rotina: só resumo + link. Painel completo em <a href="/campanhas">/campanhas</a>.</p>
+  <footer>Katzer OS · Rotina do Michel · app na tela</footer>
 </div>
 
 <script>
@@ -114,6 +134,35 @@ function diaSemana(d){const[y,m,dd]=d.split('-').map(Number);return['Domingo','S
 function fmtData(d){const[y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return`${diaSemana(d)}, ${+dd} de ${mes} de ${y}`;}
 function nowMin(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o=Object.fromEntries(p.map(x=>[x.type,x.value]));return(+o.hour%24)*60+(+o.minute);}
 function hm2min(h){const[a,b]=h.split(':').map(Number);return a*60+b;}
+function rotuloEstado(l){
+  if(l.estado==='bloqueado')return`<span class="tag" style="color:var(--sub)">bloqueado</span>`;
+  if(l.estado==='nao_realizado')return`<span class="tag late">não realizado</span>`;
+  if(l.estado==='em_andamento')return`<span class="tag run">em andamento</span>`;
+  if(l.feito){
+    if(l.difMin>0)return`<span class="tag late">atrasou ${l.difMin}′</span>`;
+    if(l.difMin<0)return`<span class="tag ok">+${-l.difMin}′ 💚</span>`;
+    return`<span class="tag ok">concluído</span>`;
+  }
+  if(l.estado==='atrasado')return`<span class="tag late atraso" data-prev="${l.previsto}">atrasando…</span>`;
+  return`<span class="tag" style="color:var(--sub)">aguardando</span>`;
+}
+function blocoCampanhas(l){
+  if(l.id!=='campanhas')return'';
+  const C=ST.campanhas||{};
+  const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
+  const bom=C.cplBom||'';
+  const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
+  const pend=C.statusDecisao||'Decisão do dia: análises pendentes no painel de campanhas';
+  const pendCls=C.pendente===false?'pend ok':'pend';
+  const link=C.link||'https://dashing-elf-41a723.netlify.app/';
+  const cta=C.cta||'▶ Abrir Painel de Campanhas';
+  return`<div class="camp">
+    <div class="metrica">${metrica}</div>
+    ${bom?`<div class="${bomCls}">${bom}</div>`:''}
+    <div class="${pendCls}">${pend}</div>
+    <div class="cta"><a href="${link}" target="_blank" rel="noopener">${cta}</a></div>
+  </div>`;
+}
 function render(){
   if(!ST||!ST.ok)return;const P=ST.pontualidade;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga do Michel 🎉':'');
@@ -123,17 +172,33 @@ function render(){
   const box=$('#rows');box.innerHTML='';
   P.linhas.forEach(l=>{
     const el=document.createElement('div');
-    const cls=l.feito?(l.difMin>0?'late':'ok'):(l.estado==='pendente'?'late':'wait');
+    let cls='wait';
+    if(l.estado==='concluido'||(l.feito&&l.difMin<=0))cls='ok';
+    else if(l.estado==='em_andamento')cls='run';
+    else if(l.estado==='atrasado'||l.estado==='nao_realizado'||(l.feito&&l.difMin>0))cls='late';
     el.className='row '+cls;
-    let tag='';
-    if(l.feito)tag=l.difMin>0?`<span class="tag late">atrasou ${l.difMin}′</span>`:(l.difMin<0?`<span class="tag ok">+${-l.difMin}′ 💚</span>`:`<span class="tag ok">no horário</span>`);
-    else if(l.estado==='pendente')tag=`<span class="tag late atraso" data-prev="${l.previsto}">atrasando…</span>`;
-    else tag=`<span class="tag" style="color:var(--sub)">aguardando</span>`;
-    el.innerHTML=`<div class="ic ${cls==='ok'?'ok':(cls==='late'?'late':'wait')}">${l.feito?'✓':(l.estado==='pendente'?'!':'·')}</div>
-      <div class="nm"><b>${l.nome}</b><small>previsto ${l.previsto}${l.feito?' · feito '+l.hora:''}${l.nota?' · 📝 '+l.nota:''}</small></div>${tag}`;
+    const ic=cls==='ok'?'ok':(cls==='late'?'late':(cls==='run'?'run':'wait'));
+    const mark=l.feito?'✓':(l.estado==='em_andamento'?'▶':(cls==='late'?'!':'·'));
+    el.innerHTML=`<div class="row-main">
+      <div class="ic ${ic}">${mark}</div>
+      <div class="nm"><b>${l.nome}</b><small>previsto ${l.previsto}${l.feito?' · feito '+l.hora:''}${l.nota?' · 📝 '+l.nota:''}</small></div>
+      ${rotuloEstado(l)}
+    </div>${blocoCampanhas(l)}`;
     box.appendChild(el);
   });
   const ob=ST.obs||[];if(ob.length){$('#obsbox').style.display='';const ol=$('#obsList');ol.innerHTML='';ob.forEach(o=>{const e=document.createElement('div');e.className='obsentry';e.innerHTML=`<span class="who">${o.quem}</span><b>${o.nome}</b> — ${o.inicio}${o.duracao?' · '+o.duracao+' min':''}`;ol.appendChild(e);});}else{$('#obsbox').style.display='none';}
+  const camps=ST.decisoesCampanha||[];const cl=$('#campList');cl.innerHTML='';
+  if(!camps.length){cl.innerHTML='<div class="campentry" style="color:var(--sub)">Nenhuma decisão de campanha registrada hoje.</div>';}
+  else{
+    camps.forEach(c=>{
+      const acao=c.decisao==='aplicar'?'✅ Aplicou':(c.decisao==='ajustar'||c.decisao==='aumentar'?'✎ Ajustou':(c.decisao==='agora-nao'?'⏸ Agora não':'· '+c.decisao));
+      const alvo=c.tipo==='escalar'?'escalar':(c.tipo==='revisar'?'revisar':(c.tipo||''));
+      const aj=(c.decisao==='ajustar'||c.decisao==='aumentar')&&c.ajuste?' — '+c.ajuste:'';
+      const e=document.createElement('div');e.className='campentry';
+      e.innerHTML=`<b>${acao}</b> · ${alvo} <b>${c.campanha||'?'}</b>${aj}<small style="display:block;color:var(--sub);margin-top:2px">${c.hora||''}</small>`;
+      cl.appendChild(e);
+    });
+  }
   startTick();
 }
 function startTick(){if(tick)clearInterval(tick);const upd=()=>{document.querySelectorAll('.atraso').forEach(s=>{const d=nowMin()-hm2min(s.dataset.prev);if(d>0)s.textContent='atrasando '+Math.floor(d)+' min';});};upd();tick=setInterval(upd,10000);}

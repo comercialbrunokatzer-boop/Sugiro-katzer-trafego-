@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Campanhas — decisão</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="/manifest-campanhas.webmanifest">
+<meta name="theme-color" content="#0f2a24">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Campanhas">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-katzer.png">
+<link rel="icon" type="image/png" href="/icon-katzer.png">
+<style>
+  :root{
+    --ground:#0f2a24;--panel:#16352d;--ink:#eef6f2;--sub:#9bb5ab;--hair:#2a4a40;
+    --gold:#c4a35a;--sea:#1f6f66;--sea2:#4fb3a6;--ok:#3dba7e;--ok-bg:#14342a;
+    --late:#d4655a;--late-bg:#331f1a;--warn:#d4a017;--warn-bg:#33290f;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);
+    --sans:"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:420px;margin:0 auto;padding:18px 16px 40px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .k{width:36px;height:36px;border-radius:50%;background:linear-gradient(150deg,var(--sea),#134f49);display:grid;place-items:center;font-weight:800;color:#fff}
+  .brand .t{font-weight:800;font-size:.95rem}.brand .s{font-size:.72rem;color:var(--sub)}
+  .back{display:inline-block;margin-bottom:10px;color:var(--sea2);font-size:.82rem;font-weight:700;text-decoration:none}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--shadow);padding:16px;margin-top:12px}
+  .card h2{margin:0 0 10px;font-size:1.05rem;font-weight:800}
+  .badge{float:right;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sea2);border:1px solid var(--hair);border-radius:999px;padding:3px 8px}
+  .row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--hair)}
+  .row:last-child{border-bottom:0}
+  .row .nm{flex:1;min-width:0;font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .val{font-size:.82rem;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .dot.red{background:var(--late)}.dot.green{background:var(--ok)}.dot.gray{background:var(--sub)}
+  .camp-block{border-bottom:1px solid var(--hair);padding:8px 0}
+  .camp-block:last-child{border-bottom:0}
+  .camp-actions{display:none;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+  .camp-block.open .camp-actions{display:grid}
+  .camp-actions button{border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:10px 6px;font-size:.72rem;font-weight:800;font-family:inherit;cursor:pointer}
+  .camp-actions .d{border-color:rgba(224,118,92,.45)}.camp-actions .m{border-color:rgba(159,177,179,.45)}.camp-actions .a{border-color:rgba(67,192,125,.45)}
+  .camp-val{display:none;margin-top:8px}
+  .camp-block.open.aumentar .camp-val{display:block}
+  .camp-val input{width:100%;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:10px;font-size:.9rem;font-family:inherit}
+  .camp-val button{margin-top:6px;width:100%;border:0;background:var(--sea);color:#fff;border-radius:10px;padding:10px;font-weight:800;font-family:inherit;cursor:pointer}
+  .camp-done{font-size:.72rem;color:var(--ok);font-weight:700;margin-top:6px}
+  .hm{text-align:right;color:var(--sub);font-size:.72rem;margin-top:8px;font-variant-numeric:tabular-nums}
+  .btn-open{display:block;width:100%;margin-top:12px;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:.95rem;font-family:inherit;cursor:pointer;background:linear-gradient(150deg,var(--sea),#134f49);color:#fff}
+  .sug{background:rgba(67,192,125,.12);border:1px solid rgba(67,192,125,.35);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .sug .lab{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+  .sug .tit{font-weight:800;font-size:.95rem}
+  .sug .mot{font-size:.8rem;color:var(--sub);margin-top:6px}
+  .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+  .act{border:1px solid var(--hair);background:var(--ground);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .act .ic{font-size:1.2rem;display:block;margin-bottom:4px}
+  .act b{display:block;font-size:.78rem}
+  .act small{display:block;font-size:.62rem;color:var(--sub);margin-top:3px;line-height:1.2}
+  .act.ok{border-color:rgba(67,192,125,.5)}.act.warn{border-color:rgba(224,171,63,.5)}.act.no{border-color:rgba(224,118,92,.5)}
+  .valor{margin-top:12px}
+  .valor label{display:block;font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:6px}
+  .valor input{width:100%;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:12px;font-size:.95rem;font-family:inherit}
+  .okbox{text-align:center;padding:18px 8px}
+  .okbox .big{font-size:2.2rem;margin-bottom:6px}
+  .okbox b{font-size:1.1rem}
+  .okbox p{color:var(--sub);font-size:.85rem;margin:8px 0 0}
+  .mini{margin-top:14px;background:var(--ground);border:1px solid var(--hair);border-radius:12px;padding:12px;font-size:.8rem;color:var(--sub);text-align:left}
+  .mini b{color:var(--ink)}
+  .ghost{margin-top:12px;border:1px solid var(--hair);background:transparent;color:var(--sub);border-radius:10px;padding:10px;width:100%;font-weight:700;font-family:inherit;cursor:pointer}
+  .empty{color:var(--sub);font-size:.85rem;text-align:center;padding:12px}
+  .trava{background:rgba(224,118,92,.12);border:1px solid rgba(224,118,92,.45);border-radius:12px;padding:12px 14px;margin:0 0 12px}
+  .trava-t{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--late,#e0765c)}
+  .trava-s{font-size:.82rem;color:var(--ink);margin-top:6px;line-height:1.4}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#e8edeb;color:#0d1820;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+  .toast.show{opacity:1}
+  footer{margin-top:18px;color:var(--sub);font-size:.7rem;text-align:center}
+  .hide{display:none!important}
+  .tog{display:flex;gap:6px;margin:0 0 12px}
+  .tog button{flex:1;border:1px solid var(--hair);background:var(--ground);color:var(--sub);border-radius:999px;padding:8px;font-size:.78rem;font-weight:800;font-family:inherit;cursor:pointer}
+  .tog button.on{background:var(--gold,#c4a35a);color:#1a1408;border-color:var(--gold,#c4a35a)}
+  .cac-head{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold,#c4a35a);margin:16px 0 8px}
+  .lead{border:1px solid var(--hair);border-radius:12px;padding:10px;margin:0 0 8px;background:var(--ground)}
+  .lead .ln{font-size:.85rem;font-weight:700;line-height:1.35}
+  .lead .btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .lead .btns button{border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:10px;padding:9px 4px;font-size:.72rem;font-weight:700;font-family:inherit;cursor:pointer}
+  .lead .btns button.on{outline:2px solid var(--gold,#c4a35a)}
+  .dot.yellow{background:var(--warn)}
+  .qbar{display:flex;height:8px;border-radius:999px;overflow:hidden;margin:8px 0 4px;background:#0a1c18}
+  .qbar span{display:block;height:100%}
+  .qbar .bom{background:var(--ok)}
+  .qbar .cur{background:var(--warn)}
+  .qbar .err{background:var(--late)}
+  .qbar .cmp{background:#6bc4ff}
+  .qleg{font-size:.68rem;color:var(--sub);line-height:1.35}
+  .mix{background:var(--ground);border:1px solid var(--hair);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:.78rem}
+  .mix .mt{font-size:.65rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .mix .ml{display:flex;justify-content:space-between;gap:8px;padding:3px 0;color:var(--sub)}
+  .mix .ml b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .mix .ms{margin-top:6px;font-size:.68rem;color:var(--sub);line-height:1.35}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/campanhas">← Painel de Campanhas</a>
+  <div class="brand">
+    <div class="k">K</div>
+    <div><div class="t">Campanhas Katzer</div><div class="s">EXECUTA · insights · sem Rotina</div></div>
+  </div>
+
+  <!-- QUADRADO 1: Campanhas — hoje -->
+  <div class="card" id="cardCamp">
+    <h2>📊 Campanhas — hoje</h2>
+    <div class="mix" id="mixVerba"></div>
+    <div class="tog" id="togCpl">
+      <button type="button" data-modo="bruto">CPL Bruto</button>
+      <button type="button" data-modo="bom" class="on">CPL BOM</button>
+    </div>
+    <div id="lista"></div>
+    <div class="hm" id="hm">—</div>
+    <button class="btn-open" id="btnAbrir">▶ Abrir decisão do dia</button>
+    <div id="cacador"></div>
+  </div>
+
+  <!-- QUADRADO 2: Decisão do dia V4 -->
+  <div class="card hide" id="cardDec">
+    <span class="badge">V4</span>
+    <h2>Decisão do dia</h2>
+    <div class="trava" style="margin-bottom:12px">
+      <div class="trava-t">V4 — nunca EUA_Americanos / MIAMI / PORTUGAL</div>
+      <div class="trava-s">Sugerir: BR_SC trocar criativo · Amanay duplicar R$ 30/dia</div>
+    </div>
+    <div id="decBody"></div>
+  </div>
+
+  <footer>Modo seguro: registra a decisão · você aplica na Meta</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=(s)=>document.querySelector(s);
+// App Campanhas em campanhas-katzer usa as APIs da Rotina (Meta + Blobs já ligados lá).
+const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
+const api=(path)=>API_BASE+path;
+let ST=null, VIEW='lista', MODO='bom', CAC=null; // lista | decisao
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:0});
+const brl2=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+async function load(){
+  try{
+    const [r, cac] = await Promise.all([
+      fetch(api('/api/placar-estado?refresh=1')).then(x=>x.json()),
+      fetch(api('/api/cacador')).then(x=>x.json()).catch(()=>null),
+    ]);
+    ST=r; CAC=cac; render();
+  }catch(e){toast('Sem conexão');}
+}
+
+function corDot(c){
+  const trava=c.travaEscalar;
+  if(trava&&trava.codigo==='PUBLICO_EXTERNO') return 'red';
+  const sem=MODO==='bom'?(c.semaforoBom||c.semaforoDecisao): (c.semaforoBruto||c.semaforo);
+  if(sem?.cor==='cinza'||sem?.codigo==='SEM_BASE') return 'gray';
+  if(sem?.cor==='verde'||sem?.codigo==='BOA') return 'green';
+  if(sem?.cor==='amarelo'||sem?.codigo==='ATENCAO') return 'yellow';
+  if(sem?.cor==='vermelho'||sem?.codigo==='CARO') return 'red';
+  if((c.leads||0)===0 && (c.gasto||0)>=50) return 'red';
+  if((c.leads||0)>0) return 'green';
+  return 'gray';
+}
+function linhaVal(c){
+  const trava=c.travaEscalar;
+  if(trava&&!trava.ok){
+    if(trava.codigo==='PUBLICO_EXTERNO') return '🚫 PUBLICO EXTERNO';
+    if(trava.codigo==='SEM_BASE') return trava.rotulo||`⚪ SEM BASE - ${c.leads||0} leads, precisa 10`;
+  }
+  if(c.leadConfirmado===false) return c.avisoLead||'Form. não confirmado';
+  if((c.leads||0)>0 && (c.leads||0)<10){
+    return `⚪ SEM BASE - ${c.leads||0} leads, precisa 10`;
+  }
+  if(MODO==='bom'){
+    if(c.temQualidade && c.cplBom!=null){
+      const em=c.semaforoBom?.emoji||'';
+      return `${em} BOM ${brl2(c.cplBom)} · ${c.leadsBons||0} bons`;
+    }
+    const br=c.cplBruto!=null?brl(c.cplBruto):(c.cpl!=null?brl(c.cpl):'—');
+    return `Bruto ${br} · caça pendente`;
+  }
+  const sem=c.semaforoBruto||c.semaforo;
+  const emoji=sem?.emoji||'';
+  if(c.cplBruto!=null||c.cpl!=null) return `${emoji} Bruto ${brl(c.cplBruto??c.cpl)} · ${c.leads}`;
+  if((c.leads||0)===0) return `${brl(c.gasto)} · 0 form.`;
+  return `${brl(c.gasto)} · ${c.leads} form.`;
+}
+
+function campsOrdenadas(){
+  if(MODO==='bom' && ST.rankingCplBom?.length) return ST.rankingCplBom;
+  if(MODO==='bruto' && ST.rankingCplBruto?.length) return ST.rankingCplBruto;
+  return (ST.placar&&ST.placar.campanhas)||[];
+}
+
+function slug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||'x';}
+function decCampanha(nome){
+  const id='camp-'+slug(nome);
+  return (ST.decisoes||[]).find(d=>d.id===id)||null;
+}
+
+function barraQualidade(c){
+  const q=c.qualidade||{};
+  const bom=Number(q.bom)||0, cur=Number(q.curioso)||0, err=Number(q.errado)||0, cmp=Number(q.comprador)||0;
+  const tot=bom+cur+err+cmp;
+  if(!tot) return '';
+  const pct=(n)=>Math.round((100*n)/tot);
+  const pb=pct(bom+cmp), pc=pct(cur), pe=pct(err);
+  // comprador entra no verde (bons); curioso amarelo; errado vermelho
+  const wBom=pct(bom), wCmp=pct(cmp);
+  return `<div class="qbar" title="Qualidade caçada">
+      <span class="bom" style="width:${wBom}%"></span>
+      <span class="cmp" style="width:${wCmp}%"></span>
+      <span class="cur" style="width:${pc}%"></span>
+      <span class="err" style="width:${pe}%"></span>
+    </div>
+    <div class="qleg">🟢 ${pct(bom)}% bom · 🟡 ${pc}% curioso · 🔴 ${pe}% errado · 💰 ${pct(cmp)}% comprador
+      ${c.cplBruto!=null&&c.cplBom!=null?` · Bruto ${brl(c.cplBruto)} → BOM ${brl2(c.cplBom)}`:''}</div>`;
+}
+
+function renderMix(){
+  const box=$('#mixVerba');
+  const m=ST.mixVerba;
+  if(!m?.linhas?.length){box.innerHTML='';return;}
+  box.innerHTML=`<div class="mt">Mix 80% — onde já vende</div>`+
+    m.linhas.map(l=>`<div class="ml"><span>${l.slug}</span><b>${l.pct}%</b></div>`).join('')+
+    `<div class="ms">${m.regra||''}${ST.regraIngles?' · '+ST.regraIngles:''}</div>`;
+}
+
+function renderLista(){
+  renderMix();
+  const box=$('#lista');box.innerHTML='';
+  const meta=ST.meta||{};
+  const camps=campsOrdenadas();
+
+  if(meta.confiavel===false && !meta.usandoCache){
+    box.innerHTML=`<div class="empty" style="color:var(--late)">${meta.mensagem||'Dados da Meta indisponíveis.'}<br><span style="font-size:.72rem;color:var(--sub)">Não tome decisão até corrigirmos a leitura.</span></div>`;
+  } else if(meta.status==='sem_gasto' || (meta.confiavel && !camps.length && meta.status!=='sem_campanha')){
+    box.innerHTML=`<div class="empty">${meta.mensagem||'Nenhum gasto registrado nos últimos 7 dias.'}</div>`;
+  } else if(meta.status==='sem_campanha'){
+    box.innerHTML=`<div class="empty">${meta.mensagem||'Nenhuma campanha encontrada na conta configurada.'}</div>`;
+  } else if(!camps.length){
+    box.innerHTML=`<div class="empty">${meta.mensagem||'Dados da Meta indisponíveis.'}</div>`;
+  } else {
+    if(meta.usandoCache && meta.mensagem){
+      const w=document.createElement('div');
+      w.className='empty';w.style.cssText='color:var(--warn);font-size:.78rem;padding:6px 0 10px';
+      w.textContent=meta.mensagem;
+      box.appendChild(w);
+    }
+    camps.slice(0,10).forEach(c=>{
+    const done=decCampanha(c.nome);
+    const trava=c.travaEscalar;
+    const bloqueado=trava&&!trava.ok;
+    const wrap=document.createElement('div');wrap.className='camp-block';
+    wrap.innerHTML=`
+      <div class="row" style="border:0;padding:0;cursor:pointer">
+        <div class="nm">${c.nome}<div style="font-size:.68rem;color:var(--sub);font-weight:500;margin-top:2px">${c.rotuloProdutoCidade||[c.produto,c.cidade].filter(Boolean).join(' · ')||c.cidade||''}${c.publicoNome||c.publico?` · ${c.publicoNome||c.publico}`:''}</div></div>
+        <div class="val">${linhaVal(c)}</div>
+        <div class="dot ${corDot(c)}"></div>
+      </div>
+      ${c.temQualidade?barraQualidade(c):''}
+      ${bloqueado&&trava.codigo==='PUBLICO_EXTERNO'?`<div class="camp-done" style="color:var(--late)">🚫 PUBLICO EXTERNO — não escalar</div>`:''}
+      ${done?`<div class="camp-done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:''}
+      <div class="camp-actions">
+        <button class="d" data-cdec="desistir">Desistir</button>
+        <button class="m" data-cdec="manter">Manter</button>
+        <button class="a" data-cdec="aumentar" ${bloqueado?'disabled style="opacity:.4"':''}>Aumentar</button>
+      </div>
+      <div class="camp-val">
+        <input placeholder="Novo valor/dia · ex: R$ 80">
+        <button data-conf-aumen>Confirmar aumento</button>
+      </div>`;
+    const head=wrap.querySelector('.row');
+    head.addEventListener('click',()=>{
+      document.querySelectorAll('.camp-block').forEach(x=>{if(x!==wrap){x.classList.remove('open','aumentar');}});
+      wrap.classList.toggle('open');
+      wrap.classList.remove('aumentar');
+    });
+    wrap.querySelectorAll('[data-cdec]').forEach(b=>{
+      b.addEventListener('click',async(ev)=>{
+        ev.stopPropagation();
+        const dec=b.dataset.cdec;
+        if(dec==='aumentar'){
+          if(bloqueado){toast(trava.rotulo||'Bloqueado');return;}
+          wrap.classList.add('aumentar');wrap.querySelector('.camp-val input').focus();return;
+        }
+        await postCampanha(c.nome,dec,'');
+      });
+    });
+    const conf=wrap.querySelector('[data-conf-aumen]');
+    conf.addEventListener('click',async(ev)=>{
+      ev.stopPropagation();
+      if(bloqueado){toast(trava.rotulo||'Bloqueado');return;}
+      const val=wrap.querySelector('.camp-val input').value.trim();
+      if(!val){toast('Digite o novo valor');return;}
+      await postCampanha(c.nome,'aumentar',val);
+    });
+    box.appendChild(wrap);
+  });
+  }
+  const hm=ST.ultimaLeitura||ST.agora||'—';
+  $('#hm').textContent=(meta.usandoCache?'cache · ':'')+'leitura '+hm+' · ordenado por CPL '+(MODO==='bom'?'BOM':'Bruto');
+  renderCacador();
+}
+
+function renderCacador(){
+  const box=$('#cacador');
+  if(!box) return;
+  if(!CAC||!CAC.ok){
+    box.innerHTML=`<div class="cac-head">CAÇAR LEADS DE HOJE - 2 TOQUES</div><div class="empty" style="padding:8px 0">${(CAC&&CAC.erro)||'…'}</div>`;
+    return;
+  }
+  box.innerHTML=`<div class="cac-head">${CAC.titulo||'CAÇAR LEADS DE HOJE - 2 TOQUES (vai pro Bitrix)'}</div>`+
+    (CAC.leads||[]).map(l=>`<div class="lead" data-lead="${l.id}">
+      <div class="ln">${l.linha||l.nome}</div>
+      <div class="btns">${(l.botoes||[]).map(b=>`<button type="button" data-q="${b.tipo}" class="${b.ativo?'on':''}">${b.label}</button>`).join('')}</div>
+    </div>`).join('');
+  box.querySelectorAll('.lead').forEach(el=>{
+    el.querySelectorAll('[data-q]').forEach(b=>{
+      b.onclick=async()=>{
+        el.querySelectorAll('button').forEach(x=>x.disabled=true);
+        const res=await fetch(api('/api/cacador'),{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({leadId:el.dataset.lead,qualidade:b.dataset.q,quem:'Michel'})
+        }).then(x=>x.json()).catch(()=>({ok:false}));
+        if(res.ok){toast(res.toast||'Registrado - CPL BOM recalculado');CAC=res;await load();}
+        else{toast(res.erro||'Não deu');el.querySelectorAll('button').forEach(x=>x.disabled=false);}
+      };
+    });
+  });
+}
+
+document.querySelectorAll('#togCpl button').forEach(b=>{
+  b.onclick=()=>{
+    MODO=b.dataset.modo;
+    document.querySelectorAll('#togCpl button').forEach(x=>x.classList.toggle('on',x.dataset.modo===MODO));
+    if(VIEW==='lista') renderLista();
+  };
+});
+
+
+async function postCampanha(nome,decisao,ajuste){
+  const id='camp-'+slug(nome);
+  const r=await fetch(api('/api/placar-registrar'),{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({acao:'decisao',id,campanha:nome,tipo:'campanha',decisao,ajuste})
+  }).then(x=>x.json()).catch(()=>({ok:false}));
+  if(r.ok){toast('Registrado · Bruno avisado');await load();}
+  else toast(r.erro||'Não deu');
+}
+
+function jaDecidiu(id){
+  return (ST.decisoes||[]).find(d=>d.id===id)||null;
+}
+
+function cardV4(r){
+  const done=jaDecidiu(r.id);
+  const ev=(r.evidencia||[]).map(e=>`<div class="mot" style="margin-top:2px">· ${e}</div>`).join('');
+  const leads=r.numeros?.leadsForm??r.numeros?.leadsGerenciador??r.numeros?.leadsApi7d??null;
+  const escala=/escalar|duplicar/i.test(r.tipo||'');
+  const semBase=r.bloqueadoEscalar || (escala && leads!=null && leads<10);
+  const trava=semBase?`<div class="trava" style="margin-top:10px"><div class="trava-t">TRAVA 1</div><div class="trava-s">⚪ SEM BASE - ${leads||0} leads, precisa 10</div></div>`:'';
+  const acoes=done?`<div class="camp-done">✓ ${done.decisao}${done.ajuste?' · '+done.ajuste:''} · ${done.hora||''}</div>`:(semBase
+    ?`<div class="actions"><button class="act no" data-dec="agora-nao" style="grid-column:1/-1"><span class="ic">⚪</span><b>Observar — não escalar</b><small>Sem base mínima</small></button></div>`
+    :`<div class="actions">
+      <button class="act ok" data-dec="aplicar"><span class="ic">✅</span><b>Aplicar</b><small>Registra</small></button>
+      <button class="act warn" data-dec="ajustar"><span class="ic">✎</span><b>Ajustar</b><small>Você decide</small></button>
+      <button class="act no" data-dec="agora-nao"><span class="ic">✕</span><b>Agora não</b><small>Espera</small></button>
+    </div>
+    <div class="valor" style="display:none" data-ajuste>
+      <label>Ajuste</label>
+      <input placeholder="${r.valorDiaSugerido!=null?'Ex: R$ '+r.valorDiaSugerido+'/dia':'Descreva o ajuste'}">
+      <button class="btn-open" style="margin-top:8px" data-conf>Confirmar ajuste</button>
+    </div>`);
+  return `<div class="sug" data-id="${r.id}" style="margin-bottom:12px">
+    <div class="lab">${r.produto} · ${r.publico||''}</div>
+    <div class="tit">${r.titulo}</div>
+    ${r.problema?`<div class="mot" style="margin-top:6px"><b>Problema:</b> ${r.problema}</div>`:''}
+    ${r.oportunidade?`<div class="mot" style="margin-top:6px"><b>Oportunidade:</b> ${r.oportunidade}</div>`:''}
+    <div class="mot" style="margin-top:8px"><b>Evidência</b></div>${ev}
+    <div class="mot" style="margin-top:8px;font-weight:700;color:var(--gold,#d4ac60)">${r.recomendacao||''}</div>
+    <div class="mot">${r.acao||''}</div>
+    ${trava}${acoes}
+  </div>`;
+}
+
+function renderDecisao(){
+  const body=$('#decBody');
+  const recs=ST.recomendacoes?.recomendacoes;
+  if(!recs?.length){
+    const meta=ST.meta||{};
+    body.innerHTML=`<div class="empty">${meta.mensagem||'Sem decisão V4 disponível.'}</div>
+      <button class="ghost" id="btnVoltar">← Voltar</button>`;
+    $('#btnVoltar').onclick=()=>{VIEW='lista';render();};
+    return;
+  }
+  body.innerHTML=recs.map(cardV4).join('')+`<button class="ghost" id="btnVoltar2">← Voltar às campanhas</button>`;
+  body.querySelectorAll('.sug').forEach(el=>{
+    const id=el.dataset.id;
+    const r=recs.find(x=>x.id===id);
+    el.querySelectorAll('[data-dec]').forEach(b=>{
+      b.onclick=async()=>{
+        const dec=b.dataset.dec;
+        if(dec==='ajustar'){
+          const box=el.querySelector('[data-ajuste]');
+          if(box){box.style.display='block';box.querySelector('input').focus();}
+          return;
+        }
+        await postRec(r,dec,'');
+      };
+    });
+    const conf=el.querySelector('[data-conf]');
+    if(conf) conf.onclick=async()=>{
+      const val=el.querySelector('[data-ajuste] input').value.trim();
+      if(!val){toast('Digite o ajuste');return;}
+      await postRec(r,'ajustar',val);
+    };
+  });
+  $('#btnVoltar2').onclick=()=>{VIEW='lista';render();};
+}
+
+async function postRec(r,decisao,ajuste){
+  const leads=r.numeros?.leadsForm??r.numeros?.leadsGerenciador??r.numeros?.leadsApi??null;
+  if(decisao==='aplicar' && /escalar|duplicar/i.test(r.tipo||'') && (r.bloqueadoEscalar || (leads!=null && leads<10))){
+    toast('TRAVA 1 — SEM BASE MÍNIMA (precisa 10 leads)');
+    return;
+  }
+  const res=await fetch(api('/api/placar-registrar'),{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      acao:'decisao', id:r.id, campanha:`${r.produto} · ${r.titulo}`,
+      tipo:r.tipo||'recomendacao', decisao, ajuste, leads
+    })
+  }).then(x=>x.json()).catch(()=>({ok:false}));
+  if(res.ok){toast('Registrado · Bruno avisado');await load();}
+  else toast(res.erro||'Não deu');
+}
+
+function render(){
+  if(!ST||!ST.ok)return;
+  if(VIEW==='lista'){
+    $('#cardCamp').classList.remove('hide');
+    $('#cardDec').classList.add('hide');
+    renderLista();
+  } else {
+    $('#cardCamp').classList.add('hide');
+    $('#cardDec').classList.remove('hide');
+    renderDecisao();
+  }
+}
+
+$('#btnAbrir').addEventListener('click',()=>{VIEW='decisao';render();});
+load();setInterval(()=>{if(VIEW==='lista')load();},20000);
+</script>
+</body>
+</html>

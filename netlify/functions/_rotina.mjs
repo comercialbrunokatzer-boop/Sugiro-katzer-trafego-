@@ -4,6 +4,7 @@
 export const TZ = 'America/Sao_Paulo';
 
 // 8 tarefas da manhã (horário base = modo CASA). Katzer = tudo +45 min.
+// V6: Garimpo 10:15 (antes do buraco do meio-dia) — sem furo na manhã.
 export const TAREFAS = [
   { id: 'reunioes',  nome: 'Reuniões',            base: '08:00' },
   { id: 'agend',     nome: 'Agendamentos/Atend.', base: '08:10' },
@@ -11,7 +12,7 @@ export const TAREFAS = [
   { id: 'instagram', nome: 'Instagram',           base: '08:35' },
   { id: 'campanhas', nome: 'Campanhas',           base: '08:55' },
   { id: 'discadora', nome: 'Discadora',           base: '09:15' },
-  { id: 'garimpo',   nome: 'Garimpo',             base: '09:35' },
+  { id: 'garimpo',   nome: 'Garimpo',             base: '10:15' },
   { id: 'auditor',   nome: 'Lista do Auditor',    base: '12:00' },
 ];
 
@@ -32,11 +33,16 @@ const PRIMEIRA_BASE = hm2min(TAREFAS[0].base); // 08:00 = âncora da 1ª tarefa
 
 /**
  * Horário previsto de uma tarefa (em minutos).
+ * - overrides[id] (opcional): horário absoluto SÓ HOJE (ex.: gestor editou Garimpo).
  * - inicioMin (opcional): início do dia SÓ HOJE (ex.: 09:00). Desloca tudo mantendo os
  *   intervalos entre tarefas; ignora o offset de modo.
  * - senão: base + offset do modo (Katzer +45).
  */
-export function previstoMin(tarefa, modo, inicioMin = null) {
+export function previstoMin(tarefa, modo, inicioMin = null, overrides = null) {
+  if (overrides && overrides[tarefa.id] != null && overrides[tarefa.id] !== '') {
+    const o = overrides[tarefa.id];
+    return typeof o === 'number' ? o : hm2min(String(o));
+  }
   if (inicioMin != null && inicioMin !== '') {
     return (hm2min(tarefa.base) - PRIMEIRA_BASE) + Number(inicioMin);
   }
@@ -66,22 +72,36 @@ export function estadoVazio(data, modo = 'casa') {
  * Calcula pontualidade (VISÃO CEO — o Michel não vê isto).
  * Regra do CEO: começa 100%; cada min de atraso -1%; adiantar devolve (saldo líquido);
  * teto 100%. Tarefa não feita e já vencida conta como atraso aberto (até 'agoraMin').
- * @returns { pct, saldoMin, linhas:[{id,nome,previsto,feito,hora,difMin,estado}] }
+ *
+ * Estados (vocabulário Bruno):
+ *   aguardando | em_andamento | concluido | atrasado | nao_realizado | bloqueado
+ *
+ * @returns { pct, saldoMin, linhas:[{id,nome,previsto,feito,hora,difMin,estado,nota}] }
  */
-export function pontualidade(estado, agoraMin) {
+export function pontualidade(estado, agoraMin, { domingo = false, fimDiaMin = 13 * 60 } = {}) {
   let saldo = 0; // minutos: >0 atrasado, <0 adiantado
   const linhas = TAREFAS.map((t) => {
-    const prev = previstoMin(t, estado.modo, estado.inicioMin);
+    const prev = previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
     const reg = estado.tarefas[t.id];
+    if (domingo) {
+      return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: false, hora: null, difMin: 0, estado: 'bloqueado', nota: '' };
+    }
     if (reg && reg.min != null) {
       const dif = reg.min - prev; // + atrasou, - adiantou
       saldo += dif;
-      return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: true, hora: min2hm(reg.min), difMin: dif, estado: dif > 0 ? 'atrasado' : 'ok', nota: reg.nota || '' };
+      return {
+        id: t.id, nome: t.nome, previsto: min2hm(prev), feito: true, hora: min2hm(reg.min),
+        difMin: dif, estado: dif > 0 ? 'atrasado' : 'concluido', nota: reg.nota || '',
+      };
     }
     // não feita: se já venceu, atraso aberto
     const aberto = agoraMin != null && agoraMin > prev ? agoraMin - prev : 0;
     if (aberto > 0) saldo += aberto;
-    return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: false, hora: null, difMin: aberto, estado: aberto > 0 ? 'pendente' : 'aguardando' };
+    let estadoLinha = 'aguardando';
+    if (aberto > 0 && agoraMin != null && agoraMin >= fimDiaMin) estadoLinha = 'nao_realizado';
+    else if (aberto > 0) estadoLinha = 'atrasado';
+    else if (reg && reg.iniciado) estadoLinha = 'em_andamento';
+    return { id: t.id, nome: t.nome, previsto: min2hm(prev), feito: false, hora: null, difMin: aberto, estado: estadoLinha, nota: '' };
   });
   const pct = Math.max(0, Math.min(100, Math.round(100 - saldo)));
   return { pct, saldoMin: saldo, linhas };

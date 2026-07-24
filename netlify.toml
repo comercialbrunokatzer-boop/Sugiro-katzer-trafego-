@@ -9,6 +9,20 @@
   # Netlify injeta o @netlify/blobs no runtime; marca como externo pro bundle não duplicar.
   external_node_modules = ["@netlify/blobs"]
 
+[functions.ranking-campanhas]
+  # maximum + 7d + 30d pode passar de 10s
+  timeout = 26
+
+# Helena Auditora — a cada 15 min (classifica A/B/C/D leads pagos)
+[functions.helena-auditora]
+  schedule = "*/15 * * * *"
+  timeout = 26
+
+# Vigilante Bruno — campanha nova / parou / ruim sem Michel mexer
+[functions.cron-alerta-ceo]
+  schedule = "*/20 * * * *"
+  timeout = 26
+
 # Health check.
 [[redirects]]
   from = "/health"
@@ -33,19 +47,57 @@
   status = 200
   force = true
 [[redirects]]
+  from = "/api/webhook-bitrix"
+  to = "/.netlify/functions/webhook-bitrix"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/relatorio-16h"
+  to = "/.netlify/functions/relatorio-16h"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/card-teste"
   to = "/.netlify/functions/card-teste"
   status = 200
   force = true
 
-# Atalhos amigáveis.
+# Atalhos amigáveis — dois placares (mesma base).
+[[redirects]]
+  from = "/placar-michel"
+  to = "/painel-michel.html"
+  status = 200
 [[redirects]]
   from = "/painel-michel"
   to = "/painel-michel.html"
   status = 200
 [[redirects]]
+  from = "/painel"
+  to = "/painel.html"
+  status = 200
+[[redirects]]
+  from = "/gestor"
+  to = "/gestor.html"
+  status = 200
+[[redirects]]
+  from = "/placar-gestor"
+  to = "/gestor.html"
+  status = 200
+  force = true
+[[redirects]]
   from = "/painel-gestor"
-  to = "/painel-ceo.html"
+  to = "/gestor.html"
+  status = 200
+[[redirects]]
+  from = "/placar-gestor.html"
+  to = "/gestor.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/campanhas-decisao"
+  to = "/campanhas-decisao.html"
   status = 200
 [[redirects]]
   from = "/guia"
@@ -56,6 +108,98 @@
   to = "/email-preview.html"
   status = 200
 [[redirects]]
-  from = "/como-instalar"
-  to = "/como-instalar.html"
+  from = "/como-instalar-campanhas"
+  to = "/como-instalar-campanhas.html"
+  status = 200
+[[redirects]]
+  from = "/api/qualidade"
+  to = "/.netlify/functions/qualidade"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/cacador"
+  to = "/.netlify/functions/cacador"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/auditoria"
+  to = "/.netlify/functions/auditoria"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/helena-auditora"
+  to = "/.netlify/functions/helena-auditora"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/alerta-ceo-campanhas"
+  to = "/.netlify/functions/cron-alerta-ceo"
+  status = 200
+  force = true
+[functions.decisao-app]
+  timeout = 26
+
+[[redirects]]
+  from = "/api/decisao-app"
+  to = "/.netlify/functions/decisao-app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/sync-bitrix-env"
+  to = "/.netlify/functions/sync-bitrix-env"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/app"
+  to = "/app.html"
+  status = 200
+[[redirects]]
+  from = "/app/"
+  to = "/app.html"
+  status = 200
+[[redirects]]
+  from = "/decisao"
+  to = "/app.html"
+  status = 200
+
+[[redirects]]
+  from = "/api/placar"
+  to = "/.netlify/functions/placar"
+  status = 200
+  force = true
+
+# APIs do Painel de Campanhas (produto separado da Rotina).
+[[redirects]]
+  from = "/api/placar-estado"
+  to = "/.netlify/functions/placar-estado"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/placar-registrar"
+  to = "/.netlify/functions/placar-registrar"
+  status = 200
+  force = true
+
+# Ranking CPL formulário (Painel de Campanhas)
+[[redirects]]
+  from = "/api/ranking-campanhas"
+  to = "/.netlify/functions/ranking-campanhas"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/qualidade"
+  to = "/qualidade.html"
+  status = 200
+[[redirects]]
+  from = "/campanhas"
+  to = "/campanhas.html"
+  status = 200
+[[redirects]]
+  from = "/campanhas/"
+  to = "/campanhas.html"
+  status = 200
+[[redirects]]
+  from = "/ranking-campanhas"
+  to = "/ranking-campanhas.html"
   status = 200
