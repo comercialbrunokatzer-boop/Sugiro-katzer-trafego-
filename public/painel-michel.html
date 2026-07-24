@@ -81,9 +81,14 @@
   .garimpo-box .qtd{display:flex;gap:6px;flex-wrap:wrap}
   .garimpo-box .qtd button{flex:1;min-width:44px;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:11px 6px;font-weight:800;font-family:inherit;cursor:pointer}
   .garimpo-box .qtd button.on{background:var(--ok);color:#fff;border-color:var(--ok)}
-  .garimpo-box input{width:100%;border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:10px;padding:11px 12px;font-size:.9rem;font-family:inherit}
+  .garimpo-box input{width:100%;border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:10px;padding:11px 12px;font-size:.9rem;font-family:inherit;margin-top:0}
   .garimpo-box .send{margin-top:12px;width:100%;border:0;background:var(--ok);color:#fff;font-weight:800;border-radius:11px;padding:13px;font-size:.95rem;font-family:inherit;cursor:pointer}
   .garimpo-box .hint{margin-top:8px;font-size:.72rem;color:var(--sub);text-align:center}
+  .garimpo-box .lead-row{border:1px solid var(--hair);border-radius:10px;padding:10px;margin-top:8px;background:var(--panel)}
+  .garimpo-box .lead-row .lr-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:.72rem;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.04em}
+  .garimpo-box .lead-row .rm{border:0;background:transparent;color:var(--late);font-weight:800;cursor:pointer;font-size:.75rem;font-family:inherit}
+  .garimpo-box .add-lead{margin-top:8px;width:100%;border:1px dashed var(--hair);background:transparent;color:var(--sea);font-weight:800;border-radius:10px;padding:10px;font-family:inherit;cursor:pointer}
+  .garimpo-box #garimpoCampos.hid{display:none}
   @media (max-width:420px){.strip{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -240,12 +245,26 @@ function render(){
     } else if(t.id==='garimpo'){
       const st=rotuloEstadoTarefa(t);
       if(t.feito){
+        const g=t.garimpo||{};
+        const leads=Array.isArray(g.leads)&&g.leads.length
+          ? g.leads.map(l=>`· <b>${l.nome}</b>${l.telefone?' · '+l.telefone:''}`).join('<br>')
+          : null;
+        const linha=[
+          g.qtd!=null?`Qtd <b>${g.qtd}</b>`:null,
+          !leads && g.nome?`Cliente(s): <b>${g.nome}</b>`:null,
+          !leads && g.telefone?`Tel: <b>${g.telefone}</b>`:null,
+        ].filter(Boolean).join(' · ');
         el.innerHTML=`<div class="top">
           <div class="tk done">✓</div>
           <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto} · feito ${t.hora||''}</small></div>
           <button class="btn ghost" data-undo="garimpo">desfazer</button>
         </div>
-        ${t.nota?`<div style="font-size:.82rem;color:var(--sub);margin-top:8px;line-height:1.4">📝 ${t.nota}</div>`:''}`;
+        <div style="margin-top:10px;padding:12px;border:1px solid var(--hair);border-radius:12px;background:var(--ok-bg);font-size:.88rem;line-height:1.45">
+          <div style="font-weight:800;color:var(--ok);margin-bottom:4px">⛏️ Relatório Garimpo</div>
+          ${linha?`<div>${linha}</div>`:''}
+          ${leads?`<div style="margin-top:6px">${leads}</div>`:''}
+          ${!linha&&!leads?(t.nota?`<div>📝 ${t.nota}</div>`:'<div style="color:var(--sub)">Sem clientes neste relatório</div>'):''}
+        </div>`;
       } else {
         el.innerHTML=`<div class="top">
           <div class="tk ${late?'late':(run?'run':'')}">${late?'!':(run?'▶':'·')}</div>
@@ -254,18 +273,20 @@ function render(){
         <div class="garimpo-box" id="garimpoForm">
           <div class="gh">10:15 GARIMPO KATZER</div>
           <div class="gb"><span>30 min</span><span>META DIÁRIA</span></div>
-          <div class="inst">Achar curtidas e comentários dos patrocinados da Katzer e colocar na planilha da Katzer. Se <b>0</b> me avisa, se <b>1, 2, 5</b> me avisa também. Preciso saber se achou 0 ou 5. É seu ouro diário.</div>
+          <div class="inst">Achar curtidas e comentários dos patrocinados. Escolha a quantidade e cadastre <b>cada cliente</b> (nome completo + celular). Pode adicionar quantos precisar (2, 3, 10…). <b>0</b> e <b>5+</b> avisam o gestor.</div>
           <div class="lab">Quantidade</div>
           <div class="qtd" id="garimpoQtd">
-            ${['0','1','2','3','4','5+'].map((q,i)=>`<button type="button" data-q="${q}" class="${i===0?'on':''}">${q}</button>`).join('')}
+            ${['0','1','2','3','4','5+'].map((q)=>`<button type="button" data-q="${q}" class="${q==='0'?'on':''}">${q}</button>`).join('')}
           </div>
-          <div class="lab">Nome completo do cliente <span class="ob">obrigatório</span></div>
-          <input id="garimpoNome" type="text" autocomplete="name" placeholder="Digite o nome completo do cliente…">
-          <div class="lab">Telefone <span class="op">(opcional)</span></div>
-          <input id="garimpoTel" type="tel" inputmode="tel" placeholder="(47) 9 9999-9999">
+          <div id="garimpoCampos" class="hid">
+            <div class="lab">Clientes <span class="ob">nome + celular obrigatórios</span></div>
+            <div id="garimpoLeads"></div>
+            <button type="button" class="add-lead" id="garimpoAdd">+ Adicionar cliente</button>
+          </div>
           <button type="button" class="send" id="garimpoSend">➤ ENVIAR RELATÓRIO</button>
-          <div class="hint">Obs: Se selecionar <b>0</b> ou <b>5+</b>, o gestor é notificado automaticamente.</div>
+          <div class="hint" id="garimpoHint">Qtd <b>0</b> — sem clientes. Envie para registrar o dia zerado.</div>
         </div>`;
+        queueMicrotask(()=>syncGarimpoUI());
       }
     } else {
       el.innerHTML=`<div class="top">
@@ -289,6 +310,69 @@ function startTick(){
   const upd=()=>{document.querySelectorAll('.atraso').forEach(s=>{const d=nowMin()-hm2min(s.dataset.prev);if(d>0){s.textContent='atrasando '+Math.floor(d)+' min';s.style.color='var(--late)';s.style.fontWeight='700';}});};
   upd();tickTimer=setInterval(upd,15000);
 }
+function garimpoQtdAtual(){
+  const qEl=document.querySelector('#garimpoQtd [data-q].on');
+  return qEl?qEl.dataset.q:'0';
+}
+function garimpoMinLeads(q){
+  if(q==='0') return 0;
+  if(q==='5+') return 5;
+  return Number(q)||0;
+}
+function celularOk(tel){
+  const d=String(tel||'').replace(/\D+/g,'');
+  return d.length>=10 && d.length<=13;
+}
+function htmlLeadRow(i){
+  return `<div class="lead-row" data-lead-i="${i}">
+    <div class="lr-h"><span>Cliente ${i+1}</span>${i>0?`<button type="button" class="rm" data-rm-lead="${i}">remover</button>`:''}</div>
+    <div class="lab" style="margin-top:0">Nome completo <span class="ob">obrigatório</span></div>
+    <input class="g-nome" type="text" autocomplete="name" placeholder="Nome completo do cliente…">
+    <div class="lab" style="margin-top:8px">Celular <span class="ob">obrigatório</span></div>
+    <input class="g-tel" type="tel" inputmode="tel" placeholder="(47) 9 9999-9999">
+  </div>`;
+}
+function syncGarimpoUI(){
+  const box=$('#garimpoCampos');
+  const list=$('#garimpoLeads');
+  const hint=$('#garimpoHint');
+  const add=$('#garimpoAdd');
+  if(!box||!list) return;
+  const q=garimpoQtdAtual();
+  const min=garimpoMinLeads(q);
+  if(q==='0'){
+    box.classList.add('hid');
+    list.innerHTML='';
+    if(hint) hint.innerHTML='Qtd <b>0</b> — sem clientes. Envie para registrar o dia zerado e avisar o gestor.';
+    return;
+  }
+  box.classList.remove('hid');
+  const cur=list.querySelectorAll('.lead-row').length;
+  if(cur<min){
+    for(let i=cur;i<min;i++) list.insertAdjacentHTML('beforeend', htmlLeadRow(i));
+  } else if(cur>min && q!=='5+'){
+    while(list.querySelectorAll('.lead-row').length>min) list.lastElementChild?.remove();
+  }
+  list.querySelectorAll('.lead-row').forEach((row,i)=>{
+    row.dataset.leadI=String(i);
+    const h=row.querySelector('.lr-h span');
+    if(h) h.textContent='Cliente '+(i+1);
+    const rm=row.querySelector('[data-rm-lead]');
+    if(rm) rm.dataset.rmLead=String(i);
+  });
+  if(add) add.style.display='';
+  if(hint){
+    hint.innerHTML=q==='5+'
+      ? 'Qtd <b>5+</b> — preencha ≥5 clientes (nome + celular). Pode adicionar mais. Gestor avisado.'
+      : `Qtd <b>${q}</b> — nome completo e celular obrigatórios em cada um. Use “+ Adicionar” se achar mais.`;
+  }
+}
+function coletaGarimpoLeads(){
+  return [...document.querySelectorAll('#garimpoLeads .lead-row')].map(row=>({
+    nome:(row.querySelector('.g-nome')?.value||'').trim(),
+    telefone:(row.querySelector('.g-tel')?.value||'').trim(),
+  }));
+}
 document.addEventListener('click',async(e)=>{
   const abrir=e.target.closest('[data-abrir-campanhas]');
   if(abrir){
@@ -306,32 +390,66 @@ document.addEventListener('click',async(e)=>{
   if(qBtn){
     document.querySelectorAll('#garimpoQtd [data-q]').forEach(b=>b.classList.remove('on'));
     qBtn.classList.add('on');
+    syncGarimpoUI();
+    return;
+  }
+  if(e.target.closest('#garimpoAdd')){
+    const list=$('#garimpoLeads');
+    if(list){
+      // Se estava em 1–4 e adiciona além do mínimo, sobe visualmente pra 5+ quando passar de 4
+      list.insertAdjacentHTML('beforeend', htmlLeadRow(list.querySelectorAll('.lead-row').length));
+      const n=list.querySelectorAll('.lead-row').length;
+      if(n>=5){
+        document.querySelectorAll('#garimpoQtd [data-q]').forEach(b=>b.classList.toggle('on', b.dataset.q==='5+'));
+      }
+      syncGarimpoUI();
+    }
+    return;
+  }
+  const rm=e.target.closest('[data-rm-lead]');
+  if(rm){
+    const row=rm.closest('.lead-row');
+    const q=garimpoQtdAtual();
+    const min=garimpoMinLeads(q);
+    const n=document.querySelectorAll('#garimpoLeads .lead-row').length;
+    if(row && n>min){ row.remove(); syncGarimpoUI(); }
+    else toast('Precisa de pelo menos '+min+' cliente(s) para qtd '+q);
     return;
   }
   const gSend=e.target.closest('#garimpoSend');
   if(gSend){
-    const qEl=document.querySelector('#garimpoQtd [data-q].on');
-    const qtd=qEl?qEl.dataset.q:'0';
-    const nome=($('#garimpoNome')?.value||'').trim();
-    const telefone=($('#garimpoTel')?.value||'').trim();
-    if(qtd!=='0' && nome.length<3){
-      toast('⛏️ Digite o nome completo do cliente');
-      $('#garimpoNome')?.focus();
-      return;
-    }
-    if(qtd==='0' && nome.length<3){
-      // 0 leads: nome pode ser "Nenhum" — se vazio, preenche
+    let qtd=garimpoQtdAtual();
+    const leads=qtd==='0'?[]:coletaGarimpoLeads();
+    if(qtd!=='0'){
+      const min=garimpoMinLeads(qtd);
+      for(const l of leads){
+        if(l.nome.length<3){
+          toast('⛏️ Digite o nome completo de cada cliente');
+          document.querySelector('#garimpoLeads .g-nome')?.focus();
+          return;
+        }
+        if(!celularOk(l.telefone)){
+          toast('⛏️ Digite o celular de cada cliente (DDD + número)');
+          document.querySelector('#garimpoLeads .g-tel')?.focus();
+          return;
+        }
+      }
+      if(leads.length<min){
+        toast(`⛏️ Cadastre pelo menos ${min} cliente(s)`);
+        return;
+      }
+      if(leads.length>=5) qtd='5+';
+      else qtd=String(leads.length);
     }
     gSend.disabled=true;
     const r=await api({
       acao:'feito',
       tarefa:'garimpo',
       qtd,
-      nome: nome || (qtd==='0'?'Nenhum lead encontrado':''),
-      telefone,
-      nota:'' // montado no backend
+      leads,
+      nota:''
     });
-    if(r.ok){toast(qtd==='0'||qtd==='5+'?'⛏️ Relatório enviado · gestor avisado':'⛏️ Relatório Garimpo enviado');load();}
+    if(r.ok){toast(r.toast||(qtd==='0'||qtd==='5+'?'⛏️ Relatório enviado · gestor avisado':'⛏️ Relatório Garimpo enviado'));load();}
     else{gSend.disabled=false;toast(r.erro||'Erro no relatório');}
     return;
   }

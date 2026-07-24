@@ -1,5 +1,6 @@
-// Garimpo Katzer — regras da auditoria (Parte 1).
-// Qtd 0: sem nome/tel. Qtd >0: nome por lead. Alerta 0 ou ≥5.
+// Garimpo Katzer — regras da auditoria (Parte 1) + multi-cliente.
+// Qtd 0: sem nome/tel. Qtd >0: nome completo + celular obrigatórios por lead.
+// Aceita quantos leads o Michel preencher (2, 3, 10…).
 
 export const QTD_OPTS = ['0', '1', '2', '3', '4', '5+'];
 
@@ -7,6 +8,9 @@ export function normalizaQtd(raw) {
   const s = String(raw ?? '').trim();
   if (s === '5') return '5';
   if (QTD_OPTS.includes(s)) return s;
+  const n = Number(s);
+  if (Number.isFinite(n) && n >= 5) return '5+';
+  if (Number.isFinite(n) && n >= 0 && n <= 4) return String(n);
   return null;
 }
 
@@ -18,16 +22,22 @@ export function qtdMinLeads(qtd) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Celular BR: pelo menos 10 dígitos (DDD + número). */
+export function celularOk(tel) {
+  const d = String(tel || '').replace(/\D+/g, '');
+  return d.length >= 10 && d.length <= 13;
+}
+
 export function normalizaLeads(body = {}) {
   const lista = Array.isArray(body.leads) ? body.leads : null;
   if (lista) {
     return lista.map((l) => ({
       nome: String(l?.nome || '').trim(),
-      telefone: String(l?.telefone || l?.fone || '').trim() || null,
+      telefone: String(l?.telefone || l?.fone || l?.celular || '').trim() || null,
     }));
   }
   const nome = String(body.nome || '').trim();
-  const telefone = String(body.telefone || body.fone || '').trim() || null;
+  const telefone = String(body.telefone || body.fone || body.celular || '').trim() || null;
   if (!nome && !telefone) return [];
   return [{ nome, telefone }];
 }
@@ -55,30 +65,37 @@ export function validaGarimpo(body = {}) {
     };
   }
 
-  const filled = normalizaLeads(body).map((l) => ({
-    nome: l.nome,
-    telefone: l.telefone,
-  }));
-
+  const filled = normalizaLeads(body);
   const min = qtdMinLeads(qtd);
-  const validos = filled.filter((l) => l.nome.length >= 3);
+
+  const incompleto = filled.find((l) => !l.nome || l.nome.length < 3 || !celularOk(l.telefone));
+  if (incompleto) {
+    const faltaNome = !incompleto.nome || incompleto.nome.length < 3;
+    return {
+      ok: false,
+      erro: faltaNome
+        ? 'Garimpo: informe o nome completo de cada cliente.'
+        : 'Garimpo: informe o celular de cada cliente (DDD + número).',
+    };
+  }
+
+  const validos = filled.filter((l) => l.nome.length >= 3 && celularOk(l.telefone));
   if (validos.length < min) {
     return {
       ok: false,
-      erro: `Garimpo: informe o nome completo de cada lead (${min} obrigatório${min > 1 ? 's' : ''} para qtd ${qtd}).`,
+      erro: `Garimpo: cadastre pelo menos ${min} cliente(s) com nome completo e celular (qtd ${qtd}).`,
     };
   }
-  // Aceita exatamente min (ou mais se 5+)
-  const leadsFinal = validos.slice(0, Math.max(min, validos.length));
-  if (qtd !== '5+' && leadsFinal.length !== min) {
-    // se mandou a mais, corta; se a menos já falhou acima
-  }
 
-  const alertaGestor = qtd === '5+' || Number(qtd) >= 5;
+  // Aceita mais do que o mínimo (Michel pode ter 6, 10… quando escolheu 5+ ou adicionou linhas)
+  const leadsFinal = validos;
+  const qtdFinal = leadsFinal.length >= 5 ? '5+' : String(leadsFinal.length);
+  const alertaGestor = qtdFinal === '5+' || Number(qtdFinal) >= 5;
+
   return {
     ok: true,
     meta: {
-      qtd,
+      qtd: qtdFinal,
       leads: leadsFinal,
       nome: leadsFinal.map((l) => l.nome).join(' · '),
       telefone: leadsFinal.map((l) => l.telefone).filter(Boolean).join(' · ') || null,

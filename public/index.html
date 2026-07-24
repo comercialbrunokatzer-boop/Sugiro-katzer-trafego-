@@ -281,18 +281,18 @@ function render(){
         <div class="garimpo-box" id="garimpoForm">
           <div class="gh">10:15 GARIMPO KATZER</div>
           <div class="gb"><span>30 min</span><span>META DIÁRIA</span></div>
-          <div class="inst">Achar curtidas e comentários dos patrocinados da Katzer. <b>Qtd 0</b> envia sem nome e avisa o gestor. <b>Qtd &gt;0</b> exige nome de cada lead. <b>5+</b> também avisa.</div>
+          <div class="inst">Achar curtidas e comentários dos patrocinados da Katzer. <b>Qtd 0</b> envia sem clientes e avisa o gestor. <b>Qtd &gt;0</b> exige nome completo + celular de cada um. Pode adicionar quantos precisar. <b>5+</b> também avisa.</div>
           <div class="lab">Quantidade</div>
           <div class="qtd" id="garimpoQtd">
             ${['0','1','2','3','4','5+'].map((q)=>`<button type="button" data-q="${q}" class="${q==='0'?'on':''}">${q}</button>`).join('')}
           </div>
           <div id="garimpoCampos" class="hid">
-            <div class="lab">Leads encontrados <span class="ob">nome obrigatório</span></div>
+            <div class="lab">Clientes <span class="ob">nome + celular obrigatórios</span></div>
             <div id="garimpoLeads"></div>
-            <button type="button" class="add-lead" id="garimpoAdd">+ Adicionar lead</button>
+            <button type="button" class="add-lead" id="garimpoAdd">+ Adicionar cliente</button>
           </div>
           <button type="button" class="send" id="garimpoSend">➤ ENVIAR RELATÓRIO</button>
-          <div class="hint" id="garimpoHint">Qtd <b>0</b> selecionada — sem nome/telefone. Envie para registrar o dia zerado.</div>
+          <div class="hint" id="garimpoHint">Qtd <b>0</b> selecionada — sem nome/celular. Envie para registrar o dia zerado.</div>
         </div>`;
         queueMicrotask(()=>syncGarimpoUI());
       }
