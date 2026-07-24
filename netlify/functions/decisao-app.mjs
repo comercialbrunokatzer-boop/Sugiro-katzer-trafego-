@@ -17,7 +17,14 @@ import {
   linkWhatsApp,
 } from './_qualidade-trafego.mjs';
 import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_decisao-feed.mjs';
-import { listaDealsFunil, fasesPorCampanha, inicioFunilISO, inicioEfetivoFunil } from './_bitrix-funil.mjs';
+import {
+  listaDealsFunil,
+  fasesPorCampanha,
+  dealsPorCampanha,
+  inicioFunilISO,
+  inicioEfetivoFunil,
+} from './_bitrix-funil.mjs';
+import { notaCampanha, top10PorNotaFunil } from './_nota-funil.mjs';
 import { metaPauseCampaign, metaActivateCampaign, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
 
@@ -182,6 +189,17 @@ function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = [], { periodo
       inicioISO: inicioCampanha,
       periodoDesdeISO,
     });
+    const dealsCamp = dealsPorCampanha(dealsBitrix, c.nome, {
+      inicioISO: inicioCampanha,
+      periodoDesdeISO,
+    });
+    // Nota = qualidade real no Bitrix (fases + contato + COMMENTS). CPL só desempatará no Top 10.
+    const notaFunil = notaCampanha({
+      deals: dealsCamp,
+      fases: fasesInfo.fases,
+      forms,
+      detail,
+    });
     const metaDecisao = decisaoMetaAds({
       cpl, forms, gasto: c.gasto, qual, fasesInfo, name: c.nome,
     });
@@ -212,6 +230,13 @@ function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = [], { periodo
       fasesFonte: fasesInfo.fonte,
       // quantos forms Meta vs quantos achamos no funil
       formsVsFases: { formsMeta: forms, noFunil: fasesInfo.total },
+      notaFunil: {
+        nota: notaFunil.nota,
+        selo: notaFunil.selo,
+        motivo: notaFunil.motivo,
+        nLeads: notaFunil.nLeads,
+        breakdown: notaFunil.breakdown,
+      },
       metaDecisao,
     };
   });
@@ -229,35 +254,37 @@ function totaisQualidade(leads) {
 }
 
 function topFeedback(campanhas) {
-  const comCpl = campanhas.filter((c) => c.cpl != null).sort((a, b) => a.cpl - b.cpl);
-  const melhores = comCpl.slice(0, 10).map((c, i) => ({
-    pos: i + 1,
+  const { melhores: m, piores: p } = top10PorNotaFunil(campanhas);
+  const melhores = m.map((c) => ({
+    pos: c.pos,
     nome: c.name,
     custo: c.custo,
     forms: c.forms,
     qual: c.qual,
+    nota: c.notaFunil?.nota ?? null,
+    selo: c.notaFunil?.selo ?? null,
   }));
-  const piores = [...comCpl].reverse().slice(0, 10).map((c, i) => ({
-    pos: i + 1,
+  const piores = p.map((c) => ({
+    pos: c.pos,
     nome: c.name,
     custo: c.custo,
     forms: c.forms,
     qual: c.qual,
+    nota: c.notaFunil?.nota ?? null,
+    selo: c.notaFunil?.selo ?? null,
   }));
   return {
     melhores,
     piores,
     feedbackMelhores: [
-      'Vídeo + rosto humano',
-      'Config/teste de público específico',
-      'Headline com localização',
-      'Orçamento compartilhado performou melhor',
+      'Leads avançaram no funil (Mapeamento / Agendamento / Negociação)',
+      'Contato completo (nome + WhatsApp) + comentários positivos no Bitrix',
+      'CPL entra só como desempate — qualidade do deal manda',
     ],
     feedbackPiores: [
-      'Sem vídeo, só imagem',
-      'Público muito aberto sem filtro',
-      'Custo alto / Fake+Ruim / pouca conversão',
-      'Sem preço na headline',
+      'Parados em Leads Novos / Tentando Contato',
+      'Muitos Rampage/Perdido ou Fake/Ruim',
+      'Forms Meta sem negócio casado no Funil Novo',
     ],
   };
 }
@@ -311,15 +338,9 @@ async function payloadApp({ incluirGestor = false } = {}) {
   } else {
     historicoRows = todas;
   }
-  const comCpl = historicoRows.filter((c) => c.cpl != null).sort((a, b) => a.cpl - b.cpl);
-  const top10Melhores = comCpl.slice(0, 10).map((c, i) => ({ ...c, pos: i + 1 }));
-  const top10Piores = [...comCpl].reverse().slice(0, 10).map((c, i) => ({ ...c, pos: i + 1 }));
-
-  // Ranking aba 2 = melhores + piores desde 12/07/2025
-  const ranking = [
-    ...top10Melhores.map((c) => ({ ...c, rankingTipo: 'melhor' })),
-    ...top10Piores.map((c) => ({ ...c, rankingTipo: 'pior' })),
-  ];
+  // Top 10 = nota do funil Bitrix (fase+contato+comentários). CPL só desempata.
+  const { melhores: top10Melhores, piores: top10Piores } = top10PorNotaFunil(historicoRows);
+  const ranking = [...top10Melhores, ...top10Piores];
 
   const tot = totaisQualidade(leadsDoc.leads || []);
   const hoje = itensHoje(feed, now.data);
@@ -334,9 +355,10 @@ async function payloadApp({ incluirGestor = false } = {}) {
     periodoLabel: 'Janela móvel últimos 30 dias',
     rankingDesde: '2025-07-12',
     rankingAte: histMeta.until || now.data,
+    rankingRegra: 'nota_funil_bitrix',
     prazo: 'Fazer até 10:15',
     fontes: 'PATROCINADO CORRETOR, FACEBOOK ADS, FORMULARIO CRM, CANAL ABERTO',
-    avisoAbas: `Aba 1 = ACTIVE na Meta sem [TESTE] (${ativas.length}; Meta ACTIVE bruto: ${ativasMetaBruto}). Aba 2 = Top 10 melhores + Top 10 piores desde 12/07/2025.`,
+    avisoAbas: `Aba 1 = ACTIVE na Meta sem [TESTE] (${ativas.length}; Meta ACTIVE bruto: ${ativasMetaBruto}). Aba 2 = Top 10 por qualidade do funil Bitrix (fase+contato+comentários; CPL só desempata) desde 12/07/2025.`,
     campanhas: ativas,
     ativas,
     nAtivas: ativas.length,
@@ -347,23 +369,23 @@ async function payloadApp({ incluirGestor = false } = {}) {
     todas,
     qualidadeTotais: tot,
     qualidadeRotulos: QUAL_TRAFEGO_ROTULO,
-    iaComo: 'IA lê: ligação + todas abas Bitrix + WhatsApp Helena + etiqueta corretor',
+    iaComo: 'Nota do funil: STAGE_ID + contato (nome/WA) + COMMENTS do negócio + Fake/Ruim do caçador. CPL não manda sozinho.',
     leadsHoje,
     alertaLeadsHoje: leadsHoje > 0
       ? `🔔 ${leadsHoje} lead(s) de tráfego hoje — confira fases e WhatsApp`
       : null,
     feedbackMelhores: [
-      'Leads avançaram no funil (Mapeamento / Agendamento / Follow Up)',
-      'Vídeo + rosto humano / público específico',
-      'Headline com localização',
+      'Leads avançaram no funil (Mapeamento / Agendamento / Negociação / Ganhou)',
+      'Contato completo + comentários úteis no Bitrix',
+      'CPL barato sozinho não sobe no Top 10 — qualidade do deal manda',
     ],
     feedbackPiores: [
-      'Leads parados em Leads Novos / Tentando Contato',
-      'CPL alto + Fake/Ruim',
-      'Pouco avanço no funil Bitrix',
+      'Parados em Leads Novos / Tentando Contato ou sem telefone',
+      'Rampage/Perdido alto ou Fake/Ruim no caçador',
+      'Forms Meta sem negócio casado no Funil Novo',
     ],
     sugestaoSemanal: {
-      texto: '30% da verba nas que mais converteram',
+      texto: '30% da verba nas que mais avançaram no funil (não só no CPL)',
       destaque: top10Melhores[0] || null,
     },
     agora: now.hm,
