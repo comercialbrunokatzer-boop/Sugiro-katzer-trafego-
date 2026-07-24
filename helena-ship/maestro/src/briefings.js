@@ -3,13 +3,27 @@
  * Cada corretor recebe no WhatsApp: Top 3 pra ligar hoje (com motivo + próxima ação + script),
  * pendências vencidas e agenda do dia. Sem abrir sistema.
  * Puro e testável: recebe os leads do corretor, devolve o briefing pronto.
+ *
+ * Vocabulário = funil oficial Katzer (#47). Aliases antigos preservados só pra não quebrar dados legados.
  */
 import { proximaAcaoSugerida } from './secretaria.js';
 
 const SCRIPT = {
+  // Funil oficial
+  'Leads Novos': 'Oi {nome}, aqui é da Katzer. Vi seu interesse — posso te mostrar as opções?',
+  'Tentando Contato': 'Oi {nome}, aqui é da Katzer. Tentei te falar — ainda faz sentido eu te mostrar as opções?',
+  'Mapeamento': 'Oi {nome}, pra eu te ajudar melhor: você busca pra morar, investir ou os dois?',
+  'Agendamento': 'Oi {nome}, sobre o imóvel que você quis conhecer: consigo te encaixar uma visita. Qual o melhor dia?',
+  'Agendamento Meetins': 'Oi {nome}, sobre o imóvel que você quis conhecer: consigo te encaixar uma visita. Qual o melhor dia?',
+  'Agendado Físico': 'Oi {nome}, confirmando sua visita — qualquer ajuste de horário me avisa.',
+  'Follow Up': 'Oi {nome}, tudo bem? Retomando nosso contato sobre o imóvel — ainda te interessa?',
+  'Negociação': 'Oi {nome}, preparei uma condição boa pra fechar. Posso te passar a proposta?',
+  'Proposta': 'Oi {nome}, a proposta está pronta — quer que eu te explique os pontos principais?',
+  'Contrato': 'Oi {nome}, pra avançar eu preciso de alguns documentos — te mando a listinha?',
+  'Ganhou': 'Parabéns pela conquista, {nome}! Já te acompanho na próxima etapa.',
+  // Aliases legados (não usar em código novo)
   'Lead Novo': 'Oi {nome}, aqui é da Katzer. Vi seu interesse — posso te mostrar as opções?',
   'Qualificado': 'Oi {nome}, sobre o imóvel que você quis conhecer: consigo te encaixar uma visita. Qual o melhor dia?',
-  'Negociação': 'Oi {nome}, preparei uma condição boa pra fechar. Posso te passar a proposta?',
   'Documentação': 'Oi {nome}, pra avançar eu preciso de alguns documentos — te mando a listinha?',
   'Fechado': 'Parabéns pela conquista, {nome}! Já te acompanho na próxima etapa.',
   'Pós-venda': 'Oi {nome}, tudo certo com o imóvel? Qualquer coisa, estou por aqui.',

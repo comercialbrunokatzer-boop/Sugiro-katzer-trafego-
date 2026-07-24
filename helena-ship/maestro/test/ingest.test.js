@@ -55,17 +55,27 @@ test('round-robin gira entre os corretores do pool', () => {
   assert.deepEqual(seq, ['985', '1637', '1613', '985']);
 });
 
-test('WH-04: lead qualificado NASCE no Bitrix, atribui corretor, enfileira discadora e avisa o lead', async () => {
+test('WH-04: lead Patrocinado Corretor (Facebook) → Bruno (não roleta), nasce no Bitrix + discadora + aviso', async () => {
   const bitrix = fakeBitrix();
   const deps = fakeDeps(bitrix);
+  // formulario_facebook = fonte Patrocinado Corretor → responsável Bruno (regra CEO / #115)
   const bruto = { nome: 'Paulo', telefone: '+55 47 99988-7766', origem: 'formulario_facebook', interesse: 'BC', orcamento_max: 3500000, nivel: 'quente' };
   const r = await ingestLead(bruto, { etapa: CFG.ETAPAS.PRE_QUALIFICADO, qualificado: true }, deps);
   assert.equal(r.ok, true);
   assert.equal(r.criado, true, 'nasceu negocio novo');
   assert.ok(r.dealId, 'tem dealId');
-  assert.ok(CFG.BROKER_POOL.includes(String(r.corretorId)), 'corretor do pool');
+  assert.equal(String(r.corretorId), String(CFG.BRUNO_BITRIX_ID || '1'), 'Patrocinado Corretor fica com Bruno, não no pool');
   assert.equal(r.discadora.enfileirado, true, 'foi pra discadora');
   assert.equal(r.aviso.enviado, true, 'avisou o lead');
+});
+
+test('WH-04b: lead NÃO patrocinado → round-robin do pool de corretores', async () => {
+  const bitrix = fakeBitrix();
+  const deps = fakeDeps(bitrix);
+  const bruto = { nome: 'Ana', telefone: '+55 47 98888-1122', origem: 'indicacao', interesse: 'BC', nivel: 'quente' };
+  const r = await ingestLead(bruto, { etapa: CFG.ETAPAS.PRE_QUALIFICADO, qualificado: true }, deps);
+  assert.equal(r.ok, true);
+  assert.ok(CFG.BROKER_POOL.includes(String(r.corretorId)), 'corretor do pool');
 });
 
 test('DEDUP: segundo evento do mesmo telefone ATUALIZA (nao cria segundo negocio)', async () => {

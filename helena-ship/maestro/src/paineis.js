@@ -2,12 +2,37 @@
  * PAINÉIS (KOS-002 P1.B6 + parecer executivo).
  * painelMichel: visão operacional (leitura em 30s). parecerBruno: SÓ decisão (nada operacional).
  * Puro e testável.
+ *
+ * Vocabulário = funil oficial Katzer (#47). NÃO é o UI de quadradinhos do tráfego.
+ * Aliases legados preservados.
  */
 
 // probabilidade de fechar por estágio — usada pra estimar receita prevista
-const PROB = { 'Lead Novo': 0.05, 'Qualificado': 0.2, 'Negociação': 0.5, 'Documentação': 0.75, 'Fechado': 1, 'Pós-venda': 1 };
+const PROB = {
+  'Leads Novos': 0.05,
+  'Tentando Contato': 0.08,
+  'Mapeamento': 0.15,
+  'Agendamento': 0.25,
+  'Agendamento Meetins': 0.25,
+  'Agendado Físico': 0.3,
+  'Follow Up': 0.18,
+  'Negociação': 0.5,
+  'Proposta': 0.65,
+  'Contrato': 0.8,
+  'Ganhou': 1,
+  // aliases legados
+  'Lead Novo': 0.05,
+  'Qualificado': 0.2,
+  'Documentação': 0.75,
+  'Fechado': 1,
+  'Pós-venda': 1,
+};
 
-/** Indicadores operacionais do Michel. */
+const ESTAGIOS_QUENTES = new Set([
+  'Negociação', 'Proposta', 'Contrato', 'Documentação',
+]);
+
+/** Indicadores operacionais do Michel (números — sem redesenhar UI). */
 export function painelMichel(d = {}) {
   const recebidos = d.leads_recebidos || 0;
   const distribuidos = d.leads_distribuidos || 0;
@@ -33,7 +58,7 @@ export function painelMichel(d = {}) {
 export function parecerBruno(d = {}) {
   const leads = d.leads || [];
   const tetoAlto = d.teto_alto_valor || 1000000;
-  const oportunidades = leads.filter((l) => ['Negociação', 'Documentação'].includes(l.estagio) || (l.valor || 0) >= tetoAlto);
+  const oportunidades = leads.filter((l) => ESTAGIOS_QUENTES.has(l.estagio) || (l.valor || 0) >= tetoAlto);
   const travadas = leads.filter((l) => l.estagio === 'Negociação' && (l.ultimo_contato_dias ?? 0) >= 3);
   const receita = leads.reduce((s, l) => s + (l.valor || 0) * (PROB[l.estagio] || 0), 0);
   return {
