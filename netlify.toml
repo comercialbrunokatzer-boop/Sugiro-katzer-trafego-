@@ -18,6 +18,11 @@
   schedule = "*/15 * * * *"
   timeout = 26
 
+# Vigilante Bruno — campanha nova / parou / ruim sem Michel mexer
+[functions.cron-alerta-ceo]
+  schedule = "*/20 * * * *"
+  timeout = 26
+
 # Health check.
 [[redirects]]
   from = "/health"
@@ -124,6 +129,11 @@
 [[redirects]]
   from = "/api/helena-auditora"
   to = "/.netlify/functions/helena-auditora"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/alerta-ceo-campanhas"
+  to = "/.netlify/functions/cron-alerta-ceo"
   status = 200
   force = true
 [functions.decisao-app]
