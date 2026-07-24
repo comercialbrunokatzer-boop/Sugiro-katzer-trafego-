@@ -40,8 +40,10 @@ WHATSAPP_CEO    = <secret>   (CEO: recebe o Placar do Gestor)
 EMAIL_CEO       = <secret>   (CEO)
 ```
 - **Michel** recebe o **Placar do Michel** por WhatsApp.
-- **CEO (Bruno)** recebe o **Placar do Gestor** nos **2 canais ao mesmo tempo**: WhatsApp **e** e-mail.
-  Sempre que o Michel tocar um botão (Aplicar/Ajustar/Agora não), o CEO recebe a atualização do que ele clicou — em tempo real, nos dois canais.
+- **CEO (Bruno)** acompanha pelo **Placar do Gestor** (sempre atualizado).
+  - WhatsApp imediato: só decisões **importantes** ou pendências (Nível 3 / risco).
+  - E-mail: **consolidado diário** (não cada toque pequeno).
+  (Evita spam; mais barato e útil.)
 - Para ENVIAR WhatsApp você precisa de um **remetente** (credencial de envio, ex.: Z-API) — se a Katzer já tem para a Secretária, reaproveite via secret; senão, sinalize que falta.
 
 ## TAREFA 2 — MONTAR O PLACAR DO MICHEL (depois que a Tarefa 1 passar)
@@ -57,6 +59,15 @@ Saída diária no WhatsApp do Michel: 🔴 onde vaza · 🟢 onde está o dinhei
 - **PII e token fora do código** (sempre secret/env).
 - Problema de atendimento de lead no Bitrix → você **sinaliza** e passa pro Katzer (Auditor); não conserta o card.
 
-## FALTA DO MICHEL (pra ligar o envio)
-1. Número de WhatsApp onde recebe o placar.
-2. OK no fluxo dos 2 toques de qualidade do lead no Bitrix.
+## FALTA / CONFIRMAR (pra ligar o envio)
+1. ~~Número WhatsApp do Michel~~ — usar secret `WHATSAPP_MICHEL` (já referenciado nos workflows; **não** escrever o número em docs/logs). Confirmar no Netlify/Actions se está setado.
+2. OK no fluxo dos **2 toques de qualidade** do lead no Bitrix (curioso / número errado / comprador) — **ainda não comprovado no código**.
+3. Conferência na API Meta se Michel **aplicou** de verdade — **ainda não existe** (modo seguro: só registra decisão).
+
+## AUDITORIA (Conselheiro · 23/07/2026) — não reinventar
+- Repo canônico do canal: este (`Sugiro-katzer-trafego-` = Supervisor de Tráfego Katzer).
+- Token Meta: **smoke OK** (Actions, 9 campanhas lidas).
+- Quadradinho/Placar: implementação na PR **#7** (`placar-michel.html`, `placar-registrar.mjs`) — **não** está na `main` ainda; nome antigo `quadradinho-decisao.html` não aparece no git (evoluiu para placar-*).
+- `maestro/src/secretariaFollowup.js` — **NÃO existe** (Spec desatualizada). Follow-up: `helena-katzer/maestro/src/followup.js`.
+- `maestro/src/michel.js` (Helena) = régua/fila do Auditor em modo seguro — **não** é o placar de tráfego.
+- `maestro/src/whatsapp.js` (Helena) = Z-API do Maestro de leads — reaproveitável como padrão, não é o disparo do Placar (Placar usa `_infra.mjs` neste repo).

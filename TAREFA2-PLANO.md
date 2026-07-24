@@ -11,8 +11,10 @@
    - O **CEO pode abrir a MESMA tela do Michel** (modo ver) — vê tudo, só não precisa clicar.
 2. **Mensagem no WhatsApp** = curta + **link "▸ Abrir decisão do dia"** (abre o quadradinho).
    - Formato a decidir: **(A) texto + link** ou **(B) imagem + link** (placar renderizado como figura).
-3. **Botões ligados de verdade:** ao tocar, registra a decisão E **avisa o CEO na hora** (WhatsApp + e-mail).
-4. **Disparo diário automático** no horário escolhido (ex.: 08h).
+3. **Botões ligados de verdade:** ao tocar, **registra a decisão** e atualiza o **Placar do Gestor**.
+   - WhatsApp ao Bruno: só se for **importante / Nível 3 / pendência**.
+   - E-mail: **consolidado diário** (não WhatsApp+e-mail em todo toque pequeno).
+4. **Disparo diário automático** no horário escolhido (ex.: 08h / 09h — a confirmar no workflow).
 
 ## Ajustes pegos no teste (IMPORTANTE)
 - **Nº de lead certo por campanha:** trocar o campo genérico `results` da Meta pelo **action de lead
@@ -30,8 +32,8 @@
 ## O que o Executor faz (eu)
 - Hospeda o quadradinho (site Netlify do Tráfego) + o backend dos botões.
 - Corrige a leitura de leads (leadgen) e monta a inteligência da sugestão.
-- Liga o aviso em tempo real pro CEO (WhatsApp + e-mail).
-- Agenda o disparo diário.
+- Atualiza Placar do Gestor; WhatsApp só em marcos/risco; e-mail consolidado diário.
+- Agenda o disparo diário do placar de campanha (separado da Rotina ~07:45).
 - Reaproveita a Z-API (envio de WhatsApp) já configurada.
 
 ## O que preciso do CEO (decisões + 1-2 setups)
