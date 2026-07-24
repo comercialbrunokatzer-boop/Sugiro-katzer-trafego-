@@ -1,6 +1,5 @@
 // GET  /api/decisao-app  → campanhas 30d + qualidade IA + feed gestor
-// POST /api/decisao-app  → { acao: manter|orcamento|parar, campanhaId, ... }
-import { createHash } from 'node:crypto';
+// POST /api/decisao-app  → { acao: manter|orcamento|parar, campanhaId, ... } — SÓ MICHEL
 import { json, enviaWhats } from './_infra.mjs';
 import { lePlacar } from './_placar-io.mjs';
 import { leCicloCampanhas, enrichComCiclo } from './_meta-ciclo.mjs';
@@ -28,16 +27,9 @@ import { notaCampanha, top10PorNotaFunil } from './_nota-funil.mjs';
 import { metaPauseCampaign, metaActivateCampaign, metaSetCampaignDailyBudget, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
 import { mensagemAcaoMichel } from './_alerta-ceo-campanhas.mjs';
+import { senhaGestorOk, autorizaCliqueMichel } from './_michel-auth.mjs';
 
-const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
-
-function senhaGestorOk(event, body = {}) {
-  const h = event.headers || {};
-  const params = event.queryStringParameters || {};
-  const chave = h['x-gestor-key'] || h['X-Gestor-Key'] || body.gestorKey || params.k || '';
-  if (!chave) return false;
-  return createHash('sha256').update(String(chave)).digest('hex') === GESTOR_HASH;
-}
+// GESTOR_HASH / senhaGestorOk vivem em _michel-auth (só leitura do feed)
 
 function brl(v) {
   if (v == null || !Number.isFinite(Number(v))) return '—';
@@ -417,7 +409,7 @@ export async function handler(event) {
       headers: {
         'access-control-allow-origin': '*',
         'access-control-allow-methods': 'GET, POST, OPTIONS',
-        'access-control-allow-headers': 'content-type, x-gestor-key',
+        'access-control-allow-headers': 'content-type, x-gestor-key, x-michel-key',
       },
       body: '',
     };
@@ -427,6 +419,15 @@ export async function handler(event) {
     let body = {};
     try { body = JSON.parse(event.body || '{}'); } catch {
       return json(400, { ok: false, erro: 'body inválido' });
+    }
+    // Portão CEO: só o Michel clica na Meta (Manter / Parar / Orçamento)
+    const auth = autorizaCliqueMichel(event, body);
+    if (!auth.ok) {
+      return json(401, {
+        ok: false,
+        precisaMichel: true,
+        erro: auth.motivo || 'Só o Michel pode executar na Meta',
+      });
     }
     const acao = String(body.acao || '').toLowerCase();
     if (!['manter', 'orcamento', 'parar', 'budget'].includes(acao)) {
