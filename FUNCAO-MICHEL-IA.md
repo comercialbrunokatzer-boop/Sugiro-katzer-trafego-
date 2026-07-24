@@ -56,6 +56,11 @@ Só isso. Nada de criar, preencher ou manter planilha — o placar se refaz sozi
 - Toda frase tem número atrás (Lei 01). Sem "achismo".
 - Só sugere; **não pausa anúncio sozinha**.
 
+> **Nota de escopo do Tráfego (CEO · item 4):**  
+> “Lê o Bitrix” no texto acima é papel do **Auditor (Katzer)**. O Executor deste repo (**Tráfego**)  
+> **não** acessa o Bitrix. Atribuição venda↔campanha entra por **export/arquivo/contrato** —  
+> nunca misturando repositório nem lendo CRM direto. Fase A do Copiloto usa só Meta (gasto · leads · CPL).
+
 ---
 
 ## 5. O QUE PRECISO DA PARTE DO MICHEL (só isto)
