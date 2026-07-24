@@ -2,12 +2,48 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   leadsDemoHoje,
+  resolveLeadsDoDia,
   linhaLead,
   marcaLead,
   payloadCacador,
   textoHaMinutos,
   totaisPorCampanha,
 } from '../netlify/functions/_cacador.mjs';
+
+test('blob antigo fonte=demo sem allowDemo: limpa (não mostra João falso)', () => {
+  const r = resolveLeadsDoDia({
+    hoje: '2026-07-24',
+    doc: { data: '2026-07-24', leads: leadsDemoHoje(), fonte: 'demo' },
+    allowDemo: false,
+  });
+  assert.equal(r.fonte, 'vazio');
+  assert.equal(r.leads.length, 0);
+  assert.equal(r.persistir, true);
+});
+
+test('sem allowDemo: dia vazio NÃO planta João Silva falso', () => {
+  const r = resolveLeadsDoDia({ hoje: '2026-07-24', doc: null, allowDemo: false });
+  assert.equal(r.fonte, 'vazio');
+  assert.equal(r.leads.length, 0);
+  assert.equal(r.persistir, true);
+});
+
+test('allowDemo: pode usar seed só em treino/homolog', () => {
+  const r = resolveLeadsDoDia({ hoje: '2026-07-24', doc: null, allowDemo: true });
+  assert.equal(r.fonte, 'demo');
+  assert.ok(r.leads.some((l) => l.id === 'demo-joao-silva'));
+});
+
+test('doc do dia com leads reais: preserva fonte blobs', () => {
+  const r = resolveLeadsDoDia({
+    hoje: '2026-07-24',
+    doc: { data: '2026-07-24', leads: [{ id: 'real-1', nome: 'Lead Real' }], fonte: 'bitrix' },
+    allowDemo: false,
+  });
+  assert.equal(r.fonte, 'bitrix');
+  assert.equal(r.leads[0].id, 'real-1');
+  assert.equal(r.persistir, false);
+});
 
 test('demo Bruno: João + Maria com linha canônica', () => {
   const agora = Date.now();

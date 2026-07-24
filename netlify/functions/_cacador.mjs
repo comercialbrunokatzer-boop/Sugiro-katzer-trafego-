@@ -33,7 +33,33 @@ export function qualidadeComRegraIngles(qualidade, campanhaNome = '') {
   return { qualidade, forcouCurioso: false, motivo: null };
 }
 
-/** Leads demo canônicos (Bruno) — usados até Bitrix/Meta leadgen ligar. */
+/**
+ * Decide o que o Caçador mostra no dia — PURO (testável).
+ * Demo NÃO entra por padrão (lead falso polui CPL/Bitrix).
+ * Só com allowDemo=true (CACADOR_ALLOW_DEMO=1) para treino/homolog.
+ */
+export function resolveLeadsDoDia({ hoje, doc = null, allowDemo = false } = {}) {
+  const temLeads = doc && doc.data === hoje && Array.isArray(doc.leads) && doc.leads.length;
+  if (temLeads) {
+    const fonte = doc.fonte || 'blobs';
+    // Blob antigo com seed demo: não servir como se fosse lead real
+    if (fonte === 'demo' && !allowDemo) {
+      return { data: hoje, leads: [], fonte: 'vazio', persistir: true };
+    }
+    return {
+      data: hoje,
+      leads: doc.leads,
+      fonte,
+      persistir: false,
+    };
+  }
+  if (allowDemo) {
+    return { data: hoje, leads: leadsDemoHoje(), fonte: 'demo', persistir: true };
+  }
+  return { data: hoje, leads: [], fonte: 'vazio', persistir: true };
+}
+
+/** Leads demo canônicos — só treino/homolog (CACADOR_ALLOW_DEMO=1). NÃO usar em operação. */
 export function leadsDemoHoje() {
   const agora = Date.now();
   return [

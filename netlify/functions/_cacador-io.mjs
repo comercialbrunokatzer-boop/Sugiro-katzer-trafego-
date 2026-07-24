@@ -1,6 +1,6 @@
 // I/O do Caçador — leads de hoje + marcas (Blobs).
 import { getStore } from '@netlify/blobs';
-import { leadsDemoHoje, normalizaLead, marcaLead, totaisPorCampanha, marcaAuditoria } from './_cacador.mjs';
+import { resolveLeadsDoDia, normalizaLead, marcaLead, totaisPorCampanha, marcaAuditoria } from './_cacador.mjs';
 import { leQualidade, salvaQualidadeCampanha } from './_qualidade-io.mjs';
 
 const STORE = 'placar-michel';
@@ -19,18 +19,26 @@ function dataBRT(d = new Date()) {
   }).format(d);
 }
 
+function allowDemoCacador() {
+  return /^(1|on|true|sim)$/i.test(String(process.env.CACADOR_ALLOW_DEMO || '').trim());
+}
+
 export async function leLeadsHoje() {
   const store = abreStore();
   const doc = await store.get(KEY, { type: 'json' });
   const hoje = dataBRT();
-  if (doc && doc.data === hoje && Array.isArray(doc.leads) && doc.leads.length) {
-    return { data: hoje, leads: doc.leads.map(normalizaLead), fonte: doc.fonte || 'blobs' };
+  const resolved = resolveLeadsDoDia({ hoje, doc, allowDemo: allowDemoCacador() });
+  const leads = (resolved.leads || []).map(normalizaLead);
+  if (resolved.persistir) {
+    const novo = {
+      data: hoje,
+      leads,
+      fonte: resolved.fonte,
+      atualizadoEm: new Date().toISOString(),
+    };
+    try { await store.setJSON(KEY, novo); } catch { /* ignore */ }
   }
-  // Novo dia (ou vazio): seed demo Bruno até Bitrix ligar
-  const leads = leadsDemoHoje().map(normalizaLead);
-  const novo = { data: hoje, leads, fonte: 'demo', atualizadoEm: new Date().toISOString() };
-  try { await store.setJSON(KEY, novo); } catch { /* ignore */ }
-  return { data: hoje, leads, fonte: 'demo' };
+  return { data: hoje, leads, fonte: resolved.fonte };
 }
 
 export async function salvaLeadsHoje(leads, { fonte = 'blobs' } = {}) {
