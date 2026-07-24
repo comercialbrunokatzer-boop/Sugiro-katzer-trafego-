@@ -1,42 +1,41 @@
-// Lógica de disparo do relatório (compartilhada entre o cron e o endpoint de teste).
+// Lógica de disparo (cron + teste): só ROTINA.
+// Campanhas = produto separado (/campanhas).
 import { pontualidade, agoraBRT, min2hm, previstoMin, TAREFAS } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, enviaEmail } from './_infra.mjs';
 import { resumoWhats, emailHTML } from './_relatorio.mjs';
+import { leDecisoesCampanha } from './_campanhas-dia.mjs';
 
-/** Agenda do dia já montada (quadradinho pronto): cada tarefa com o horário previsto. */
 function agendaLinhas(estado) {
   return TAREFAS
-    .map((t) => `🕘 *${min2hm(previstoMin(t, estado.modo, estado.inicioMin))}* · ${t.nome}`)
+    .map((t) => `🕘 *${min2hm(previstoMin(t, estado.modo, estado.inicioMin, estado.overrides))}* · ${t.nome}`)
     .join('\n');
 }
 
-/** Manda o card da Rotina pro Michel E uma cópia pro CEO acompanhar (07:45 e teste). */
+/** 07:45 — Rotina + Placar no mesmo horário (Michel e cópia pro Bruno). */
 export async function disparaCard(now = agoraBRT()) {
   if (now.dow === 0) return { skip: 'domingo (folga)' };
   const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
 
   const estado = await leEstado(now.data);
-  const modoTxt = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Casa';
+  const modoTxt = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Jlle/Casa';
   const inicioTxt = estado.inicioMin != null ? min2hm(estado.inicioMin) : (estado.modo === 'katzer' ? '08:45' : '08:00');
   const agenda = agendaLinhas(estado);
 
-  // 1) Card pro Michel — agenda pronta + link pra tocar "Feito".
   const michelMsg = [
     `☀️ *Bom dia, Michel!* — ${modoTxt} · início ${inicioTxt}`,
     '',
     agenda,
     '',
-    `Toca *Feito* em cada uma aqui 👉 ${url}/painel-michel`,
+    `Rotina 👉 ${url}/placar-michel`,
   ].join('\n');
   const wM = await enviaWhats(process.env.WHATSAPP_MICHEL, michelMsg);
 
-  // 2) Cópia pro CEO — o quadradinho pronto (mesma agenda) + link do ao vivo no rodapé.
   const ceoMsg = [
-    `🗓️ *Rotina do Michel — hoje* (${modoTxt} · início ${inicioTxt})`,
+    `🗓️ *Dia do Michel* (${modoTxt} · início ${inicioTxt})`,
     '',
     agenda,
     '',
-    `Ao vivo (o % é seu): ${url}/painel-gestor`,
+    `Rotina (ao vivo): ${url}/placar-gestor`,
   ].join('\n');
   const wC = await enviaWhats(process.env.WHATSAPP_CEO, ceoMsg);
 
@@ -44,24 +43,44 @@ export async function disparaCard(now = agoraBRT()) {
 }
 
 /**
- * Dispara o relatório do dia pro CEO (WhatsApp sempre; e-mail se houver Resend).
- * Regras: pula domingo; idempotente (1x/dia, exceto teste); 13:30 dias Casa, 14:30 Katzer
- * (+ catch-all às 14:30 do que faltou). teste=true ignora janela/idempotência e não marca.
+ * Relatório da tarde pro Bruno (WhatsApp + e-mail) — só ROTINA.
+ * Janelas: 13:00 (Casa) · 14:30 (Katzer) · 16:00 (catch-all Bruno).
+ * Campanhas = outro produto (/campanhas).
  */
 export async function disparaRelatorio(now, { teste = false } = {}) {
   if (now.dow === 0) return { skip: 'domingo (folga)' };
   const estado = await leEstado(now.data);
   if (estado.relatorioEnviado && !teste) return { skip: `já enviado ${estado.relatorioEnviado}` };
 
-  const janelaTarde = now.min >= 14 * 60;
-  const deve = teste || janelaTarde || (!janelaTarde && estado.modo === 'casa');
-  if (!deve) return { skip: `janela cedo · modo ${estado.modo} espera 14:30` };
+  const janela16 = now.min >= 16 * 60;
+  const janelaKatzer = now.min >= 14 * 60 + 30;
+  const janelaJlle = now.min >= 13 * 60;
+  const ehKatzer = estado.modo === 'katzer';
+  const deve = teste || janela16 || janelaKatzer || (!ehKatzer && janelaJlle);
+  if (!deve) {
+    return { skip: ehKatzer ? 'modo Katzer espera 14:30 (ou 16:00)' : 'modo Jlle espera 13:00 (ou 16:00)' };
+  }
 
   const P = pontualidade(estado, now.min);
-  const modoTxt = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Casa';
-  const w = await enviaWhats(process.env.WHATSAPP_CEO, resumoWhats(estado, now));
-  const e = await enviaEmail(process.env.EMAIL_CEO, `Relatório da manhã · Michel — ${P.pct}% · ${modoTxt}`, emailHTML(estado, now));
+  const modoTxt = ehKatzer ? '🏢 Katzer' : '🏠 Jlle/Casa';
+  const campanhas = await leDecisoesCampanha(now.data);
+
+  const w = await enviaWhats(
+    process.env.WHATSAPP_CEO,
+    resumoWhats(estado, now, campanhas),
+  );
+  const e = await enviaEmail(
+    process.env.EMAIL_CEO,
+    `Relatório · Michel — ${P.pct}% · ${modoTxt}`,
+    emailHTML(estado, now, campanhas),
+  );
 
   if (!teste) { estado.relatorioEnviado = now.hm; await salvaEstado(estado); }
-  return { pct: P.pct, whats: w, email: e, teste };
+  return {
+    pct: P.pct,
+    campanhas: campanhas.length,
+    whats: w,
+    email: e,
+    teste,
+  };
 }

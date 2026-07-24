@@ -1,4 +1,6 @@
 // Infra compartilhada (arquivo "_" = não vira função): armazenamento + WhatsApp.
+// Persistência = Netlify Blobs (auto). Gestor /api/estado atualiza sozinho (poll).
+// WhatsApp: Evolution API (preferida) → fallback Z-API.
 import { getStore } from '@netlify/blobs';
 import { estadoVazio } from './_rotina.mjs';
 
@@ -25,23 +27,73 @@ export async function salvaEstado(estado) {
   return estado;
 }
 
-/** Envia texto no WhatsApp via Z-API. Não quebra o fluxo se falhar (retorna status). */
-export async function enviaWhats(telefone, mensagem) {
+function soDig(s) {
+  return String(s || '').replace(/\D+/g, '');
+}
+
+/** Evolution API (webhook Bruno) — preferida quando EVOLUTION_* estiver setado. */
+async function enviaWhatsEvolution(telefone, mensagem) {
+  const base = (process.env.EVOLUTION_API_URL || '').replace(/\/+$/, '');
+  const key = process.env.EVOLUTION_API_KEY || process.env.EVOLUTION_APIKEY || '';
+  const instance = process.env.EVOLUTION_INSTANCE || process.env.EVOLUTION_INSTANCE_NAME || '';
+  if (!base || !key || !instance || !telefone) {
+    return { enviado: false, motivo: 'evolution ausente', provider: 'evolution' };
+  }
+  try {
+    const url = `${base}/message/sendText/${encodeURIComponent(instance)}`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: key,
+      },
+      body: JSON.stringify({
+        number: soDig(telefone),
+        text: mensagem,
+      }),
+    });
+    return { enviado: r.ok, status: r.status, provider: 'evolution' };
+  } catch (e) {
+    return { enviado: false, erro: String((e && e.message) || e), provider: 'evolution' };
+  }
+}
+
+/** Z-API — fallback (já em produção na Katzer). */
+async function enviaWhatsZapi(telefone, mensagem) {
   const inst = process.env.ZAPI_INSTANCE;
   const tok = process.env.ZAPI_TOKEN;
   const ct = process.env.ZAPI_CLIENT_TOKEN;
-  if (!inst || !tok || !telefone) return { enviado: false, motivo: 'zapi/telefone ausente' };
+  if (!inst || !tok || !telefone) return { enviado: false, motivo: 'zapi/telefone ausente', provider: 'zapi' };
   try {
     const url = `https://api.z-api.io/instances/${inst}/token/${tok}/send-text`;
     const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(ct ? { 'Client-Token': ct } : {}) },
-      body: JSON.stringify({ phone: String(telefone).replace(/\D+/g, ''), message: mensagem }),
+      body: JSON.stringify({ phone: soDig(telefone), message: mensagem }),
     });
-    return { enviado: r.ok, status: r.status };
+    return { enviado: r.ok, status: r.status, provider: 'zapi' };
   } catch (e) {
-    return { enviado: false, erro: String((e && e.message) || e) };
+    return { enviado: false, erro: String((e && e.message) || e), provider: 'zapi' };
   }
+}
+
+/**
+ * Envia texto no WhatsApp. Evolution primeiro; se falhar/ausente → Z-API.
+ * Não quebra o fluxo se falhar (retorna status).
+ */
+export async function enviaWhats(telefone, mensagem) {
+  if (!telefone) return { enviado: false, motivo: 'telefone ausente' };
+  const evo = await enviaWhatsEvolution(telefone, mensagem);
+  if (evo.enviado) return evo;
+  // Se Evolution nem está configurada, tenta Z-API; se Evolution falhou, também tenta Z-API.
+  const z = await enviaWhatsZapi(telefone, mensagem);
+  if (z.enviado) return { ...z, evolution: evo };
+  return {
+    enviado: false,
+    motivo: evo.motivo || z.motivo || 'falha whatsapp',
+    evolution: evo,
+    zapi: z,
+  };
 }
 
 /** Envia e-mail via Resend (se RESEND_API_KEY existir). Não quebra se faltar. */

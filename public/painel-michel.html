@@ -2,14 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Rotina Produtiva — Michel</title>
+<title>Placar Michel — Katzer OS V6</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- App na tela (PWA / atalho iOS+Android) -->
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0d1820">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Rotina Katzer">
+<meta name="apple-mobile-web-app-title" content="Placar Michel">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icon-katzer.png">
 <link rel="icon" type="image/png" href="/icon-katzer.png">
@@ -17,10 +16,11 @@
   :root{
     --ground:#eef1f0;--panel:#fff;--ink:#14252f;--sub:#5c6b74;--hair:#dbe2e0;--gold:#a8792a;--sea:#1f6f66;
     --ok:#1f9d57;--ok-bg:#e4f2ea;--late:#c0492f;--late-bg:#f7e7e2;--obs:#6b4bb0;--obs-bg:#efeafa;
+    --run:#1f6f66;--run-bg:#e3f1ef;
     --shadow:0 1px 2px rgba(18,34,44,.06),0 8px 24px rgba(18,34,44,.08);
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
-  @media (prefers-color-scheme:dark){:root{--ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;--gold:#d4ac60;--sea:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;--late:#e0765c;--late-bg:#331f1a;--obs:#b49ae8;--obs-bg:#241d38;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}}
+  @media (prefers-color-scheme:dark){:root{--ground:#0d1820;--panel:#14232d;--ink:#e8edeb;--sub:#9fb1b3;--hair:#263742;--gold:#d4ac60;--sea:#4fb3a6;--ok:#43c07d;--ok-bg:#14342a;--late:#e0765c;--late-bg:#331f1a;--obs:#b49ae8;--obs-bg:#241d38;--run:#4fb3a6;--run-bg:#14342a;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased}
   .wrap{max-width:640px;margin:0 auto;padding:clamp(16px,4vw,28px)}
@@ -30,13 +30,32 @@
   .modo{display:flex;gap:8px;background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:6px;box-shadow:var(--shadow)}
   .modo button{flex:1;border:0;background:transparent;color:var(--sub);font-weight:700;font-size:.92rem;padding:10px;border-radius:8px;font-family:inherit;cursor:pointer}
   .modo button.on{background:linear-gradient(150deg,var(--sea),#134f49);color:#fff}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 4px}
+  .strip .b{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:10px 8px;text-align:center;box-shadow:var(--shadow)}
+  .strip .n{font-size:1.35rem;font-weight:800;line-height:1}.strip .l{font-size:.65rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+  .strip .b.late .n{color:var(--late)}.strip .b.ok .n{color:var(--ok)}.strip .b.run .n{color:var(--run)}
+  .prio{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
+  .prio h2{margin:0 0 8px;font-size:.88rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
+  .prio li{margin:4px 0;font-size:.88rem}
+  .campbox{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
+  .campbox h2{margin:0 0 6px;font-size:.95rem}
+  .campbox .s{font-size:.88rem;color:var(--sub);margin-bottom:12px;font-variant-numeric:tabular-nums;line-height:1.35}
+  .camp-card{margin-top:10px;padding-top:10px;border-top:1px dashed var(--hair)}
+  .camp-card .metrica{font-size:.84rem;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600;line-height:1.4}
+  .camp-card .bom{margin-top:8px;font-size:.8rem;color:var(--ok);font-weight:700;background:var(--ok-bg);border-radius:8px;padding:7px 10px;display:inline-block}
+  .camp-card .bom.soft{color:var(--gold);background:rgba(168,121,42,.12)}
+  .camp-card .pend{margin-top:8px;font-size:.8rem;color:var(--sub);line-height:1.35}
+  .camp-card .pend.ok{color:var(--ok);font-weight:600}
+  .camp-card .cta{margin-top:10px}
+  .orient{background:var(--run-bg);border:1px solid var(--hair);border-radius:14px;padding:12px 14px;margin-top:12px;font-size:.85rem}
+  .orient b{color:var(--run)}
   .task{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:11px}
   .task .top{display:flex;align-items:center;gap:11px}
   .tk{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:.82rem;flex:none;background:var(--ground);color:var(--sub)}
-  .tk.done{background:var(--ok-bg);color:var(--ok)} .tk.late{background:var(--late-bg);color:var(--late)}
+  .tk.done{background:var(--ok-bg);color:var(--ok)} .tk.late{background:var(--late-bg);color:var(--late)} .tk.run{background:var(--run-bg);color:var(--run)}
   .task .nm{flex:1;min-width:0}
   .task .nm b{font-weight:700;font-size:1rem} .task .nm small{display:block;color:var(--sub);font-size:.76rem;font-variant-numeric:tabular-nums}
-  .btn{border:0;border-radius:9px;padding:9px 15px;font-weight:800;font-size:.86rem;font-family:inherit;cursor:pointer;background:var(--sea);color:#fff;white-space:nowrap}
+  .btn{border:0;border-radius:9px;padding:9px 15px;font-weight:800;font-size:.86rem;font-family:inherit;cursor:pointer;background:var(--sea);color:#fff;white-space:nowrap;text-decoration:none;display:inline-block}
   .btn.ghost{background:transparent;color:var(--sub);border:1px solid var(--hair);padding:8px 12px}
   .note{margin-top:9px;width:100%;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:9px;padding:8px 10px;font-size:.85rem;font-family:inherit}
   .obsbox{margin-top:20px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:14px 15px}
@@ -48,21 +67,37 @@
   .obsbox .cnt b{color:var(--late)} .obsbox .cnt.ok b{color:var(--ok)}
   .obsentry{background:var(--panel);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:8px}
   .obsentry .who{font-size:.62rem;font-weight:800;text-transform:uppercase;color:var(--obs);background:var(--obs-bg);padding:.15rem .45rem;border-radius:999px;margin-right:6px}
+  .sec{margin:18px 0 4px;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:800}
   footer{margin-top:18px;color:var(--sub);font-size:.72rem;text-align:center}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
   .toast.show{opacity:1}
+  .garimpo-box{margin-top:12px;padding:14px;border:1px solid var(--hair);border-radius:14px;background:linear-gradient(160deg,rgba(168,121,42,.08),transparent)}
+  .garimpo-box .gh{color:var(--gold);font-weight:800;font-size:.95rem;letter-spacing:.02em}
+  .garimpo-box .gb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}
+  .garimpo-box .gb span{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;border-radius:999px;background:var(--ground);color:var(--sub);border:1px solid var(--hair)}
+  .garimpo-box .inst{border:1px solid rgba(168,121,42,.45);border-radius:10px;padding:10px 12px;font-size:.82rem;line-height:1.4;color:var(--ink);background:rgba(168,121,42,.06);margin-bottom:12px}
+  .garimpo-box .lab{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);margin:10px 0 6px}
+  .garimpo-box .lab .ob{color:var(--late)}.garimpo-box .lab .op{color:var(--sub);font-weight:600;text-transform:none;letter-spacing:0}
+  .garimpo-box .qtd{display:flex;gap:6px;flex-wrap:wrap}
+  .garimpo-box .qtd button{flex:1;min-width:44px;border:1px solid var(--hair);background:var(--ground);color:var(--ink);border-radius:10px;padding:11px 6px;font-weight:800;font-family:inherit;cursor:pointer}
+  .garimpo-box .qtd button.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .garimpo-box input{width:100%;border:1px solid var(--hair);background:var(--panel);color:var(--ink);border-radius:10px;padding:11px 12px;font-size:.9rem;font-family:inherit}
+  .garimpo-box .send{margin-top:12px;width:100%;border:0;background:var(--ok);color:#fff;font-weight:800;border-radius:11px;padding:13px;font-size:.95rem;font-family:inherit;cursor:pointer}
+  .garimpo-box .hint{margin-top:8px;font-size:.72rem;color:var(--sub);text-align:center}
+  @media (max-width:420px){.strip{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div id="a2hs" style="display:none;background:linear-gradient(150deg,#1f6f66,#134f49);color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.9rem;line-height:1.4">
-    📲 <b>Deixa isso como app no teu celular:</b>
-    <span id="a2hs-ios">toque em <b>Compartilhar</b> (o quadradinho com a setinha ⬆️) e depois <b>“Adicionar à Tela de Início”</b>.</span>
-    <span id="a2hs-and" style="display:none">toque no <b>⋮</b> (menu) e depois <b>“Adicionar à tela inicial”</b>.</span>
-    <br>Aí é só tocar o ícone <b>Rotina Katzer</b> todo dia — sem link.
-    <button onclick="document.getElementById('a2hs').style.display='none'" style="margin-top:8px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:700;border-radius:8px;padding:6px 12px;font-family:inherit;cursor:pointer">ok, entendi</button>
+    📲 <b>Salva como app no celular:</b>
+    <span id="a2hs-ios">Compartilhar ⬆️ → <b>Adicionar à Tela de Início</b>.</span>
+    <span id="a2hs-and" style="display:none">Menu ⋮ → <b>Adicionar à tela inicial</b>.</span>
+    <br>Ícone: <b>Placar Michel</b>.
+    <button onclick="document.getElementById('a2hs').style.display='none'" style="margin-top:8px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:700;border-radius:8px;padding:6px 12px;font-family:inherit;cursor:pointer">ok</button>
   </div>
-  <p class="eyebrow">Katzer OS · Rotina Produtiva</p>
+
+  <p class="eyebrow">Katzer OS · Placar Michel · V6</p>
   <h1>Bom dia, Michel 👋</h1>
   <p class="date" id="date">carregando…</p>
 
@@ -71,11 +106,21 @@
     <button data-modo="katzer">🏢 Katzer (08:45)</button>
   </div>
 
+  <div class="strip" id="strip"></div>
+
+  <div class="prio" id="prio">
+    <h2>Prioridades do dia</h2>
+    <ol id="prioList"><li>Carregando…</li></ol>
+  </div>
+
+  <div class="orient" id="orient">Carregando orientação…</div>
+
+  <div class="sec">Rotina do dia</div>
   <div id="tasks"></div>
 
   <div class="obsbox">
     <h3>🔔 Obs — Imprevisto</h3>
-    <p>Registra o que te tirou da rotina (pedido do Bruno/Carol, Bitrix fora, discadora travada…). Serve pra justificar o tempo. A rotina vem primeiro.</p>
+    <p>Registra o que te tirou da rotina. Serve pra justificar o tempo.</p>
     <div class="row">
       <select id="obsQuem">
         <option value="">Qual imprevisto?</option>
@@ -86,7 +131,7 @@
         <option value="Sistema">🌐 Internet / Sistema</option>
         <option value="Outro">⚠️ Outro imprevisto</option>
       </select>
-      <textarea class="nm" id="obsNome" placeholder="Explique bem o que aconteceu e por quê (mín. 100 caracteres) — ex.: Bitrix caiu às 10h, não abria o negócio do cliente, tive que refazer o cadastro na mão…"></textarea>
+      <textarea class="nm" id="obsNome" placeholder="Explique bem o que aconteceu e por quê (mín. 100 caracteres)…"></textarea>
       <div class="cnt" id="obsCnt">Mínimo <b>100</b> caracteres · faltam <b>100</b></div>
       <input id="obsDur" type="number" min="1" placeholder="min" style="width:70px">
       <button class="btn" id="obsBtn">Registrar</button>
@@ -94,7 +139,7 @@
     <div id="obsList"></div>
   </div>
 
-  <footer>Katzer OS · Rotina Produtiva do Michel · seg–sáb</footer>
+  <footer>Katzer OS · Placar Michel · V6 · mesma base do Placar do Gestor · seg–sáb</footer>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -108,23 +153,131 @@ function diaSemana(d){const [y,m,dd]=d.split('-').map(Number);const dt=new Date(
 function fmtData(d){const [y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return `${diaSemana(d)}, ${+dd} de ${mes} de ${y}`;}
 function nowMin(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o=Object.fromEntries(p.map(x=>[x.type,x.value]));return (+o.hour%24)*60+(+o.minute);}
 function hm2min(h){const[a,b]=h.split(':').map(Number);return a*60+b;}
+
+function resumoTarefas(){
+  const ts=ST.tarefas||[];
+  const feitas=ts.filter(t=>t.feito).length;
+  const atras=ts.filter(t=>!t.feito&&(t.estado==='atrasado'||t.atrasoAberto>0)).length;
+  const pend=ts.filter(t=>!t.feito&&t.estado!=='bloqueado').length;
+  const run=ts.filter(t=>t.estado==='em_andamento').length;
+  return {feitas,atras,pend,run,total:ts.length};
+}
+
+function renderStrip(){
+  const R=resumoTarefas();
+  $('#strip').innerHTML=`
+    <div class="b ok"><div class="n">${R.feitas}</div><div class="l">Feitas</div></div>
+    <div class="b"><div class="n">${R.pend}</div><div class="l">Pendentes</div></div>
+    <div class="b late"><div class="n">${R.atras}</div><div class="l">Atrasadas</div></div>
+    <div class="b run"><div class="n">${R.run}</div><div class="l">Em andamento</div></div>`;
+}
+
+function renderPrioridades(){
+  const ts=ST.tarefas||[];
+  const urg=ts.filter(t=>!t.feito&&(t.estado==='atrasado'||t.atrasoAberto>0));
+  const next=ts.filter(t=>!t.feito&&t.estado==='aguardando').slice(0,2);
+  const camp=ts.find(t=>t.id==='campanhas'&&!t.feito);
+  const items=[];
+  urg.forEach(t=>items.push(`🔴 ${t.nome} — atrasando (previsto ${t.previsto})`));
+  if(camp&&!urg.find(u=>u.id==='campanhas')) items.push(`📊 Campanhas — abrir o painel se ainda não fez`);
+  next.forEach(t=>{if(t.id!=='campanhas'||items.every(i=>!i.includes('Campanhas'))) items.push(`➡️ Próximo: ${t.nome} (${t.previsto})`);});
+  if(!items.length) items.push(ST.domingo?'Folga — domingo.':'✅ Nada urgente agora. Siga a rotina.');
+  $('#prioList').innerHTML=items.slice(0,4).map(i=>`<li>${i}</li>`).join('');
+
+  let orient='';
+  if(ST.domingo) orient='<b>Hoje:</b> folga. Não há rotina.';
+  else if(urg.length) orient=`<b>Agora:</b> regular o atraso em <b>${urg[0].nome}</b>. Depois volte à ordem.`;
+  else if(camp) orient='<b>Agora:</b> no horário de Campanhas, só OLHE o resumo e abra o Painel. Executar (decisão/insights) fica no app Campanhas.';
+  else orient='<b>Agora:</b> siga a próxima tarefa da lista. Sem atalho fora da ordem.';
+  $('#orient').innerHTML=orient;
+}
+
+function rotuloEstadoTarefa(t){
+  if(t.feito) return 'concluído';
+  if(t.estado==='em_andamento') return 'em andamento';
+  if(t.estado==='atrasado'||t.atrasoAberto>0) return 'atrasando';
+  if(t.estado==='nao_realizado') return 'não realizado';
+  if(t.estado==='bloqueado') return 'bloqueado';
+  return 'aguardando';
+}
+
+/** Card Campanhas: SÓ OLHAR — resumo + CPL BOM + Abrir. Sem escalar / sem executar. */
+function htmlCardCampanhas(t){
+  const C=ST.campanhas||{};
+  const link=C.link||'https://dashing-elf-41a723.netlify.app/painel.html';
+  const cta=C.cta||'▶ Abrir Painel 2 (Execução)';
+  const metrica=C.metrica||C.resumo||'Sem dados da Meta ainda';
+  const bom=C.cplBom||'';
+  const bomCls=(C.pctBons!=null&&C.pctBons>=50)?'bom':'bom soft';
+  const pend=C.statusDecisao||'👁 Visualizar · execute no Painel isolado';
+  const pendCls=C.pendente===false?'pend ok':'pend';
+  return `<div class="camp-card">
+    <div class="metrica">${metrica}</div>
+    ${bom?`<div class="${bomCls}">${bom}</div>`:''}
+    <div class="${pendCls}">${pend}</div>
+    <div class="cta"><a class="btn" href="${link}" data-abrir-campanhas="1">${cta}</a></div>
+  </div>`;
+}
+
 function render(){
   if(!ST||!ST.ok)return;
   $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga 🎉':'');
   document.querySelectorAll('#modo button').forEach(b=>b.classList.toggle('on',b.dataset.modo===ST.modo));
+  renderStrip();renderPrioridades();
+
   const box=$('#tasks');box.innerHTML='';
   ST.tarefas.forEach(t=>{
     const el=document.createElement('div');el.className='task';
-    const late=!t.feito&&t.atrasoAberto>0;
-    el.innerHTML=`<div class="top">
-      <div class="tk ${t.feito?'done':(late?'late':'')}">${t.feito?'✓':(late?'!':'·')}</div>
-      <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${t.feito?' · feito '+t.hora:(late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':'')}</small></div>
-      ${t.feito
-        ? `<button class="btn ghost" data-undo="${t.id}">desfazer</button>`
-        : `<button class="btn" data-feito="${t.id}">Feito</button>`}
-    </div>
-    ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
-    ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
+    const late=!t.feito&&(t.atrasoAberto>0||t.estado==='atrasado'||t.estado==='nao_realizado');
+    const run=!t.feito&&t.estado==='em_andamento';
+    const isCamp=t.id==='campanhas';
+    if(isCamp){
+      const st=rotuloEstadoTarefa(t);
+      el.innerHTML=`<div class="top">
+        <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
+        <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto} · ${st}${t.feito&&t.hora?' · feito '+t.hora:''}</small></div>
+      </div>${htmlCardCampanhas(t)}`;
+    } else if(t.id==='garimpo'){
+      const st=rotuloEstadoTarefa(t);
+      if(t.feito){
+        el.innerHTML=`<div class="top">
+          <div class="tk done">✓</div>
+          <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto} · feito ${t.hora||''}</small></div>
+          <button class="btn ghost" data-undo="garimpo">desfazer</button>
+        </div>
+        ${t.nota?`<div style="font-size:.82rem;color:var(--sub);margin-top:8px;line-height:1.4">📝 ${t.nota}</div>`:''}`;
+      } else {
+        el.innerHTML=`<div class="top">
+          <div class="tk ${late?'late':(run?'run':'')}">${late?'!':(run?'▶':'·')}</div>
+          <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':''} · ${st}</small></div>
+        </div>
+        <div class="garimpo-box" id="garimpoForm">
+          <div class="gh">10:15 GARIMPO KATZER</div>
+          <div class="gb"><span>30 min</span><span>META DIÁRIA</span></div>
+          <div class="inst">Achar curtidas e comentários dos patrocinados da Katzer e colocar na planilha da Katzer. Se <b>0</b> me avisa, se <b>1, 2, 5</b> me avisa também. Preciso saber se achou 0 ou 5. É seu ouro diário.</div>
+          <div class="lab">Quantidade</div>
+          <div class="qtd" id="garimpoQtd">
+            ${['0','1','2','3','4','5+'].map((q,i)=>`<button type="button" data-q="${q}" class="${i===0?'on':''}">${q}</button>`).join('')}
+          </div>
+          <div class="lab">Nome completo do cliente <span class="ob">obrigatório</span></div>
+          <input id="garimpoNome" type="text" autocomplete="name" placeholder="Digite o nome completo do cliente…">
+          <div class="lab">Telefone <span class="op">(opcional)</span></div>
+          <input id="garimpoTel" type="tel" inputmode="tel" placeholder="(47) 9 9999-9999">
+          <button type="button" class="send" id="garimpoSend">➤ ENVIAR RELATÓRIO</button>
+          <div class="hint">Obs: Se selecionar <b>0</b> ou <b>5+</b>, o gestor é notificado automaticamente.</div>
+        </div>`;
+      }
+    } else {
+      el.innerHTML=`<div class="top">
+        <div class="tk ${t.feito?'done':(late?'late':(run?'run':''))}">${t.feito?'✓':(late?'!':(run?'▶':'·'))}</div>
+        <div class="nm"><b>${t.nome}</b><small>previsto ${t.previsto}${t.feito?' · feito '+t.hora:(late?' · <span class="atraso" data-prev="'+t.previsto+'">atrasando…</span>':(run?' · em andamento':''))}</small></div>
+        ${t.feito
+          ? `<button class="btn ghost" data-undo="${t.id}">desfazer</button>`
+          : `<button class="btn" data-feito="${t.id}">Feito</button>`}
+      </div>
+      ${t.feito&&t.nota?`<div style="font-size:.8rem;color:var(--sub);margin-top:6px">📝 ${t.nota}</div>`:''}
+      ${!t.feito?`<input class="note" data-note="${t.id}" placeholder="Miniresumo (opcional) — o que rolou">`:''}`;
+    }
     box.appendChild(el);
   });
   const ol=$('#obsList');ol.innerHTML='';
@@ -137,11 +290,68 @@ function startTick(){
   upd();tickTimer=setInterval(upd,15000);
 }
 document.addEventListener('click',async(e)=>{
+  const abrir=e.target.closest('[data-abrir-campanhas]');
+  if(abrir){
+    e.preventDefault();
+    const href=abrir.getAttribute('href')||'https://dashing-elf-41a723.netlify.app/';
+    const camp=(ST.tarefas||[]).find(t=>t.id==='campanhas');
+    if(camp&&!camp.feito){
+      abrir.style.pointerEvents='none';
+      try{await api({acao:'feito',tarefa:'campanhas',nota:'Abriu Painel de Campanhas (app separado)'});}catch(err){}
+    }
+    window.location.href=href;
+    return;
+  }
+  const qBtn=e.target.closest('#garimpoQtd [data-q]');
+  if(qBtn){
+    document.querySelectorAll('#garimpoQtd [data-q]').forEach(b=>b.classList.remove('on'));
+    qBtn.classList.add('on');
+    return;
+  }
+  const gSend=e.target.closest('#garimpoSend');
+  if(gSend){
+    const qEl=document.querySelector('#garimpoQtd [data-q].on');
+    const qtd=qEl?qEl.dataset.q:'0';
+    const nome=($('#garimpoNome')?.value||'').trim();
+    const telefone=($('#garimpoTel')?.value||'').trim();
+    if(qtd!=='0' && nome.length<3){
+      toast('⛏️ Digite o nome completo do cliente');
+      $('#garimpoNome')?.focus();
+      return;
+    }
+    if(qtd==='0' && nome.length<3){
+      // 0 leads: nome pode ser "Nenhum" — se vazio, preenche
+    }
+    gSend.disabled=true;
+    const r=await api({
+      acao:'feito',
+      tarefa:'garimpo',
+      qtd,
+      nome: nome || (qtd==='0'?'Nenhum lead encontrado':''),
+      telefone,
+      nota:'' // montado no backend
+    });
+    if(r.ok){toast(qtd==='0'||qtd==='5+'?'⛏️ Relatório enviado · gestor avisado':'⛏️ Relatório Garimpo enviado');load();}
+    else{gSend.disabled=false;toast(r.erro||'Erro no relatório');}
+    return;
+  }
   const f=e.target.closest('[data-feito]');const u=e.target.closest('[data-undo]');
-  if(f){f.disabled=true;const id=f.dataset.feito;const nt=document.querySelector(`[data-note="${id}"]`);const nota=nt?nt.value:'';const r=await api({acao:'feito',tarefa:id,nota});if(r.ok){toast('✅ Registrado — Bruno avisado');load();}else{f.disabled=false;toast('Erro, tenta de novo');}}
+  if(f){
+    f.disabled=true;const id=f.dataset.feito;const nt=document.querySelector(`[data-note="${id}"]`);const nota=nt?nt.value.trim():'';
+    const r=await api({acao:'feito',tarefa:id,nota});
+    if(r.ok){toast('✅ Registrado');load();}
+    else{f.disabled=false;toast(r.erro||'Erro, tenta de novo');}
+  }
   if(u){const r=await api({acao:'desfazer',tarefa:u.dataset.undo});if(r.ok)load();}
 });
-document.querySelectorAll('#modo button').forEach(b=>b.addEventListener('click',async()=>{const r=await api({acao:'modo',modo:b.dataset.modo});if(r.ok)load();}));
+document.querySelectorAll('#modo button').forEach(b=>b.addEventListener('click',async()=>{
+  if(!ST||b.dataset.modo===ST.modo) return; // já está nesse modo — não posta de novo
+  b.disabled=true;
+  const r=await api({acao:'modo',modo:b.dataset.modo});
+  b.disabled=false;
+  if(r.ok){if(r.unchanged)return;toast(r.modo==='katzer'?'🏢 Modo Katzer':'🏠 Modo Casa');load();}
+  else toast(r.erro||'Não trocou o modo');
+}));
 const OBS_MIN=100;
 function obsCntUpd(){const n=$('#obsNome').value.trim().length;const c=$('#obsCnt');const falta=Math.max(0,OBS_MIN-n);
   c.classList.toggle('ok',n>=OBS_MIN);
@@ -157,7 +367,6 @@ $('#obsBtn').addEventListener('click',async()=>{
 });
 load();setInterval(load,20000);
 
-// Aviso "adicionar à tela": só mostra se AINDA não for app; ajusta iOS/Android.
 (function(){
   var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   var box = document.getElementById('a2hs');

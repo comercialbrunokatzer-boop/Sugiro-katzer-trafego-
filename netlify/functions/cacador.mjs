@@ -1,0 +1,140 @@
+// GET  /api/cacador  → leads de hoje + botões 2 toques + auditoria A/B/C/D
+// POST /api/cacador  → { leadId, qualidade } OU { leadId, qualidadeProvisoria|qualidadeReal|statusPosMapeamento }
+import { json, enviaWhats } from './_infra.mjs';
+import { leLeadsHoje, marcaLeadESincroniza, marcaAuditoriaESincroniza } from './_cacador-io.mjs';
+import { payloadCacador, QUALIDADE_TIPOS } from './_cacador.mjs';
+import {
+  mensagemTravaSaiuSemQualidadeReal,
+  mensagemCacadorMarca,
+  isDemoLead,
+} from './_whatsapp-mensagens.mjs';
+import { agoraBRT } from './_rotina.mjs';
+import { leTravaEnviados, filtrarTravaPendentes, marcaTravaEnviados } from './_trava-whats-io.mjs';
+
+export async function handler(event) {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: {
+        'access-control-allow-origin': '*',
+        'access-control-allow-methods': 'GET, POST, OPTIONS',
+        'access-control-allow-headers': 'content-type',
+      },
+      body: '',
+    };
+  }
+
+  if (event.httpMethod === 'POST') {
+    let body = {};
+    try { body = JSON.parse(event.body || '{}'); } catch {
+      return json(400, { ok: false, erro: 'body inválido' });
+    }
+    try {
+      const leadId = body.leadId || body.id;
+      if (!leadId) return json(400, { ok: false, erro: 'informe leadId' });
+
+      const temAuditoria = body.qualidadeProvisoria != null
+        || body.qualidadeReal != null
+        || body.statusPosMapeamento != null
+        || body.acao === 'auditoria';
+      if (temAuditoria) {
+        const result = await marcaAuditoriaESincroniza({
+          leadId,
+          qualidadeProvisoria: body.qualidadeProvisoria,
+          qualidadeReal: body.qualidadeReal,
+          statusPosMapeamento: body.statusPosMapeamento,
+          quem: body.quem || body.corretor || 'Michel',
+        });
+        const payload = payloadCacador(result.leads);
+        let whats = { enviado: false };
+        if (result.vermelho && !isDemoLead(result.lead)) {
+          const ceo = process.env.WHATSAPP_CEO || '';
+          if (ceo) {
+            const now = agoraBRT();
+            const enviadosDoc = await leTravaEnviados().catch(() => ({ chaves: {} }));
+            const { pendentes, chaves } = filtrarTravaPendentes(
+              [{ id: result.lead.id, nome: result.lead.nome, campanha: result.lead.campanha, corretor: result.lead.corretor || body.quem }],
+              enviadosDoc.chaves || {},
+              now.data,
+            );
+            if (pendentes.length) {
+              whats = await enviaWhats(
+                ceo,
+                mensagemTravaSaiuSemQualidadeReal({
+                  leads: pendentes,
+                  hm: now.hm,
+                  data: now.data,
+                }),
+              );
+              if (whats.enviado) await marcaTravaEnviados(chaves);
+            } else {
+              whats = { enviado: false, motivo: 'já avisado hoje (dedupe)' };
+            }
+          }
+        }
+        return json(200, {
+          ok: true,
+          toast: result.toast,
+          lead: result.lead,
+          vermelho: result.vermelho,
+          bloqueiaAvancoBitrix: result.bloqueiaAvancoBitrix,
+          whats,
+          ...payload,
+        });
+      }
+
+      const qualidade = body.qualidade || body.tipo || body.marca;
+      if (!QUALIDADE_TIPOS.includes(qualidade)) {
+        return json(400, { ok: false, erro: `qualidade: ${QUALIDADE_TIPOS.join(' / ')} ou auditoria A/B/C/D` });
+      }
+      const result = await marcaLeadESincroniza({
+        leadId,
+        qualidade,
+        quem: body.quem || 'Michel',
+        corretor: body.corretor || body.corretorResponsavel || body.quem || 'Michel',
+      });
+      const payload = payloadCacador(result.leads);
+      let whats = { enviado: false, motivo: 'não BOM' };
+      if (qualidade === 'bom' || qualidade === 'comprador') {
+        const ceo = process.env.WHATSAPP_CEO || '';
+        const lead = result.lead || {};
+        const now = agoraBRT();
+        const isDemo = isDemoLead(lead);
+        whats = ceo
+          ? await enviaWhats(
+            ceo,
+            mensagemCacadorMarca({
+              qualidade,
+              nome: lead.nome || lead.linha || leadId,
+              campanha: lead.campanha || '',
+              telefone: lead.telefone,
+              isDemo,
+              fonte: lead.fonte,
+              hm: now.hm,
+            }),
+          )
+          : { enviado: false, motivo: 'WHATSAPP_CEO ausente' };
+      }
+      return json(200, {
+        ok: true,
+        toast: result.toast,
+        lead: result.lead,
+        totaisCampanha: result.totaisCampanha,
+        whats,
+        ...payload,
+      });
+    } catch (e) {
+      return json(400, { ok: false, erro: String((e && e.message) || e) });
+    }
+  }
+
+  if (event.httpMethod !== 'GET') return json(405, { ok: false, erro: 'use GET ou POST' });
+
+  try {
+    const { leads, data, fonte } = await leLeadsHoje();
+    const payload = payloadCacador(leads);
+    return json(200, { ...payload, data, fonteLeads: fonte });
+  } catch (e) {
+    return json(500, { ok: false, erro: String((e && e.message) || e) });
+  }
+}

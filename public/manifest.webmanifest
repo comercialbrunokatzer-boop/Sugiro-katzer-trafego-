@@ -1,16 +1,13 @@
 {
-  "name": "Rotina Katzer — Michel",
-  "short_name": "Rotina Katzer",
-  "description": "Rotina Produtiva do Michel — toque Feito em cada tarefa.",
-  "start_url": "/painel-michel",
+  "name": "Placar do Michel",
+  "short_name": "Placar Michel",
+  "description": "Rotina operacional do Michel — reuniões, Instagram, discadora. Sem Campanhas.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#0d1820",
   "theme_color": "#0d1820",
   "icons": [
-    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-katzer.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/icon-katzer.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }

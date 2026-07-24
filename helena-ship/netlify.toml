@@ -1,0 +1,177 @@
+# ============================================================
+# Helena SDR IA v5.2.0 - Netlify Config
+# Katzer Assessoria
+# ============================================================
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+  # Trava de qualidade: roda os testes no build. Se algum teste quebrar,
+  # o deploy é BLOQUEADO (não publica código com regressão de compliance).
+  command = "npm test"
+
+[build.environment]
+  # Mesma versão do runtime das functions (package.json engines: >=22)
+  NODE_VERSION = "22"
+  # Secret scanning: o site publica a pasta inteira (publish="."), então o scanner
+  # varre ate testes/docs, que contem valores FICTICIOS de exemplo (telefones fake,
+  # dominios fake) e disparam falso-positivo. Ignora SO esses caminhos de fixture;
+  # o codigo real (src, functions, html) continua sendo varrido normalmente.
+  SECRETS_SCAN_OMIT_PATHS = "test/**,maestro/test/**,docs/**"
+
+# ----- Maestro (barramento de leads · KOS-001) -----
+# As functions do Maestro sao ESM e vivem em maestro/ (fonte + testes 56/56).
+# Os wrappers em netlify/functions/wh-*.mjs re-exportam os handlers.
+# Bundler esbuild SO pra elas (inlina o grafo maestro/src num arquivo unico);
+# as functions da Helena (firebase-admin) seguem no bundler padrao, intocadas.
+[functions."wh-meta"]
+  node_bundler = "esbuild"
+[functions."wh-whatsapp"]
+  node_bundler = "esbuild"
+[functions."wh-preform"]
+  node_bundler = "esbuild"
+[functions."wh-helena"]
+  node_bundler = "esbuild"
+[functions."maestro-health"]
+  node_bundler = "esbuild"
+[functions."secretaria-diag"]
+  node_bundler = "esbuild"
+[functions."secretaria-run"]
+  node_bundler = "esbuild"
+# Runner automático da Secretária (agendado a cada 2h via export const config no arquivo).
+[functions."secretaria-cron"]
+  node_bundler = "esbuild"
+# Retomada patrocinado Bruno (Leads Novos / Tentando Contato) — anti-spam + mídia
+[functions."retomada-cron"]
+  node_bundler = "esbuild"
+# Cadencia patrocinado Bruno (Tentando Contato / Mapeamento / Follow Up) — homolog por padrão
+[functions."cadencia-cron"]
+  node_bundler = "esbuild"
+# Funil Novo Katzer → App Decisão (Tráfego)
+[functions."funil-katzer"]
+  node_bundler = "esbuild"
+
+# ----- Redirects de API -----
+# Todos os caminhos /api/* sao roteados para a funcao unica "helena.js"
+# que faz o roteamento interno baseado em event.path
+
+[[redirects]]
+  from = "/api/helena"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+# Abertura de lead de formulario (Meta -> Helena manda a 1a mensagem). Server-to-server.
+[[redirects]]
+  from = "/api/helena/lead-form"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/helena/retomada"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/whatsapp-receive"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/whatsapp-send"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/conversations"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/conversation/*"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/ping"
+  to = "/.netlify/functions/helena"
+  status = 200
+  force = true
+
+# ----- Maestro: os 4 webhooks + health -----
+# Atalhos amigaveis /api/* -> as functions do Maestro (netlify/functions/wh-*.mjs).
+[[redirects]]
+  from = "/api/wh-meta"
+  to = "/.netlify/functions/wh-meta"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/wh-whatsapp"
+  to = "/.netlify/functions/wh-whatsapp"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/wh-preform"
+  to = "/.netlify/functions/wh-preform"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/api/wh-helena"
+  to = "/.netlify/functions/wh-helena"
+  status = 200
+  force = true
+# Health do Maestro. Nome proprio pra NAO colidir com o /api/health da Helena.
+[[redirects]]
+  from = "/api/maestro-health"
+  to = "/.netlify/functions/maestro-health"
+  status = 200
+  force = true
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/maestro-health"
+  status = 200
+  force = true
+# Diagnostico da Secretaria: testa o BITRIX_WEBHOOK_READ e puxa o raio-x (schema).
+[[redirects]]
+  from = "/api/secretaria-diag"
+  to = "/.netlify/functions/secretaria-diag"
+  status = 200
+  force = true
+# Homologacao da Secretaria: roda o cerebro sobre uma conversa real (DRY-RUN, nao escreve).
+[[redirects]]
+  from = "/api/secretaria-run"
+  to = "/.netlify/functions/secretaria-run"
+  status = 200
+  force = true
+# Funil Novo Katzer → App Decisão (Tráfego): deals + fase + WhatsApp + Bitrix
+[[redirects]]
+  from = "/api/funil-katzer"
+  to = "/.netlify/functions/funil-katzer"
+  status = 200
+  force = true
+
+# Painel admin (HTML estatico)
+[[redirects]]
+  from = "/painel"
+  to = "/painel.html"
+  status = 200
+
+# ----- Headers de seguranca -----
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
