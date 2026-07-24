@@ -68,6 +68,14 @@ function parseInstrucaoBruno(text) {
     return { instrucao: true, conteudo: mHelena[1].trim() };
   }
 
+  // 1d) "Oi Helena! Responda ao X: …" / cumprimento + verbo de envio
+  if (
+    /^(?:oi|ol[aá]|opa)\b.{0,40}\b(?:responda|responde|diga|diz|manda|envie)\b/i.test(raw)
+    && raw.length >= 20
+  ) {
+    return { instrucao: true, conteudo: raw };
+  }
+
   // 2) Verbo de instrução no início + contexto claro de tarefa.
   //    Ex.: "manda as fotos de vista pro João", "fala sobre 2 suítes", "orienta sobre o lazer"
   //    "apresenta o empreendimento pro cliente"
@@ -122,29 +130,56 @@ function parseInstrucaoBruno(text) {
 
 /**
  * Bruno manda o TEXTO LITERAL pra Helena enviar ao cliente.
- * Ex.: "Diga ao leandro Helena: Oi Leandro, estou on! … Mande isso"
+ * Ex.: "Diga ao leandro Helena: Oi Leandro… Mande isso"
+ * Ex.: "Oi Helena! Responda ao Leandro: Perdão Leandro…"
  * Ex.: "Manda pro João: boa tarde, confirmamos sábado 10h"
  * → { direto:true, nomeAlvo, textoCliente } ou { direto:false }
  */
 function parseEnvioDiretoBruno(text) {
   if (!text || typeof text !== "string") return { direto: false };
-  const raw = text.trim();
+  let raw = text.trim();
   if (!raw) return { direto: false };
 
-  // "Diga ao leandro Helena: TEXTO" / "Diga pro João: TEXTO"
+  // Tira cumprimento / vocativo pra Helena no começo
+  // "Oi Helena!", "Helena,", "Opa chefe Helena —", etc.
+  raw = raw
+    .replace(/^(?:oi|ol[aá]|opa|e a[ií]|bom dia|boa tarde|boa noite)\b[\s,!.]*/i, "")
+    .replace(/^helena\b[\s,!:\-–]*/i, "")
+    .trim();
+
+  const verbo = "(?:diga|diz|fale|fala|manda|mande|envie|envia|responda|responde|responder)";
+  const prep = "(?:ao|pro|pra|para)";
+  const nome = "([A-Za-zÀ-ÿ]{2,30})";
+
+  // "Responda ao Leandro: TEXTO" / "Diga ao leandro Helena: TEXTO"
   let m = raw.match(
-    /^(?:diga|diz|fale|fala|manda|envie|envia)\s+(?:ao|pro|pra|para)\s+(?:o\s+|a\s+)?([A-Za-zÀ-ÿ]{2,30})(?:\s+[A-Za-zÀ-ÿ]{2,30})?\s*(?:\s+helena)?\s*[:\-–]\s*([\s\S]+)/i
+    new RegExp(
+      `^${verbo}\\s+${prep}\\s+(?:o\\s+|a\\s+)?${nome}(?:\\s+[A-Za-zÀ-ÿ]{2,30})?\\s*(?:\\s+helena)?\\s*[:\\-–]\\s*([\\s\\S]+)`,
+      "i"
+    )
   );
-  // "Helena: diga ao leandro: TEXTO"
+  // "Helena, responda ao Leandro: TEXTO" (se sobrou helena)
   if (!m) {
     m = raw.match(
-      /^helena[,:\s]+(?:diga|diz|fale|fala|manda|envie)\s+(?:ao|pro|pra|para)\s+(?:o\s+|a\s+)?([A-Za-zÀ-ÿ]{2,30})\s*[:\-–]\s*([\s\S]+)/i
+      new RegExp(
+        `^helena[,:\\s]+${verbo}\\s+${prep}\\s+(?:o\\s+|a\\s+)?${nome}\\s*[:\\-–]\\s*([\\s\\S]+)`,
+        "i"
+      )
     );
   }
-  // "Mande isso pro Leandro: TEXTO" / "Manda isso ao cliente: TEXTO"
+  // "Mande isso pro Leandro: TEXTO"
   if (!m) {
     m = raw.match(
       /^(?:mande|manda|envie|envia)\s+isso\s+(?:pro|pra|para|ao)\s+(?:o\s+|a\s+)?([A-Za-zÀ-ÿ]{2,30}|cliente)\s*[:\-–]\s*([\s\S]+)/i
+    );
+  }
+  // "Pro Leandro diga/manda: TEXTO" / "Ao Leandro: TEXTO"
+  if (!m) {
+    m = raw.match(
+      new RegExp(
+        `^(?:pro|pra|para|ao)\\s+(?:o\\s+|a\\s+)?${nome}\\s*(?:${verbo}\\s*)?[:\\-–]\\s*([\\s\\S]+)`,
+        "i"
+      )
     );
   }
   if (!m) return { direto: false };
@@ -153,11 +188,15 @@ function parseEnvioDiretoBruno(text) {
   let textoCliente = String(m[2] || "").trim();
   // remove "Helena:" acidental no meio do texto
   textoCliente = textoCliente.replace(/^helena\s*[:\-–]\s*/i, "").trim();
-  // remove fecho "Mande isso" / "manda isso"
+  // remove fecho "Mande isso" / "manda isso" / "envie isso"
   textoCliente = textoCliente.replace(/\s*(?:mande|manda|envie|envia)\s+isso\.?\s*$/i, "").trim();
 
   if (nomeAlvo.length < 2 || textoCliente.length < 5) return { direto: false };
   if (/^cliente$/i.test(nomeAlvo)) nomeAlvo = "";
+  // Evita falso positivo: "manda as fotos" (sem dois-pontos já caiu; com nome=fotos)
+  if (/^(as?|o|a|fotos?|planta|v[ií]deo|video|lazer|vista)$/i.test(nomeAlvo)) {
+    return { direto: false };
+  }
 
   return { direto: true, nomeAlvo, textoCliente };
 }

@@ -1,0 +1,13 @@
+{
+  "name": "katzer-maestro",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Maestro — barramento unico do Katzer OS. Todo lead nasce dentro do Bitrix24. Netlify Functions + Firebase.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test",
+    "arquitetura": "node scripts/gera-doc.mjs"
+  },
+  "license": "UNLICENSED"
+}

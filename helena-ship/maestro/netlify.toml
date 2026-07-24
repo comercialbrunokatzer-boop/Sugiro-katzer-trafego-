@@ -1,0 +1,27 @@
+# Maestro — deploy no Netlify. Cada webhook e uma function serverless.
+# Endpoints ficam em /.netlify/functions/<nome> (ou /api/<nome> via redirect abaixo).
+
+[build]
+  functions = "functions"
+  publish = "public"
+
+[functions]
+  node_bundler = "esbuild"
+
+# atalhos amigaveis: /api/wh-meta -> /.netlify/functions/wh-meta
+[[redirects]]
+  from = "/api/wh-meta"
+  to = "/.netlify/functions/wh-meta"
+  status = 200
+[[redirects]]
+  from = "/api/wh-whatsapp"
+  to = "/.netlify/functions/wh-whatsapp"
+  status = 200
+[[redirects]]
+  from = "/api/wh-preform"
+  to = "/.netlify/functions/wh-preform"
+  status = 200
+[[redirects]]
+  from = "/api/wh-helena"
+  to = "/.netlify/functions/wh-helena"
+  status = 200

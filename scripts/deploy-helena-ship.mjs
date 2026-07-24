@@ -1,10 +1,6 @@
 #!/usr/bin/env node
-/**
- * Deploy direto da Helena (snapshot helena-ship/) no site regal-chaja-662035.
- * Roda no CI do Tráfego (tem NETLIFY_AUTH_TOKEN). Bypass do build Git.
- */
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -39,30 +35,36 @@ async function api(path, { method = 'GET', body } = {}) {
 
 function sh(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { stdio: 'inherit', env: process.env, ...opts });
-  if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} exit ${r.status}`);
+  return r.status === 0;
 }
 
-const sites = await api('/sites?per_page=100');
-const lista = Array.isArray(sites) ? sites : (sites?.sites || []);
-const helena = lista.find((s) => s.name === HELENA_SITE);
-if (!helena) {
-  console.log('deploy-helena-ship: site não achado', HELENA_SITE);
-  process.exit(0);
+try {
+  const sites = await api('/sites?per_page=100');
+  const lista = Array.isArray(sites) ? sites : (sites?.sites || []);
+  const helena = lista.find((s) => s.name === HELENA_SITE);
+  if (!helena) {
+    console.log('deploy-helena-ship: site não achado', HELENA_SITE);
+    process.exit(0);
+  }
+  console.log(`deploy-helena-ship: site ${HELENA_SITE} (${helena.id})`);
+  if (!existsSync(join(ship, 'maestro/src/bitrixRead.js'))) {
+    throw new Error('maestro/ ausente no helena-ship — aborta');
+  }
+  if (!sh('npm', ['install', '--omit=dev', '--no-audit', '--no-fund'], { cwd: ship })) {
+    throw new Error('npm install helena-ship falhou');
+  }
+  mkdirSync(join(ship, '_pub'), { recursive: true });
+  writeFileSync(join(ship, '_pub/index.html'), '<!doctype html><title>Helena</title>');
+  const ok = sh('npx', [
+    '--yes', 'netlify-cli@17',
+    'deploy', '--prod',
+    '--dir', '_pub',
+    '--functions', 'netlify/functions',
+    '--site', helena.id,
+  ], { cwd: ship });
+  if (!ok) throw new Error('netlify deploy helena falhou');
+  console.log('deploy-helena-ship: OK');
+} catch (e) {
+  console.error('deploy-helena-ship: FALHOU', e && e.message ? e.message : e);
+  process.exit(1);
 }
-
-console.log(`deploy-helena-ship: site ${HELENA_SITE} (${helena.id})`);
-sh('npm', ['install', '--omit=dev', '--no-audit', '--no-fund'], { cwd: ship });
-
-// publish mínimo (só pra CLI; o que importa são as functions)
-sh('mkdir', ['-p', join(ship, '_pub')]);
-sh('bash', ['-c', `echo '<!doctype html><title>Helena</title>' > '${join(ship, '_pub/index.html')}'`]);
-
-sh('npx', [
-  '--yes', 'netlify-cli@17',
-  'deploy', '--prod',
-  '--dir', '_pub',
-  '--functions', 'netlify/functions',
-  '--site', helena.id,
-], { cwd: ship });
-
-console.log('deploy-helena-ship: OK');

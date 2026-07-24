@@ -233,7 +233,7 @@ const BRUNO_PHONE = optionalEnv("BRUNO_PHONE");
 const CAROL_PHONE = optionalEnv("CAROL_PHONE");
 
 const ZAPI_BASE = `https://api.z-api.io/instances/${ZAPI_INSTANCE_ID}/token/${ZAPI_TOKEN}`;
-const VERSION = "7.62";
+const VERSION = "7.63";
 
 // VALIDADOR ANTI-ESQUECIMENTO v5.4.8
 const PRODUTOS_OBRIGATORIOS_VALIDADOR = [
@@ -6201,10 +6201,10 @@ async function handleQuickReplyFromAdmin(adminPhone, message) {
 
   // admin falando solto, sem comando nem pedido -> responde como assistente (nunca vira lead)
   await zapiSendText(adminPhoneNorm,
-    "Opa chefe! 😊 Aqui é a Helena. Se quiser o resumo de um lead, manda 'resumo do FULANO' ou o telefone dele. " +
+    "Opa chefe! 😊 Aqui é a Helena *v7.63*. Se quiser o resumo de um lead, manda 'resumo do FULANO' ou o telefone dele. " +
     "Comandos: /assumir, /devolver, /responder ULTIMO <texto>, /produto ULTIMO <chave>. " +
     "Ou me dá uma instrução: 'manda as fotos de vista', 'orienta sobre 2 suítes'. " +
-    "Pra eu mandar TEXTO EXATO: 'Diga ao NOME: … Mande isso'.");
+    "Pra eu mandar TEXTO EXATO: 'Responda ao NOME: …' ou 'Diga ao NOME: … Mande isso'.");
   return { handled: true };
 }
 
