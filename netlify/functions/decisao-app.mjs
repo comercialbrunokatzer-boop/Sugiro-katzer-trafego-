@@ -17,10 +17,6 @@ import {
   linkWhatsApp,
 } from './_qualidade-trafego.mjs';
 import { leFeedDecisao, registraFeedDecisao, itensHoje, dataDesde } from './_decisao-feed.mjs';
-<<<<<<< HEAD
-import { listaDealsFunil, fasesPorCampanha, inicioFunilISO, inicioEfetivoFunil } from './_bitrix-funil.mjs';
-import { metaPauseCampaign, metaActivateCampaign, metaSetCampaignDailyBudget, metaInsightsPeriodo } from './_meta-acoes.mjs';
-=======
 import {
   listaDealsFunil,
   fasesPorCampanha,
@@ -29,8 +25,7 @@ import {
   inicioEfetivoFunil,
 } from './_bitrix-funil.mjs';
 import { notaCampanha, top10PorNotaFunil } from './_nota-funil.mjs';
-import { metaPauseCampaign, metaActivateCampaign, metaInsightsPeriodo } from './_meta-acoes.mjs';
->>>>>>> origin/cursor/nota-qualidade-funil-f7d6
+import { metaPauseCampaign, metaActivateCampaign, metaSetCampaignDailyBudget, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
