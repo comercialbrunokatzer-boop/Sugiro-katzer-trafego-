@@ -13,23 +13,26 @@ export async function handler(event) {
 
   const url = (process.env.SITE_URL || 'https://rotina-produtiva-michel.netlify.app').replace(/\/+$/, '');
 
-  // 1) Pro Michel (pode repassar): só o painel dele (sem %).
+  // 1) Pro Michel (pode repassar): Rotina + Campanhas (sem %).
   const msgMichel = [
-    '📲 *Michel — deixa a Rotina como app (1 vez, 10 seg):*',
+    '📲 *Michel — deixa os apps na tela (1 vez, 10 seg):*',
     '',
+    `Rotina / Placar 👉 ${url}/placar-michel`,
+    `Campanhas (decisão) 👉 ${url}/campanhas`,
     `Passo a passo 👉 ${url}/como-instalar`,
     '',
-    'Depois é só tocar o ícone dourado *KZ Katzer* todo dia e marcar *Feito*. Sem link.',
+    'Depois é só tocar o ícone *KZ Katzer* / *Campanhas*. Sem link.',
   ].join('\n');
 
   // 2) Só pro CEO (NÃO repassar — tem o %): painel-gestor com ícone 📊 próprio.
   const msgGestor = [
     '🔒 *SÓ SEU — não repassa pro Michel (tem o %):*',
     '',
-    `Teu *Painel do Gestor* 👉 ${url}/painel-gestor`,
+    `Teu *Placar do Gestor* 👉 ${url}/placar-gestor`,
+    `Campanhas (só olhar / histórico) 👉 ${url}/campanhas`,
     'Adiciona à Tela de Início igual (Compartilhar → Adicionar).',
     '',
-    '📊 O ícone novo é o *gráfico dourado “GESTOR”* — diferente do KZ do Michel.',
+    '📊 O ícone é o *gráfico dourado “GESTOR”* — diferente do KZ do Michel.',
     '⚠️ Se já tem o antigo *“P”* na tela, apaga ele e adiciona de novo pra pegar o ícone novo.',
   ].join('\n');
 
