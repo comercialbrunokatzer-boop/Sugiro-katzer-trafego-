@@ -35,6 +35,9 @@ function semAcento(s) {
 // Punta Cana...) não contêm nenhum destes tokens, então são ignorados.
 const REGRAS = [
   // ---- TIER 1: nacionalidade do PÚBLICO buscado (sobrepõe a praça) ----
+  // SUL-AMERICANO antes de AMERICAN: hífen cria fronteira e "AMERICANOS" sozinho
+  // casaria EN (bug #91 — campanha sul-americana abria em inglês).
+  { code: "es", nome: "espanhol",             re: /\bSUL[- ]?AMERICAN[OA]?S?\b|\bSULAMERICAN[OA]?S?\b/ },
   { code: "es", nome: "espanhol",             re: /\bLATIN[OA]?S?\b|LATINO-?AMERICAN/ },
   { code: "pt", nome: "português (Brasil)",   re: /\bBRASILEIR[OA]S?\b/ },
   { code: "en", nome: "inglês",               re: /\bAMERICAN[OA]?S?\b/ },
