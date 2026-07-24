@@ -3,6 +3,7 @@
 // Protegido por ?key=<WHATSAPP_CEO>. GET /api/placar?key=<numero>[&preset=last_7d]
 import { montaPlacar, resumoPlacarWhats } from './_placar.mjs';
 import { json } from './_infra.mjs';
+import { META_AD_ACCOUNT, META_GRAPH } from './_meta-config.mjs';
 
 const soDig = (s) => String(s || '').replace(/\D+/g, '');
 const PRESETS = new Set(['today', 'yesterday', 'last_7d', 'last_14d', 'last_30d', 'this_month']);
@@ -15,12 +16,10 @@ export async function handler(event) {
   if (!ceo || key !== ceo) return json(403, { ok: false, erro: 'passe ?key=<numero do CEO>' });
 
   const token = process.env.META_SYSTEM_TOKEN;
-  const acct = process.env.META_AD_ACCOUNT || 'act_1150648749960943';
-  const graph = process.env.META_GRAPH || 'https://graph.facebook.com/v20.0';
   if (!token) return json(503, { ok: false, erro: 'META_SYSTEM_TOKEN ausente' });
 
   const preset = PRESETS.has(q.preset) ? q.preset : 'last_7d';
-  const url = new URL(`${graph}/${acct}/insights`);
+  const url = new URL(`${META_GRAPH}/${META_AD_ACCOUNT}/insights`);
   url.searchParams.set('level', 'campaign');
   url.searchParams.set('date_preset', preset);
   url.searchParams.set('fields', 'campaign_name,spend,actions,results');

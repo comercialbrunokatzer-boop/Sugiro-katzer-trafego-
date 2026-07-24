@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { montaPlacar } from '../netlify/functions/_placar.mjs';
 import {
-  montaSugestoes, montaSugestaoPrincipal, registraDecisao, listaDecisoes, decisoesVazias, rotuloDecisao, agoraBRT,
+  montaSugestoes, montaSugestaoPrincipal, registraDecisao, listaDecisoes, decisoesVazias, rotuloDecisao, agoraBRT, garanteAprendizados,
 } from '../netlify/functions/_placar-estado.mjs';
 
 const data = [
@@ -97,4 +97,15 @@ test('agoraBRT: devolve data e hora coerentes de Brasília', () => {
   assert.equal(a.data, '2026-07-21');
   assert.equal(a.hm, '12:57');
   assert.equal(a.min, 12 * 60 + 57);
+});
+
+test('garanteAprendizados: grava uma vez e não sobrescreve', () => {
+  const dec = decisoesVazias('2026-07-24');
+  const cartoes = [{ id: 'esc-x', aprendizado: 'escala devagar' }];
+  const r1 = garanteAprendizados(dec, cartoes);
+  assert.equal(r1.mudou, true);
+  assert.equal(dec.aprendizados['esc-x'], 'escala devagar');
+  const r2 = garanteAprendizados(dec, [{ id: 'esc-x', aprendizado: 'outra frase' }]);
+  assert.equal(r2.mudou, false);
+  assert.equal(dec.aprendizados['esc-x'], 'escala devagar');
 });

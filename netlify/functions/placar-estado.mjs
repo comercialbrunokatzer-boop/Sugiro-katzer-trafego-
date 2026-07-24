@@ -7,8 +7,9 @@
 // DECISÃO DO DIA V4: NÃO sugerir EUA_Americanos a R$7.
 // Sugerir: BR_SC trocar criativo + Amanay duplicar R$30/dia.
 import { createHash } from 'node:crypto';
-import { agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes } from './_placar-estado.mjs';
-import { lePlacar, leDecisoes, mensagemMeta } from './_placar-io.mjs';
+import { montaCartoesCopiloto } from './_placar.mjs';
+import { agoraBRT, montaSugestoes, montaSugestaoPrincipal, listaDecisoes, garanteAprendizados } from './_placar-estado.mjs';
+import { lePlacar, leDecisoes, salvaDecisoes, mensagemMeta } from './_placar-io.mjs';
 import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
 import {
   enriqueceComQualidade, textoCplBrutoVsBom, calculaCplQualidade,
@@ -25,6 +26,7 @@ import { json } from './_infra.mjs';
 import { LEADS_MIN_ESCALAR } from './_campanhas-regras.mjs';
 import { montaMixVerba } from './_mix-verba.mjs';
 import { cidadeReal } from './_campanhas-regras.mjs';
+import { META_AD_ACCOUNT } from './_meta-config.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 function senhaGestorOk(event, params) {
@@ -76,7 +78,7 @@ export async function handler(event) {
     status: meta?.status || 'ok',
     codigo: meta?.codigo || 'OK',
     etapa: meta?.etapa || 'insights',
-    conta: meta?.conta || (process.env.META_AD_ACCOUNT || 'act_1150648749960943'),
+    conta: meta?.conta || META_AD_ACCOUNT,
     confiavel: meta?.confiavel !== false,
     cacheHit: !!cacheHit,
     usandoCache: !!meta?.usandoCache,
@@ -127,6 +129,13 @@ export async function handler(event) {
   const rankingCplBom = ordenaPorCpl(campanhasQ, { modo: 'bom' });
   const rankingCplBruto = ordenaPorCpl(campanhasQ, { modo: 'bruto' });
 
+  // Copiloto Fase A — cartões 8 blocos (aprendizado estável no store)
+  const resumoCopiloto = montaCartoesCopiloto(placarQ, { aprendizados: decisoes.aprendizados || {} });
+  const { mudou } = garanteAprendizados(decisoes, resumoCopiloto.cartoes);
+  if (mudou) {
+    try { await salvaDecisoes(decisoes); } catch { /* store opcional em preview */ }
+  }
+
   const body = {
     ok: true,
     metricaPrincipal: 'formulario_ou_whatsapp',
@@ -147,6 +156,9 @@ export async function handler(event) {
     recomendacoes: recBundle,
     mixVerba: montaMixVerba(),
     decisoes: listaDecisoes(decisoes),
+    cartoes: resumoCopiloto.cartoes,
+    naoAltere: resumoCopiloto.naoAltere,
+    roteiroMetaIA: resumoCopiloto.roteiroMetaIA,
     qualidadeAtualizadoEm: qualDoc.atualizadoEm || null,
     meta: metaOut,
     dadosConfiaveis: metaOut.confiavel && (metaOut.status === 'ok' || metaOut.status === 'sem_gasto' || metaOut.status === 'sem_campanha'),
