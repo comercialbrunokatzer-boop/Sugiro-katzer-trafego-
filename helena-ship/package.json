@@ -1,0 +1,15 @@
+{
+  "name": "helena-katzer",
+  "version": "5.4.7",
+  "description": "Helena SDR IA - Katzer Assessoria",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

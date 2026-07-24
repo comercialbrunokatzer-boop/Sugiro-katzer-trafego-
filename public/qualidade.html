@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Caçador · CPL BOM · Katzer</title>
+<meta name="theme-color" content="#0f2a24">
+<link rel="manifest" href="/manifest-campanhas.webmanifest">
+<link rel="apple-touch-icon" href="/icon-katzer.png">
+<link rel="icon" type="image/png" href="/icon-katzer.png">
+<style>
+  :root{
+    --bg:#0f2a24; --panel:#16352d; --ink:#eef6f2; --muted:#9bb5ab;
+    --line:#2a4a40; --good:#3dba7e; --warn:#d4a017; --bad:#d4655a; --chip:#1e4339; --gold:#c4a35a;
+    --sans:"Segoe UI", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0c221d,#12332b);color:var(--ink);font-family:var(--sans);min-height:100dvh}
+  .wrap{max-width:480px;margin:0 auto;padding:16px 16px 48px}
+  .brand{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  h1{margin:6px 0 4px;font-size:1.25rem}
+  .sub{color:var(--muted);font-size:.84rem;margin:0 0 12px;line-height:1.4}
+  .nav{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .nav a{flex:1;min-width:70px;text-align:center;text-decoration:none;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:8px;font-size:.72rem;font-weight:700}
+  .nav a.on{background:var(--gold);color:#1a1408;border-color:var(--gold)}
+  .regra{background:rgba(196,163,90,.12);border:1px solid rgba(196,163,90,.35);border-radius:12px;padding:12px;font-size:.78rem;line-height:1.4;margin:0 0 14px}
+  .regra b{color:var(--gold)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 12px}
+  .nome{font-weight:800;font-size:.95rem;line-height:1.25}
+  .meta{color:var(--muted);font-size:.78rem;margin-top:4px}
+  .comp{margin-top:8px;font-size:.82rem;font-weight:700;line-height:1.35}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .field label{display:block;font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .field input{width:100%;border:1px solid var(--line);background:#0f2420;color:var(--ink);border-radius:10px;padding:10px;font-family:inherit;font-size:.95rem}
+  .save{margin-top:12px;width:100%;border:0;background:var(--gold);color:#1a1408;border-radius:10px;padding:12px;font-weight:800;font-family:inherit;cursor:pointer}
+  .save:disabled{opacity:.5}
+  .empty,.err{color:var(--muted);text-align:center;padding:24px 8px}
+  .err{color:var(--bad)}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#0f2a24;padding:11px 18px;border-radius:999px;font-weight:700;font-size:.85rem;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+  .toast.show{opacity:1}
+  footer{margin-top:16px;text-align:center;color:var(--muted);font-size:.72rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Katzer · Painel de Campanhas</div>
+  <h1>Caçador · CPL BOM</h1>
+  <p class="sub">Marque Bom / Curioso / Errado / Comprador depois da Discadora ou Garimpo. CPL Bruto engana — CPL BOM decide.</p>
+  <div class="nav">
+    <a href="/campanhas">Decisão</a>
+    <a href="/ranking-campanhas">Ranking</a>
+    <a class="on" href="/qualidade">Caçador</a>
+  </div>
+  <div class="regra">
+    <b>CPL Bruto</b> = gasto ÷ leads form.<br>
+    <b>CPL BOM</b> = gasto ÷ (Bom + Comprador)<br>
+    Ex.: Fort Myers Bruto R$16 🟢 → BOM R$56,72 🔴 · Amanay BOM R$13,20 🟢🟢
+  </div>
+  <div id="app"><div class="empty">Carregando…</div></div>
+  <footer>Michel caça · Bruno decide com CPL BOM</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const brl=(v)=>v==null?'—':'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
+const $= (s)=>document.querySelector(s);
+const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
+const api=(path)=>API_BASE+path;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+
+let DATA=null;
+
+function card(c){
+  const q=c.qualidade||{};
+  const id=c.id||'';
+  const nome=c.nome||'';
+  return `<article class="card" data-id="${id}" data-nome="${nome.replace(/"/g,'&quot;')}">
+    <div class="nome">${nome}</div>
+    <div class="meta">${c.cidade||'—'} · ${brl(c.gasto)} · ${c.leads||0} form.</div>
+    <div class="comp">${c.comparativo||''}</div>
+    <div class="grid">
+      <div class="field"><label>Bom</label><input type="number" min="0" inputmode="numeric" data-k="bom" value="${q.bom||0}"></div>
+      <div class="field"><label>Curioso</label><input type="number" min="0" inputmode="numeric" data-k="curioso" value="${q.curioso||0}"></div>
+      <div class="field"><label>Errado</label><input type="number" min="0" inputmode="numeric" data-k="errado" value="${q.errado||0}"></div>
+      <div class="field"><label>Comprador</label><input type="number" min="0" inputmode="numeric" data-k="comprador" value="${q.comprador||0}"></div>
+    </div>
+    <button class="save" data-save>Salvar caça</button>
+  </article>`;
+}
+
+function render(){
+  const app=$('#app');
+  if(!DATA||!DATA.ok){app.innerHTML=`<div class="err">${(DATA&&DATA.erro)||'Dados indisponíveis.'}</div>`;return;}
+  const camps=DATA.campanhas||[];
+  if(!camps.length){app.innerHTML=`<div class="empty">Nenhuma campanha com gasto nos últimos 7 dias.</div>`;return;}
+  const rank=(DATA.rankingCplBom||[]).slice(0,3);
+  let top='';
+  if(rank.length){
+    top=`<div class="regra"><b>Melhores CPL BOM</b><br>`+rank.map((c,i)=>
+      `${i+1}. ${c.nome} — ${brl(c.cplBom)} ${c.semaforoBom?.emoji||''}`
+    ).join('<br>')+`</div>`;
+  }
+  app.innerHTML=top+camps.map(card).join('');
+  app.querySelectorAll('[data-save]').forEach(btn=>{
+    btn.onclick=async()=>{
+      const el=btn.closest('.card');
+      const body={
+        id:el.dataset.id||undefined,
+        nome:el.dataset.nome,
+        bom:+el.querySelector('[data-k=bom]').value||0,
+        curioso:+el.querySelector('[data-k=curioso]').value||0,
+        errado:+el.querySelector('[data-k=errado]').value||0,
+        comprador:+el.querySelector('[data-k=comprador]').value||0,
+        quem:'Michel',
+      };
+      btn.disabled=true;
+      const r=await fetch(api('/api/qualidade'),{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body),
+      }).then(x=>x.json()).catch(()=>({ok:false}));
+      btn.disabled=false;
+      if(r.ok){toast('Caça salva · CPL BOM atualizado');load();}
+      else toast(r.erro||'Não deu');
+    };
+  });
+}
+
+async function load(){
+  try{
+    const r=await fetch(api('/api/qualidade'));
+    DATA=await r.json();
+  }catch{DATA={ok:false,erro:'Sem conexão'};}
+  render();
+}
+load();
+</script>
+</body>
+</html>

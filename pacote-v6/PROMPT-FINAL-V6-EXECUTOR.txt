@@ -1,0 +1,104 @@
+PROMPT FINAL V6.0 — BLINDADO PRO EXECUTOR
+Katzer OS · Tráfego · Rotina + Painel + Gestor
+================================================
+NÃO inventar. NÃO usar link embed.fbsbx.com/playables (não é ZIP).
+NÃO criar site Netlify aleatório. NÃO queimar token em chat.
+NÃO MUDAR MAIS depois deste V6.0 FINAL.
+
+ORDEM DO BRUNO (WhatsApp do executor):
+  1) Baixa ZIP: KATZER-V6-FINAL-TUDO-PUBLICO.zip
+  2) MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/index.html → index.html na raiz
+     do Netlify rotina-produtiva-michel.netlify.app (corrige 404)
+  3) MICHEL-PAINEL-2-E-3/painel.html → /painel.html
+  4) BRUNO-GESTOR/gestor.html → /gestor.html
+  5) Lê este prompt. Manda link público sem 404.
+
+────────────────────────────────────────
+0. RESPOSTAS FECHADAS (não reperguntar)
+────────────────────────────────────────
+
+1) Rotina atualiza automática? SIM (store + poll do gestor).
+2) Gestor = /gestor.html (ao vivo, pausar/escalar, editar Garimpo, relatório 16h).
+3) WhatsApp a cada movimento? SIM (Feito · BOM · Garimpo com nome).
+4) Relatório 16h auto no gestor + botão enviar WA.
+
+────────────────────────────────────────
+1. ESTRUTURA DO ZIP
+────────────────────────────────────────
+
+PASTA MICHEL-ROTINA-INDEX-RAIZ-PUBLICO/ → index.html (raiz Rotina)
+  · Rotina diária sem buraco · Garimpo 10:15 · meta 0–5+ · NOME obrigatório
+  · Quadradinho 1 campanha = SÓ OLHAR → abre Painel 2
+
+PASTA MICHEL-PAINEL-2-E-3/ → painel.html
+  · Painel 2: filtros SÓ Total | Julho | Ativas + insights + decisão
+  · Ranking por CPL BOM (gasto ÷ Bom+Comprador)
+  · Painel 3: Caçador flutuante + som pling + corretor responsável
+
+PASTA BRUNO-GESTOR/ → gestor.html
+  · Ao vivo · Pausar/Escalar · editar Garimpo · relatório 16h + botão WA
+
+────────────────────────────────────────
+2. WEBHOOKS / AUTO (já no código + env)
+────────────────────────────────────────
+
+WhatsApp gestor (cada movimento):
+  Evolution: EVOLUTION_API_URL · EVOLUTION_API_KEY · EVOLUTION_INSTANCE
+  Fallback Z-API: ZAPI_INSTANCE · ZAPI_TOKEN · WHATSAPP_CEO
+
+Bitrix → Caçador:
+  POST /api/webhook-bitrix
+  Header: x-bitrix-secret = BITRIX_WEBHOOK_SECRET
+  Body: { nome, telefone, campanha, cidade?, bitrixUrl? }
+
+Persistência auto (gestor atualiza sozinho):
+  Netlify Blobs (produção atual).
+  Opcional Supabase espelho: SUPABASE_URL · SUPABASE_SERVICE_KEY
+  (se setado no futuro — hoje Blobs basta; Bruno não manda nada).
+
+────────────────────────────────────────
+3. DEPLOY (ordem fixa)
+────────────────────────────────────────
+
+Repo: comercialbrunokatzer-boop/Sugiro-katzer-trafego-
+Branch: cursor/ranking-cpl-formulario-f7d6
+
+Alinhar ZIP → public/ e:
+  gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=rotina-produtiva-michel
+  gh workflow run deploy-trafego.yml --ref <BRANCH> -f site_name=dashing-elf-41a723
+
+Testar HTTP 200:
+  https://rotina-produtiva-michel.netlify.app/
+  https://rotina-produtiva-michel.netlify.app/gestor.html
+  https://dashing-elf-41a723.netlify.app/painel.html
+
+────────────────────────────────────────
+4. REGRAS DE PRODUTO
+────────────────────────────────────────
+
+Rotina = DISCIPLINA · visualizar
+Painel isolado = EXECUTAR (2+3)
+Lead = form Meta OU WhatsApp (cliente chamou). Clique NUNCA.
+CPL BOM = gasto ÷ (Bom + Comprador)
+Ranking = por CPL BOM (fallback form)
+Filtros painel = só Total | Julho | Ativas
+Garimpo 10:15 · meta 0–5+ · NOME obrigatório no Feito
+Caçador = flutuante + pling + corretor responsável
+TRAVA <10 leads não escala · PUBLICO EXTERNO não escala
+Fort Myers=Penha · Amanay=Itapoá · Barra View=Santer · Grant Home=Barra Velha
+
+────────────────────────────────────────
+5. CHECKLIST
+────────────────────────────────────────
+
+[ ] / Rotina sem 404
+[ ] Garimpo 10:15 + nome obrigatório + meta 0–5+
+[ ] Painel Total|Julho|Ativas + Caçador pling + corretor
+[ ] Ranking por CPL BOM
+[ ] /gestor.html completo
+[ ] WhatsApp Feito/BOM/Garimpo
+[ ] /api/webhook-bitrix
+[ ] npm test passa
+[ ] PRONTO PARA TESTE DO BRUNO
+
+FIM.
