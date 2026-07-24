@@ -51,6 +51,11 @@
   .camp .cta a{display:inline-block;text-decoration:none;background:var(--sea);color:#fff;font-weight:800;font-size:.86rem;border-radius:9px;padding:9px 15px}
   .obsbox{margin-top:18px;background:var(--obs-bg);border:1px solid var(--hair);border-radius:14px;padding:13px 15px}
   .obsbox h3{margin:0 0 8px;font-size:.88rem;color:var(--obs)}
+  .campbox{margin-top:18px;background:var(--panel);border:1px solid var(--hair);border-radius:14px;padding:13px 15px;box-shadow:var(--shadow)}
+  .campbox h3{margin:0 0 4px;font-size:.88rem;color:var(--gold)}
+  .campbox .hint{font-size:.74rem;color:var(--sub);margin:0 0 8px}
+  .campentry{background:var(--ground);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:7px}
+  .campentry b{font-weight:700}
   .obsentry{background:var(--panel);border:1px solid var(--hair);border-radius:9px;padding:8px 11px;font-size:.82rem;margin-top:7px}
   .obsentry .who{font-size:.62rem;font-weight:800;text-transform:uppercase;color:var(--obs);background:var(--obs-bg);padding:.15rem .45rem;border-radius:999px;margin-right:6px}
   .note{margin-top:16px;font-size:.78rem;color:var(--sub);text-align:center}
@@ -81,6 +86,12 @@
   </div>
 
   <div id="rows"></div>
+
+  <div class="campbox" id="campbox">
+    <h3>📣 Campanhas — lembrete do dia</h3>
+    <p class="hint">O que o Michel tocou no Placar (Aplicar / Ajustar / Agora não). Só você vê.</p>
+    <div id="campList"></div>
+  </div>
 
   <div class="obsbox" id="obsbox" style="display:none">
     <h3>🔔 Interrupções (pedidas por você/Carol)</h3>
@@ -199,6 +210,18 @@ function render(){
     box.appendChild(el);
   });
   const ob=ST.obs||[];if(ob.length){$('#obsbox').style.display='';const ol=$('#obsList');ol.innerHTML='';ob.forEach(o=>{const e=document.createElement('div');e.className='obsentry';e.innerHTML=`<span class="who">${o.quem}</span><b>${o.nome}</b> — ${o.inicio}${o.duracao?' · '+o.duracao+' min':''}`;ol.appendChild(e);});}else{$('#obsbox').style.display='none';}
+  const camps=ST.decisoesCampanha||[];const cl=$('#campList');if(cl){cl.innerHTML='';
+  if(!camps.length){cl.innerHTML='<div class="campentry" style="color:var(--sub)">Nenhuma decisão de campanha registrada hoje.</div>';}
+  else{
+    camps.forEach(c=>{
+      const acao=c.decisao==='aplicar'?'✅ Aplicou':(c.decisao==='ajustar'||c.decisao==='aumentar'?'✎ Ajustou':(c.decisao==='agora-nao'?'⏸ Agora não':'· '+c.decisao));
+      const alvo=c.tipo==='escalar'?'escalar':(c.tipo==='revisar'?'revisar':(c.tipo||''));
+      const aj=(c.decisao==='ajustar'||c.decisao==='aumentar')&&c.ajuste?' — '+c.ajuste:'';
+      const e=document.createElement('div');e.className='campentry';
+      e.innerHTML=`<b>${acao}</b> · ${alvo} <b>${c.campanha||'?'}</b>${aj}<small style="display:block;color:var(--sub);margin-top:2px">${c.hora||''}</small>`;
+      cl.appendChild(e);
+    });
+  }}
   startTick();
 }
 function startTick(){if(tick)clearInterval(tick);const upd=()=>{document.querySelectorAll('.atraso').forEach(s=>{const d=nowMin()-hm2min(s.dataset.prev);if(d>0)s.textContent='atrasando '+Math.floor(d)+' min';});};upd();tick=setInterval(upd,10000);}

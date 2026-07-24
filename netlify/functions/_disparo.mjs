@@ -3,6 +3,7 @@
 import { pontualidade, agoraBRT, min2hm, previstoMin, TAREFAS } from './_rotina.mjs';
 import { leEstado, salvaEstado, enviaWhats, enviaEmail } from './_infra.mjs';
 import { resumoWhats, emailHTML } from './_relatorio.mjs';
+import { leDecisoesCampanha } from './_campanhas-dia.mjs';
 
 function agendaLinhas(estado) {
   return TAREFAS
@@ -62,20 +63,22 @@ export async function disparaRelatorio(now, { teste = false } = {}) {
 
   const P = pontualidade(estado, now.min);
   const modoTxt = ehKatzer ? '🏢 Katzer' : '🏠 Jlle/Casa';
+  const campanhas = await leDecisoesCampanha(now.data);
 
   const w = await enviaWhats(
     process.env.WHATSAPP_CEO,
-    resumoWhats(estado, now),
+    resumoWhats(estado, now, campanhas),
   );
   const e = await enviaEmail(
     process.env.EMAIL_CEO,
     `Relatório · Michel — ${P.pct}% · ${modoTxt}`,
-    emailHTML(estado, now),
+    emailHTML(estado, now, campanhas),
   );
 
   if (!teste) { estado.relatorioEnviado = now.hm; await salvaEstado(estado); }
   return {
     pct: P.pct,
+    campanhas: campanhas.length,
     whats: w,
     email: e,
     teste,
