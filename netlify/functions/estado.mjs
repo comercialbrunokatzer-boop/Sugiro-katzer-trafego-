@@ -1,6 +1,6 @@
 // ESTADO — Rotina + card Campanhas (só resumo + link pro app separado).
 // GET /api/estado        → tarefas + obs + modo + campanhas{resumo}
-// GET /api/estado?ceo=1  → + pontualidade (% + saldo)
+// GET /api/estado?ceo=1  → + pontualidade (% + saldo) + decisoesCampanha[]
 //
 // Decisão / quadradinho NÃO vive aqui. App: CAMPANHAS_APP_URL
 import { createHash } from 'node:crypto';
@@ -11,6 +11,7 @@ import { listaDecisoes, montaSugestoes } from './_placar-estado.mjs';
 import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
 import { enriqueceComQualidade, resumoCplBomQualidade } from './_qualidade.mjs';
 import { leCicloCampanhas, enrichComCiclo } from './_meta-ciclo.mjs';
+import { leDecisoesCampanha } from './_campanhas-dia.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 const CAMPANHAS_APP_URL = (process.env.CAMPANHAS_APP_URL || 'https://dashing-elf-41a723.netlify.app').replace(/\/+$/, '');
@@ -212,6 +213,9 @@ export async function handler(event) {
       return json(401, { ok: false, precisaSenha: true, erro: 'senha do gestor necessária' });
     }
     base.pontualidade = pontualidade(estado, now.min, { domingo, fimDiaMin });
+    // Lembrete de campanha: só no Gestor (Michel não vê via ?ceo=1).
+    // NÃO sobrescreve base.campanhas (resumo Meta + link do card).
+    base.decisoesCampanha = await leDecisoesCampanha(now.data);
   }
   return json(200, base);
 }

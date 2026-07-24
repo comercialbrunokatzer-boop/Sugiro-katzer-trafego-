@@ -1,6 +1,7 @@
-// Construtor do relatório consolidado (WhatsApp + e-mail) — SÓ ROTINA.
-// Painel de Campanhas = produto separado (/campanhas) — nunca misturar aqui.
+// Construtor do relatório consolidado (WhatsApp + e-mail).
+// Rotina + lembrete de decisões do Placar (só pro Gestor / Bruno).
 import { pontualidade } from './_rotina.mjs';
+import { blocoCampanhasEmail, blocoCampanhasWhats } from './_campanhas-dia.mjs';
 
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
@@ -10,8 +11,8 @@ export function dataExtenso(data, dow) {
   return `${DIAS[dow]}, ${+d} de ${MESES[+m - 1]} de ${y}`;
 }
 
-/** Resumo WhatsApp do CEO — só tarefas / pontualidade da Rotina. */
-export function resumoWhats(estado, now) {
+/** Resumo WhatsApp do CEO — rotina + lembrete de campanhas (decisões do Placar). */
+export function resumoWhats(estado, now, campanhas = []) {
   const P = pontualidade(estado, now.min);
   const modoIco = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Jlle/Casa';
   const feitasNoHorario = P.linhas.filter((l) => l.feito && l.difMin <= 0).length;
@@ -28,12 +29,13 @@ export function resumoWhats(estado, now) {
     `✅ ${feitasNoHorario} no horário · 💚 ${adiantadas} adiantada(s) · 🔴 ${atrasadas} atrasada(s)${pendentes ? ` · ⏳ ${pendentes} pendente(s)` : ''}`,
     destaques || '',
     obs || '',
+    blocoCampanhasWhats(campanhas),
   ].filter(Boolean);
   return linhas.join('\n');
 }
 
-/** E-mail HTML — só Rotina. */
-export function emailHTML(estado, now) {
+/** E-mail HTML — rotina + lembrete de campanhas. */
+export function emailHTML(estado, now, campanhas = []) {
   const P = pontualidade(estado, now.min);
   const modo = estado.modo === 'katzer' ? '🏢 Katzer' : '🏠 Jlle/Casa';
   const cor = P.pct >= 90 ? '#e0be6e' : (P.pct >= 70 ? '#c9a24a' : '#d67a52');
@@ -56,6 +58,7 @@ export function emailHTML(estado, now) {
       ${estado.obs.map((o) => `<div style="color:#ece5d6;font-size:13px;margin-top:6px"><b style="color:#c9a24a">${o.quem}</b> · ${o.nome} — ${o.inicio}${o.duracao ? ` · ${o.duracao} min` : ''}</div>`).join('')}
     </div>` : '';
   const horaRodape = estado.modo === 'katzer' ? '14:30 (Katzer)' : '13:00 (Jlle/Casa)';
+  const campHtml = blocoCampanhasEmail(campanhas);
   return `<!doctype html><html><body style="margin:0;background:#08080a;padding:24px 12px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">
     <div style="max-width:600px;margin:0 auto;background:#0e0e11;border:1px solid #2a2732;border-radius:14px;overflow:hidden">
       <div style="padding:22px;text-align:center;border-bottom:1px solid #2a2732">
@@ -71,8 +74,9 @@ export function emailHTML(estado, now) {
       </div>
       <table style="width:100%;border-collapse:collapse;border-top:1px solid #2a2732">${rows}</table>
       ${obsHtml}
+      ${campHtml}
       <div style="padding:18px 22px;color:#9a9283;font-size:12px;text-align:center;border-top:1px solid #2a2732;margin-top:16px">
-        Enviado ${horaRodape} · seg–sáb · só Rotina (Campanhas = app separado).
+        Enviado ${horaRodape} · seg–sáb · Rotina + lembrete de decisões do Placar.
       </div>
     </div></body></html>`;
 }
