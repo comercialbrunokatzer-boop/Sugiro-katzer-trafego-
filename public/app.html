@@ -76,6 +76,22 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
 .fb-box{margin:12px 16px;padding:12px;background:#fff;border:1px solid #eee;border-radius:12px;font-size:12px;display:grid;gap:10px;grid-template-columns:1fr 1fr}
 .fb-box b{display:block;margin-bottom:4px}
 @media(max-width:560px){.fb-box{grid-template-columns:1fr}}
+/* Resumo Michel + AÇÃO — faixa escura */
+.resumo-michel{display:grid;gap:10px;grid-template-columns:repeat(3,1fr);margin:12px 16px}
+@media(max-width:720px){.resumo-michel{grid-template-columns:1fr}}
+.resumo-card{background:#111;color:#f5f5f5;border-radius:14px;padding:14px;border:1px solid #2a2a2a}
+.resumo-card h4{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;margin-bottom:6px;font-weight:700}
+.resumo-card .val{font-family:'Instrument Sans',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.resumo-card .sub{font-size:11px;color:#a1a1aa;margin-top:6px;line-height:1.35}
+.badge-rastreio{display:inline-block;font-size:10px;padding:3px 8px;border-radius:8px;background:#7f1d1d;color:#fecaca;font-weight:700;margin:0 14px 8px}
+.acao-michel{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:6px 10px;border-radius:999px;cursor:help;letter-spacing:.02em}
+.acao-michel.vermelho{background:#dc2626;color:#fff}
+.acao-michel.amarelo{background:#f59e0b;color:#111}
+.acao-michel.verde{background:#16a34a;color:#fff}
+.acao-michel.azul{background:#2563eb;color:#fff}
+.acao-michel.cinza{background:#374151;color:#e5e7eb}
+.metricas-row{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 10px;font-size:11px;color:#444}
+.metricas-row b{color:#111}
 </style>
 </head>
 <body>
@@ -102,16 +118,21 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
 </div>
 
 <div id="tab-ranking" style="display:none">
-  <div class="info" id="infoRanking">Desde <b>12/07/2025</b> (entrada do Michel) até hoje · Top 10 por <b>qualidade do funil Bitrix</b> (fase + contato + comentários) · CPL só desempatando.</div>
+  <div class="info" id="infoRanking">Desde <b>12/07/2025</b> · Top 10 inteligente: <b>custo/avanço → CPL → taxa de perda</b>. Funil só com <b>UF_CRM_CAMPANHA_ORIGEM</b>.</div>
+  <div class="resumo-michel" id="resumoMichel">
+    <div class="resumo-card"><h4>💵 Dinheiro no Lixo</h4><div class="val" id="cardLixo">—</div><div class="sub">Soma do gasto com taxa de perda &gt; 50%</div></div>
+    <div class="resumo-card"><h4>🚀 Oportunidade de Escala</h4><div class="val" id="cardEscala">—</div><div class="sub" id="cardEscalaSub">Campanhas VERDE (escalar)</div></div>
+    <div class="resumo-card"><h4>📞 Gargalo Humano</h4><div class="val" id="cardGargalo">—</div><div class="sub">Leads em Tentando Contato + Leads Novos</div></div>
+  </div>
   <div class="fb-box" id="fbRanking">
     <div><b>Por que as 10 melhores converteram</b><span id="fbMelhores">—</span></div>
     <div><b>Por que as 10 piores travaram</b><span id="fbPiores">—</span></div>
   </div>
-  <div class="sec-title">🏆 Top 10 melhores · maior nota no funil</div>
-  <div class="sec-sub" id="subMelhores">Nota Bitrix (fase/contato/comentários) · CPL só desempatando</div>
+  <div class="sec-title">🏆 Top 10 melhores · menor custo por avanço</div>
+  <div class="sec-sub" id="subMelhores">AÇÃO MICHEL em cada linha · Nota S/A/B/C/D · CPL só desempatando</div>
   <div id="listMelhores"></div>
-  <div class="sec-title">⚠️ Top 10 piores · menor nota no funil</div>
-  <div class="sec-sub">Mesma régua — barato sem avanço no funil cai aqui</div>
+  <div class="sec-title">⚠️ Top 10 piores · maior custo / perda</div>
+  <div class="sec-sub">SC cara (CPL alto) e campanhas sem avanço caem aqui</div>
   <div id="listPiores"></div>
 </div>
 
@@ -269,7 +290,7 @@ function htmlFases(cam){
       <div class="fase-n">${forms}</div>
       <div>
         <div class="fase-label">Forms Meta → Funil Novo Katzer</div>
-        <div class="fase-meta">${noFunil} leads no funil${cam.fasesFonte?` · ${esc(cam.fasesFonte)}`:''} · toque a fase → leads certos · Bitrix · WhatsApp</div>
+        <div class="fase-meta">${noFunil} leads no funil${cam.semRastreio?' · ⚠ SEM RASTREIO — CORRIGIR MAKE':''}${cam.fasesFonte?` · ${esc(cam.fasesFonte)}`:''} · toque a fase → leads certos · Bitrix · WhatsApp</div>
       </div>
     </div>
     <div class="fase-pills">${pills||'<span class="fase-meta">Carregando fases…</span>'}</div>
@@ -277,27 +298,52 @@ function htmlFases(cam){
   </div>`;
 }
 
+function fmtMoney(v){
+  if(v==null||!Number.isFinite(Number(v))) return '∞';
+  return 'R$'+Math.round(Number(v)).toLocaleString('pt-BR');
+}
+function badgeAcao(cam){
+  const a=cam.acaoMichel;
+  if(!a) return '';
+  return `<span class="acao-michel ${esc(a.cor||'cinza')}" title="${esc(a.texto||'')}">${esc(a.icone||'')} ${esc(a.label||'AÇÃO')}</span>`;
+}
 function cardHtml(cam,{showPos=false, showActions=true}={}){
   const cls=cam.alertaVisual==='ruim'?'ruim':(cam.alertaVisual==='oportunidade'?'oportunidade':'');
   const badgeTxt=cam.qual==='bad'?'RUIM · '+cam.custo:(cam.qual==='good'?'OPORTUNIDADE · '+cam.custo:cam.custo+' /lead');
   const nf=cam.notaFunil||{};
-  const notaTxt=nf.nota!=null?`Nota funil ${nf.selo||''} ${nf.nota}`:null;
+  const ni=cam.notaInteligente||{};
+  const selo=ni.selo||nf.selo||'';
+  const nota=ni.nota??nf.nota;
+  const notaTxt=nota!=null?`Nota ${selo} ${nota}`:null;
+  const m=cam.metricas||{};
   return `<div class="card ${cls}">
     <div class="card-head">
       <h3>${showPos&&cam.pos?`<span class="pos">${cam.pos}º</span>`:''}${esc(cam.name)}${cam.ativa===false?' <span style="color:#999;font-size:10px">· pausada</span>':''}</h3>
-      <span class="badge ${cam.qual||''}">${esc(badgeTxt)}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        ${badgeAcao(cam)}
+        <span class="badge ${cam.qual||''}">${esc(badgeTxt)}</span>
+      </div>
     </div>
+    ${cam.semRastreio?`<div class="badge-rastreio">⚠ SEM RASTREIO — CORRIGIR MAKE</div>`:''}
     <div class="row">
       <div class="col"><b>${esc(cam.inicio)}</b><span>Início</span></div>
       <div class="col"><b>${esc(cam.gasto)}</b><span>Gasto</span></div>
       <div class="col"><b>${esc(cam.imp)}</b><span>Impressões</span></div>
       <div class="col"><b>${cam.forms??0}</b><span>Forms</span></div>
-      <div class="col"><b>${esc(cam.custo)}</b><span>Custo/Lead</span></div>
-      ${notaTxt?`<div class="col"><b>${esc(notaTxt)}</b><span title="${esc(nf.motivo||'')}">Qualidade Bitrix</span></div>`:''}
+      <div class="col"><b>${esc(cam.custo)}</b><span>CPL</span></div>
+      ${notaTxt?`<div class="col"><b>${esc(notaTxt)}</b><span title="${esc(nf.motivo||'')}">Ranking</span></div>`:''}
     </div>
-    ${nf.motivo?`<div class="fase-meta" style="margin:4px 0 8px;color:#555">${esc(nf.motivo)}</div>`:''}
+    <div class="metricas-row">
+      <span>Perda <b>${m.taxaPerda??'—'}%</b></span>
+      <span>R$/avanço <b>${fmtMoney(m.custoPorAvanco)}</b></span>
+      <span>R$/Meetins <b>${fmtMoney(m.custoPorMeetins)}</b></span>
+      <span>Dias <b>${m.diasRodando??'—'}</b></span>
+      <span>AÇÃO MICHEL <b>${esc(cam.acaoMichel?.label||'—')}</b></span>
+    </div>
+    ${cam.acaoMichel?.texto?`<div class="meta-decisao ${escAttr(cam.acaoMichel.tipo||'')}" style="margin-top:0"><b>Orientação Michel</b>${esc(cam.acaoMichel.texto)}</div>`:''}
+    ${nf.motivo?`<div class="fase-meta" style="margin:4px 14px 8px;color:#555">${esc(nf.motivo)}</div>`:''}
     ${cam.metaDecisao?`<div class="meta-decisao ${escAttr(cam.metaDecisao.acao||'')}"><b>Meta · ${esc((cam.metaDecisao.acao||'').replace(/_/g,' '))}</b>${esc(cam.metaDecisao.motivo||'')}</div>`:''}
-    <div class="row"><div class="col"><b>Qualidade IA + fases Bitrix</b>
+    <div class="row"><div class="col"><b>Qualidade IA + fases Bitrix (por campanha)</b>
       <div class="quality">
         <span class="q pot">${cam.detail?.pot||0} Potencial</span>
         <span class="q int">${cam.detail?.int||0} Interessado</span>
@@ -390,7 +436,18 @@ async function loadMichel(){
   const info=document.getElementById('infoAtivas');
   if(info) info.innerHTML=`Só campanhas <b>ACTIVE</b> na Meta (sem [TESTE]) · <b>${ATIVAS.length}</b> agora. ${esc(DATA.avisoAbas||'')}${DATA.bitrixOk===false?' · <span style="color:#b91c1c">Bitrix: webhook ainda não ligado — fases parciais</span>':(DATA.bitrixOk?' · Bitrix OK':'')}`;
   const ir=document.getElementById('infoRanking');
-  if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> até <b>${esc(DATA.rankingAte||'hoje')}</b> · Top 10 por <b>qualidade do funil Bitrix</b> (fase + contato + comentários) · CPL só desempatando.`;
+  if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> até <b>${esc(DATA.rankingAte||'hoje')}</b> · Top 10 <b>inteligente</b> (custo/avanço → CPL → perda) · funil com <b>UF_CRM_CAMPANHA_ORIGEM</b>.`;
+  const rm=DATA.resumoMichel||{};
+  const elLixo=document.getElementById('cardLixo');
+  const elEsc=document.getElementById('cardEscala');
+  const elEscSub=document.getElementById('cardEscalaSub');
+  const elGar=document.getElementById('cardGargalo');
+  if(elLixo) elLixo.textContent=rm.dinheiroNoLixoFmt||('R$'+Math.round(rm.dinheiroNoLixo||0));
+  if(elEsc) elEsc.textContent=String((rm.oportunidadeEscala||[]).length);
+  if(elEscSub) elEscSub.textContent=(rm.oportunidadeEscala||[]).length
+    ? (rm.oportunidadeEscala||[]).slice(0,4).map(x=>x.nome).join(' · ')
+    : 'Nenhuma campanha VERDE no momento';
+  if(elGar) elGar.textContent=String(rm.gargaloHumano??0);
   const fbM=document.getElementById('fbMelhores');
   const fbP=document.getElementById('fbPiores');
   if(fbM) fbM.innerHTML='<br>'+(DATA.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>');
