@@ -1,0 +1,13 @@
+name: Ver anuncios Carol e Michel
+on: workflow_dispatch
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Puxa anuncios
+        run: |
+          curl -s -G "https://graph.facebook.com/v20.0/act_1150648749960943/insights" \
+            --data-urlencode "level=ad" \
+            --data-urlencode "date_preset=last_14d" \
+            --data-urlencode "fields=campaign_name,adset_name,ad_name,spend,results,cost_per_result,ctr,frequency" \
+            --data-urlencode "access_token=${{ secrets.META_SYSTEM_TOKEN }}" | python3 -m json.tool
