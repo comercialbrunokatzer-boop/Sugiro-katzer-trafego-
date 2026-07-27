@@ -2,7 +2,7 @@
  * Painel Katzer OS — custo por venda + funil por etapa + parecer por conjunto (adset).
  * Make: Campanha Origem = campaign_name · Conjunto Origem = adset_name.
  */
-import { ORDEM_FUNIL, normalizaNomeFase } from './_bitrix-funil.mjs';
+import { ORDEM_FUNIL, normalizaNomeFase, linkWhatsApp, portalBase } from './_bitrix-funil.mjs';
 
 /** Etapas do card Funil de Conversão (CEO). */
 export const ETAPAS_FUNIL_PAINEL = [
@@ -23,10 +23,39 @@ function brl(v, dig = 2) {
   return `R$${Number(v).toLocaleString('pt-BR', { minimumFractionDigits: dig, maximumFractionDigits: dig })}`;
 }
 
-/** Índice mínimo no funil para considerar que o lead “passou” pela etapa. */
-function idxFase(nome) {
-  const i = ORDEM_FUNIL.indexOf(normalizaNomeFase(nome));
-  return i >= 0 ? i : -1;
+/**
+ * Garante bitrixUrl (deal/lead id) + whatsappUrl (telefone).
+ * Nunca devolver lead com id sem link Bitrix.
+ */
+export function normalizaLeadLinks(l = {}) {
+  const id = l.id != null ? String(l.id) : '';
+  const isDemo = id.startsWith('demo-');
+  let bitrixUrl = l.bitrixUrl || null;
+  if (!bitrixUrl && id && !isDemo) {
+    const path = l.tipo === 'lead' || l.entityType === 'lead'
+      ? `/crm/lead/details/${id}/`
+      : `/crm/deal/details/${id}/`;
+    bitrixUrl = `${portalBase()}${path}`;
+  }
+  if (bitrixUrl) {
+    bitrixUrl = String(bitrixUrl).replace(
+      /https?:\/\/katzer\.bitrix24\.com\.br/gi,
+      portalBase(),
+    );
+  }
+  const telefone = l.telefone || null;
+  const whatsappUrl = l.whatsappUrl || linkWhatsApp(telefone) || null;
+  return {
+    id: l.id ?? null,
+    nome: l.nome || l.nomeContato || l.title || (id ? `Lead #${id}` : 'Lead'),
+    contactId: l.contactId || null,
+    bitrixUrl,
+    whatsappUrl,
+    telefone,
+    fase: l.fase || null,
+    temBitrix: !!bitrixUrl,
+    temWhatsApp: !!whatsappUrl,
+  };
 }
 
 /**
@@ -48,18 +77,21 @@ export function contaEtapa(deals = [], etapa) {
  */
 export function montaFunilCusto({ gasto = 0, deals = [], fases = [] } = {}) {
   const g = n(gasto);
-  // Prefer deals; fallback buckets de fase
+  // Prefer deals; fallback buckets de fase (já vêm com bitrix/wa de fasesPorCampanha)
   let lista = deals || [];
   if (!lista.length && Array.isArray(fases)) {
     lista = [];
     for (const f of fases) {
       const nn = n(f.n);
       for (let i = 0; i < nn; i += 1) {
+        const src = (f.leads && f.leads[i]) ? f.leads[i] : {};
         lista.push({
-          ...(f.leads && f.leads[i] ? f.leads[i] : {}),
+          ...src,
           fase: f.nome,
-          bitrixUrl: f.leads?.[i]?.bitrixUrl || null,
-          whatsappUrl: f.leads?.[i]?.whatsappUrl || null,
+          bitrixUrl: src.bitrixUrl || null,
+          whatsappUrl: src.whatsappUrl || null,
+          telefone: src.telefone || null,
+          contactId: src.contactId || null,
         });
       }
     }
@@ -68,6 +100,7 @@ export function montaFunilCusto({ gasto = 0, deals = [], fases = [] } = {}) {
   const etapas = ETAPAS_FUNIL_PAINEL.map((et) => {
     const { n: qtd, leads } = contaEtapa(lista, et);
     const custo = qtd > 0 ? g / qtd : null;
+    const leadsNorm = leads.slice(0, 40).map(normalizaLeadLinks);
     return {
       id: et.id,
       label: et.label,
@@ -75,18 +108,13 @@ export function montaFunilCusto({ gasto = 0, deals = [], fases = [] } = {}) {
       custo,
       custoFmt: custo != null ? brl(custo) : '—',
       labelCusto: qtd > 0 ? `${brl(custo)} por ${et.label.toLowerCase().replace(/am$/, 'amento').replace(/as$/, 'a')}` : 'sem volume',
-      leads: leads.slice(0, 40).map((l) => ({
-        id: l.id,
-        nome: l.nome || l.nomeContato || l.title || `Lead #${l.id || ''}`,
-        bitrixUrl: l.bitrixUrl || null,
-        whatsappUrl: l.whatsappUrl || null,
-        telefone: l.telefone || null,
-        fase: l.fase || null,
-      })),
+      leads: leadsNorm,
+      temBitrix: leadsNorm.some((l) => l.temBitrix),
+      temWhatsApp: leadsNorm.some((l) => l.temWhatsApp),
+      motivoVazio: qtd === 0 ? 'Nenhum lead nesta etapa.' : null,
     };
   });
 
-  // Ajuste rótulos de custo como no mock do CEO
   const mapLabel = {
     mapeamento: 'por mapeamento',
     agendaram: 'por agendamento',
@@ -203,7 +231,6 @@ export function top10CustoVenda(campanhas = []) {
 
   const melhores = comVenda.slice(0, 10).map((c, i) => ({ ...c, pos: i + 1, rankingTipo: 'melhor' }));
   const piores = semVenda.slice(0, 10).map((c, i) => ({ ...c, pos: i + 1, rankingTipo: 'pior' }));
-  // Se ninguém vendeu, piores = maior CPL/gasto
   if (!piores.length) {
     const alt = [...(campanhas || [])]
       .filter((c) => n(c.forms) > 0)
@@ -245,4 +272,5 @@ export default {
   top10CustoVenda,
   enrichPainelKatzerOs,
   contaEtapa,
+  normalizaLeadLinks,
 };
