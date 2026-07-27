@@ -2,93 +2,101 @@
 
 | | |
 |---|---|
-| **Data** | 2026-07-26 |
+| **Atualizado** | 2026-07-27 |
 | **CEO** | Bruno Katzer |
-| **Painel** | App Decisão / Ranking inteligente (PR #43) |
+| **Painel** | App Decisão (custo/venda · funil · parecer) |
 | **Portal Bitrix** | `katzerassessoria.bitrix24.com.br` |
+| **App** | https://rotina-produtiva-michel.netlify.app/app.html |
 
 ---
 
-## Status
+## Status (validação live 27/07)
 
 | Parte | Status | Quem |
 |-------|--------|------|
-| Campos no Bitrix (Lead) | **FEITO** | Bruno |
-| Código do painel (filtro UF + ranking) | **FEITO** — PR #43 | Cursor |
-| Mapear Make Facebook → Bitrix | **PENDENTE** | Michel (ou Carol — quem tem login Make) |
-| Facebook / Instagram | **Não mexer** | Já conectado (Michel/Carol) |
+| Campos no Bitrix | **FEITO** | Bruno |
+| Código painel (UF + custo/venda + botões) | **FEITO** — PRs #43–#47 | Cursor |
+| Make: parar `teste-integracao` | **FEITO** (ontem) | Bruno / Michel |
+| Make: gravar no **Deal** `campaign_name` + `adset_name` | **CHECAR AGORA** | Make (módulo criar/atualizar **Deal**) |
+| API live `bitrixUfPreenchidos` | **ainda 0** | Aguardando lead **novo** com UF no Deal |
+| Badge SEM RASTREIO nas ACTIVE | **ainda ON** (FortMyers SC / Brasileiros) | Some quando UF casar |
+
+> **Importante:** o painel lê `crm.deal` (Funil Novo · CATEGORY_ID=1), **não** só Lead.  
+> Se o Make mapear só no Lead, a API continua `UF=0` e o funil fica zerado.
 
 ---
 
-## O que o Bruno já fez (100%)
+## Mapeamento obrigatório no Make (Deal)
 
-No Bitrix Katzer → CRM → Campos personalizados → **Lead**:
+1. https://www.make.com → **Scenarios** → cenário **Facebook Lead Ads → Bitrix**
+2. Módulo Bitrix = **criar/atualizar Deal** (negócio do Funil Novo Katzer), **não** só Lead
+3. Mapear:
 
-1. **Campanha origem** (tipo Série/texto, não obrigatório, mostrar no filtro)  
-2. **Adset origem** (tipo Série/texto, não obrigatório, mostrar no filtro)
+| Campo Bitrix (Deal) | Valor Make (Meta) | ID técnico esperado |
+|---------------------|-------------------|---------------------|
+| Campanha Origem | `{{campaign_name}}` | `UF_CRM_CAMPANHA_ORIGEM` |
+| Conjunto Origem | `{{adset_name}}` | `UF_CRM_ADSET_ORIGEM` |
 
-IDs técnicos esperados pelo painel (no **negócio/deal** do Funil Novo Katzer):
-- `UF_CRM_CAMPANHA_ORIGEM`
-- `UF_CRM_ADSET_ORIGEM`
+4. Remover / não gravar mais `teste-integracao` nesses campos  
+5. Salvar cenário **ON**
 
-> O App Decisão lê **crm.deal** (CATEGORY_ID=1), não só Lead. Se o Make gravar só no Lead, o funil continua **SEM RASTREIO** e os botões Bitrix/WhatsApp ficam sem lead na etapa. Ideal: mesmos campos no Deal **ou** Make atualizar o negócio.
->
-> Confirmar no Bitrix (editar campo → ver ID) se os códigos internos batem. Se o Bitrix gerou outro ID numérico, avisar o Cursor.
-
----
-
-## O que depende do Michel (Make)
-
-1. Entrar em https://www.make.com  
-2. **Scenarios** → abrir o cenário **Facebook Lead Ads → Bitrix**  
-3. No módulo **Bitrix** (criar/atualizar Lead), mapear:
-
-| Campo Bitrix | Valor Make (Facebook) |
-|--------------|------------------------|
-| Campanha origem / Campanha Origem | `campaign_name` |
-| Adset origem / Conjunto Origem | `adset_name` |
-
-> No painel Katzer OS o ranking usa **custo por venda** (gasto ÷ Ganhou). Parecer por conjunto lê `UF_CRM_ADSET_ORIGEM` (alias `UF_CRM_CONJUNTO_ORIGEM`).
-
-4. Salvar e deixar o cenário **ON**
-
-**Não precisa** entrar de novo no Facebook/Instagram. A conexão Face ↔ Make já existe.
+**Não mexer** Facebook/Instagram — conexão Face ↔ Make já existe.
 
 ---
 
-## Como validar (depois do Make)
+## Como validar (ordem)
 
-1. Cai um lead **novo** do Facebook  
-2. Abrir o lead no Bitrix Katzer  
-3. Campo **Campanha origem** deve vir com o nome da campanha Meta  
-4. No painel App Decisão → Ranking: funil **diferente por campanha** (não mais 8 iguais)  
-5. Sem UF preenchido → badge **SEM RASTREIO — CORRIGIR MAKE**
+1. Cair **1 lead novo** do Facebook (lead antigo sem UF não “cura” sozinho)
+2. Abrir o **negócio** no Bitrix → Campanha Origem = nome real da campanha Meta (ex.: `FortMyers_SANTACATARINA_…`)
+3. Hard refresh no app: https://rotina-produtiva-michel.netlify.app/app.html  
+4. Esperado:
+   - badge **SEM RASTREIO** some na campanha casada
+   - funil sai de `0 / Nenhum lead nesta etapa`
+   - Bitrix / WhatsApp ligam (1 lead = direto; vários = lista)
+   - **Custo por venda** e TOP 10 passam a ter base de Ganhou
 
----
-
-## Código (já no GitHub)
-
-- Branch: `cursor/ranking-inteligente-bitrix-f7d6`  
-- PR: https://github.com/comercialbrunokatzer-boop/Sugiro-katzer-trafego-/pull/43  
-- Funil só conta com `UF_CRM_CAMPANHA_ORIGEM`  
-- Ranking: custo/avanço → CPL → taxa de perda  
-- Badges Michel: CORTAR / AJUSTAR / ESCALAR / LIGAR  
-
-Merge do PR pode ir mesmo antes do Make; até mapear, campanhas novas aparecem **SEM RASTREIO** (honesto) em vez do funil vazado.
-
----
-
-## Mensagem pronta (WhatsApp → Michel)
+### API (smoke)
 
 ```
-Michel, Bitrix já tem 2 campos no Lead:
-• Campanha origem
-• Adset origem
+GET /api/decisao-app
+→ bitrixUfPreenchidos > 0
+→ ativas[].semRastreio = false (nas que tiverem UF)
+→ ativas[].leadsTotal > 0
+→ ativas[].funilPainel.etapas[].leads[].bitrixUrl
+```
 
-No Make (cenário Facebook → Bitrix), no módulo Bitrix, mapeia:
-• Campanha origem ← campaign_name
-• Adset origem ← adset_name
+---
 
-Salva e deixa ON. Não precisa mexer no Face.
-Doc: docs/RASTREIO-CAMPANHA-BITRIX-MAKE.md
+## O que o painel já faz sozinho (depois do UF)
+
+- Card: Investido · Leads/CPL · **Custo por venda** (verde)
+- Funil por etapa atual + R$/etapa + Bitrix + WhatsApp
+- TOP 10 melhores (menor custo/venda) · TOP 10 piores (gasto sem venda)
+- Parecer: PARAR / MANTER+ADICIONAR · botões MANTER = · ADICIONAR + · DIMINUIR − · PARAR
+- Gestor 🔒 com senha
+
+---
+
+## Não confundir com Operação 79
+
+| Sistema | O que é | Estabilidade / pendentes |
+|---------|---------|---------------------------|
+| **App Decisão** (tráfego) | Meta + Bitrix UF · funil custo/venda | SEM RASTREIO some com UF no **Deal** |
+| **Op.79** (Helena) | Fila oficial 79 WhatsApp | `cadencia-monitor` · ESTAVEL após **20 ticks** 5–6 min |
+
+Os **~61–62 pendentes** da Op.79 **não** são forms Meta sem UF. São contatos da fila Helena.  
+Make/UF destrava o **App Decisão**; o monitor de estabilidade da Op.79 é outro endpoint.
+
+---
+
+## Mensagem pronta (WhatsApp)
+
+```
+Make → Bitrix DEAL (não só Lead):
+• Campanha Origem ← {{campaign_name}}
+• Conjunto Origem ← {{adset_name}}
+Sem teste-integracao.
+
+Depois do 1º lead novo:
+hard refresh no app → SEM RASTREIO some → Bitrix/WhatsApp ligam.
 ```
