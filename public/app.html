@@ -3,150 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Katzer OS - App Decisão</title>
+<title>Katzer OS — App Decisão</title>
 <link rel="manifest" href="/manifest-campanhas.webmanifest">
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#ffffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Campanhas">
+<meta name="apple-mobile-web-app-title" content="Katzer OS">
 <link rel="apple-touch-icon" href="/icon-katzer.png">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'DM Sans',system-ui,sans-serif}
-body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-height:100vh}
-.header{padding:16px 20px;border-bottom:1px solid #eee;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);position:sticky;top:0;z-index:10}
+body{background:#fff;color:#111;min-height:100vh}
+.header{padding:14px 16px;border-bottom:1px solid #eee;background:#fff;position:sticky;top:0;z-index:10}
 .header h1{font-family:'Instrument Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-.02em}
 .header p{font-size:11px;color:#888;margin-top:2px}
-.tabs{display:flex;gap:6px;padding:12px 16px;background:#fff;border-bottom:1px solid #eee;flex-wrap:wrap}
-.tab{padding:8px 12px;border-radius:20px;border:1px solid #e5e5e5;background:#fff;font-size:12px;cursor:pointer;font-weight:600}
+.tabs{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;background:#fff}
+.tab{padding:8px 12px;border-radius:999px;border:1px solid #e8e8e8;background:#fff;font-size:12px;cursor:pointer;font-weight:600}
 .tab.active{background:#111;color:#fff;border-color:#111}
-.alert-top{background:#fff7ed;border:1px solid #fed7aa;padding:10px 14px;margin:12px 16px;border-radius:10px;font-size:12px;display:none}
-.alert-leads{background:#ecfdf5;border:1px solid #a7f3d0;padding:10px 14px;margin:12px 16px;border-radius:10px;font-size:12px;display:none;font-weight:600;color:#065f46}
-.info{margin:12px 16px;font-size:11px;color:#666;background:#fff;border:1px solid #eee;padding:8px 12px;border-radius:8px;line-height:1.4}
-.sec-title{margin:16px 16px 4px;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700}
-.sec-sub{margin:0 16px 8px;font-size:11px;color:#888}
-.card{background:#fff;border:1px solid #eee;border-radius:14px;margin:12px 16px;overflow:hidden}
-.card.ruim{border-color:#fecaca;background:#fffafa;box-shadow:0 0 0 1px #fecaca}
-.card.oportunidade{border-color:#bbf7d0;background:#f7fef9;box-shadow:0 0 0 1px #bbf7d0}
-.card-head{padding:12px 14px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.card-head h3{font-size:13px;font-weight:600;line-height:1.3}
-.badge{font-size:10px;padding:3px 8px;border-radius:10px;background:#f3f3f3;white-space:nowrap}
+.info{margin:12px 16px;font-size:11px;color:#666;background:#fafafa;border:1px solid #eee;padding:8px 12px;border-radius:10px}
+.sec{margin:16px 16px 8px;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700}
+.sec-sub{margin:0 16px 10px;font-size:11px;color:#888}
+.card{background:#fff;border:1px solid #eee;border-radius:16px;margin:12px 16px;overflow:hidden}
+.card-head{padding:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-bottom:1px solid #f5f5f5}
+.card-head h3{font-size:14px;font-weight:700;line-height:1.3}
+.metrics{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:8px;padding:12px 14px}
+.m{background:#fafafa;border:1px solid #f0f0f0;border-radius:12px;padding:10px}
+.m b{display:block;font-size:15px;font-weight:700}
+.m span{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em}
+.m.highlight{background:#ecfdf5;border-color:#bbf7d0}
+.m.highlight b{color:#166534}
+.funil{padding:4px 14px 14px}
+.funil-h{font-size:12px;font-weight:700;margin:8px 0 4px}
+.funil-sub{font-size:10px;color:#888;margin-bottom:8px}
+.etapa{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #f0f0f0;border-radius:12px;margin-bottom:8px;background:#fff}
+.etapa-n{min-width:28px;height:28px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800}
+.etapa-body{flex:1;min-width:0}
+.etapa-body b{font-size:12px;display:block}
+.etapa-body span{font-size:11px;color:#666}
+.etapa-links{display:flex;gap:6px;flex-shrink:0}
+.etapa-links a,.etapa-links span{font-size:10px;padding:6px 8px;border-radius:8px;text-decoration:none;font-weight:700}
+.bx{background:#eff6ff;color:#1d4ed8}
+.wa{background:#ecfdf5;color:#15803d}
+.muted{background:#f5f5f5;color:#aaa}
+.parecer{padding:0 14px 14px;display:grid;gap:8px}
+.dec{border-radius:12px;padding:12px;font-size:12px;border:1px solid #eee}
+.dec.vermelho{border-color:#fecaca;background:#fff5f5}
+.dec.verde{border-color:#bbf7d0;background:#f0fdf4}
+.dec.cinza{background:#fafafa}
+.dec b{display:block;margin-bottom:4px;font-size:12px}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 14px;background:#fafafa;border-top:1px solid #f0f0f0}
+.btn{padding:10px 8px;border-radius:10px;border:1px solid #e5e5e5;background:#fff;font-size:11px;cursor:pointer;font-weight:700}
+.btn.primary{background:#16a34a;color:#fff;border-color:#16a34a}
+.btn.danger{color:#b91c1c}
+.badge{font-size:10px;padding:3px 8px;border-radius:999px;background:#f3f3f3;font-weight:700}
 .badge.bad{background:#fee2e2;color:#b91c1c}
 .badge.good{background:#dcfce7;color:#166534}
-.meta-decisao{margin:0 14px 10px;padding:8px 10px;border-radius:8px;background:#f4f6f8;border:1px solid #e8ecf0;font-size:11px;line-height:1.35;color:#222}
-.meta-decisao b{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#555;display:block;margin-bottom:2px}
-.meta-decisao.escalar{background:#f0fdf4;border-color:#bbf7d0}
-.meta-decisao.cortar_ou_trocar,.meta-decisao.pausar_teste{background:#fff5f5;border-color:#fecaca}
-.meta-decisao.manter_e_ligar{background:#eff6ff;border-color:#bfdbfe}
-.row{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid #f7f7f7;font-size:12px;flex-wrap:wrap}
-.col{flex:1;min-width:90px}
-.col b{font-size:12px;display:block}
-.col span{font-size:11px;color:#666}
-.quality{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
-.q{font-size:10px;padding:2px 6px;border-radius:6px;background:#f5f5f5}
-.q.pot{background:#dbeafe}.q.int{background:#dcfce7}.q.cur{background:#fef3c7}.q.fake{background:#fee2e2}.q.ruim{background:#f3f4f6}
-.fase-box{margin-top:8px;padding:8px;background:#fafafa;border:1px solid #eee;border-radius:10px}
-.fase-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
-.fase-n{min-width:28px;height:28px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px}
-.fase-label{font-size:11px;font-weight:700;color:#333}
-.fase-meta{font-size:10px;color:#888}
-.fase-pills{display:flex;flex-wrap:wrap;gap:6px}
-.fase-pill{font-size:10px;padding:5px 9px;border-radius:8px;background:#fff;border:1px solid #e5e5e5;font-weight:600;cursor:pointer;color:#111}
-.fase-pill.zero{opacity:.45;cursor:default;background:#f7f7f7}
-.fase-pill.open,.fase-pill:not(.zero):hover{border-color:#111;background:#111;color:#fff}
-.fase-leads{margin-top:8px;display:none;flex-direction:column;gap:6px}
-.fase-leads.show{display:flex}
-.lead-line{font-size:11px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#fff;border-radius:8px;border:1px solid #f0f0f0}
-.lead-line a{color:#0b6e4f;font-weight:700;text-decoration:none}
-.lead-line a.bx{color:#2a5bd7}
-.actions{display:flex;gap:6px;padding:10px 14px;background:#fafafa}
-.btn{padding:7px 12px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;font-size:12px;cursor:pointer;flex:1;font-weight:600}
-.btn.primary{background:#111;color:#fff;border-color:#111}
-.btn.danger{color:#b91c1c}
+.badge.warn{background:#7f1d1d;color:#fecaca}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:20px;font-size:12px;z-index:100;display:none;max-width:90%;text-align:center}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50}
 .modal-box{background:#fff;padding:20px;border-radius:16px;width:90%;max-width:320px}
 .modal-box h4{font-size:14px;margin-bottom:8px}
 .modal-box p{font-size:12px;color:#666;margin-bottom:12px}
 .input{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px}
+.rank-row{padding:10px 14px;border-bottom:1px solid #f5f5f5;font-size:12px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.rank-row b{font-size:12px}
+.foot{margin:8px 16px 24px;font-size:10px;color:#999;text-align:center}
+.alert-leads,.alert-top{margin:10px 16px;padding:10px 12px;border-radius:10px;font-size:12px;display:none}
+.alert-leads{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-weight:600}
+.alert-top{background:#fff7ed;border:1px solid #fed7aa}
 .gestor-lock{padding:40px 20px;text-align:center}
-.feed{padding:12px 16px}
 .feed-item{font-size:12px;padding:8px 0;border-bottom:1px solid #f0f0f0}
-.small-card{background:#f8f7f6;border-radius:10px;padding:12px;margin:10px 0;font-size:12px}
-.pos{font-size:11px;color:#888;font-weight:700;margin-right:4px}
-.fb-box{margin:12px 16px;padding:12px;background:#fff;border:1px solid #eee;border-radius:12px;font-size:12px;display:grid;gap:10px;grid-template-columns:1fr 1fr}
-.fb-box b{display:block;margin-bottom:4px}
-@media(max-width:560px){.fb-box{grid-template-columns:1fr}}
+.small{background:#fafafa;border-radius:10px;padding:12px;margin:10px 0;font-size:12px}
+@media(max-width:420px){.metrics{grid-template-columns:1fr 1fr}.actions{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="header">
-  <h1>Katzer OS • App Decisão</h1>
-  <p>Só o <b>Michel</b> clica Manter / R$ / Parar na Meta · Bruno é avisado</p>
+  <h1>Katzer OS — App Decisão</h1>
+  <p>Michel executa na Meta · Bruno vê gestor · Make: Campanha + Conjunto Origem</p>
   <div id="michelGate" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-    <input id="michelPwd" class="input" type="password" placeholder="Chave do Michel (Meta)" autocomplete="current-password" style="margin:0;flex:1;min-width:160px;max-width:240px">
-    <button class="btn primary" type="button" onclick="unlockMichel()" style="flex:0">Desbloquear Meta</button>
+    <input id="michelPwd" class="input" type="password" placeholder="Chave do Michel (Meta)" autocomplete="current-password" style="margin:0;flex:1;min-width:140px;max-width:220px">
+    <button class="btn primary" type="button" onclick="unlockMichel()" style="flex:0">Desbloquear</button>
     <span id="michelStatus" style="font-size:11px;color:#888">Meta bloqueada</span>
   </div>
 </div>
 <div class="tabs">
-  <button class="tab active" data-tab="ativas" onclick="showTab('ativas')">1 · Ativas</button>
-  <button class="tab" data-tab="ranking" onclick="showTab('ranking')">2 · Ranking</button>
-  <button class="tab" data-tab="gestor" onclick="showTab('gestor')">3 · Gestor 🔒</button>
+  <button class="tab active" data-tab="ativas" onclick="showTab('ativas')">Campanhas</button>
+  <button class="tab" data-tab="ranking" onclick="showTab('ranking')">TOP 10</button>
+  <button class="tab" data-tab="gestor" onclick="showTab('gestor')">Gestor 🔒</button>
 </div>
 
 <div id="tab-ativas">
-  <div class="info" id="infoAtivas">Só campanhas <b>ACTIVE</b> na Meta (veiculando agora). Gasto/CPL = últimos 30 dias.</div>
+  <div class="info" id="infoAtivas">Campanhas ACTIVE · funil Bitrix + WhatsApp · custo por venda</div>
   <div id="alertLeads" class="alert-leads"></div>
   <div id="alertMichel" class="alert-top"></div>
   <div id="listAtivas"></div>
+  <div class="foot" id="footAtivas">Atualizado — Dados via Meta + Bitrix + WhatsApp</div>
 </div>
 
 <div id="tab-ranking" style="display:none">
-  <div class="info" id="infoRanking">Desde <b>12/07/2025</b> (entrada do Michel) até hoje · Top 10 por <b>qualidade do funil Bitrix</b> (fase + contato + comentários) · CPL só desempatando.</div>
-  <div class="fb-box" id="fbRanking">
-    <div><b>Por que as 10 melhores converteram</b><span id="fbMelhores">—</span></div>
-    <div><b>Por que as 10 piores travaram</b><span id="fbPiores">—</span></div>
-  </div>
-  <div class="sec-title">🏆 Top 10 melhores · maior nota no funil</div>
-  <div class="sec-sub" id="subMelhores">Nota Bitrix (fase/contato/comentários) · CPL só desempatando</div>
-  <div id="listMelhores"></div>
-  <div class="sec-title">⚠️ Top 10 piores · menor nota no funil</div>
-  <div class="sec-sub">Mesma régua — barato sem avanço no funil cai aqui</div>
-  <div id="listPiores"></div>
+  <div class="info" id="infoRanking">TOP 10 MELHORES = menor custo/venda · TOP 10 PIORES = gasto sem venda</div>
+  <div class="sec">🏆 TOP 10 MELHORES</div>
+  <div class="sec-sub">Menor custo por venda</div>
+  <div class="card" id="listMelhores"></div>
+  <div class="sec">⚠️ TOP 10 PIORES</div>
+  <div class="sec-sub">Maior custo sem venda</div>
+  <div class="card" id="listPiores"></div>
 </div>
 
 <div id="tab-gestor" style="display:none">
   <div class="gestor-lock" id="lockScreen">
     <h3 style="font-size:14px">Área Gestor Bruno</h3>
-    <p style="font-size:12px;color:#666;margin:8px 0 16px">Digite a senha para ver movimentos do Michel</p>
+    <p style="font-size:12px;color:#666;margin:8px 0 16px">Senha do gestor</p>
     <input id="pwd" class="input" type="password" placeholder="Senha" autocomplete="current-password">
     <button class="btn primary" onclick="unlock()">Entrar</button>
   </div>
   <div id="gestorContent" style="display:none">
     <div class="card">
-      <div class="card-head"><h3>Placar Gestor · desde 12/07/2025</h3><span class="badge">Live</span></div>
-      <div class="feed" id="feed"></div>
+      <div class="card-head"><h3>Placar Gestor</h3><span class="badge">Live</span></div>
+      <div style="padding:12px 14px" id="feed"></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>Qualidade IA (tempo real)</h3></div>
-      <div class="row"><div class="col"><span id="qualTotais">…</span></div></div>
+      <div class="card-head"><h3>Top custo/venda</h3></div>
+      <div style="padding:12px 14px;font-size:12px" id="topMelhores"></div>
     </div>
-    <div class="card">
-      <div class="card-head"><h3>Top 10 melhores · nota do funil</h3></div>
-      <div class="row" id="topMelhores" style="flex-direction:column;gap:4px;font-size:12px"></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><h3>Top 10 piores + feedback</h3></div>
-      <div class="row" id="feedbackBox"></div>
-    </div>
-    <div id="alertGestor" class="alert-top" style="margin:12px 16px"></div>
+    <div id="alertGestor" class="alert-top"></div>
   </div>
 </div>
 
 <div class="modal" id="modalStop">
   <div class="modal-box">
     <h4>Parar campanha na Meta?</h4>
-    <p>Isso <b>pausa de verdade</b> na Meta Ads (status PAUSED), registra no placar do gestor e avisa no WhatsApp.</p>
+    <p>Pausa de verdade (PAUSED), registra no gestor e avisa Bruno.</p>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="closeModal('modalStop')">Cancelar</button>
       <button class="btn primary" onclick="confirmStop()">Sim, pausar</button>
@@ -155,8 +142,8 @@ body{background:linear-gradient(180deg,#f6f4f1 0%,#fcfcfc 40%);color:#111;min-he
 </div>
 <div class="modal" id="modalBudget">
   <div class="modal-box">
-    <h4>Novo orçamento diário</h4>
-    <input id="budgetInput" class="input" type="number" placeholder="R$">
+    <h4>Novo orçamento diário (R$)</h4>
+    <input id="budgetInput" class="input" type="number" placeholder="Ex.: 80">
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="closeModal('modalBudget')">Cancelar</button>
       <button class="btn primary" onclick="confirmBudget()">Confirmar</button>
@@ -180,37 +167,27 @@ function acha(id){return [...ATIVAS,...MELHORES,...PIORES].find(c=>String(c.id)=
 function refreshMichelGate(){
   const st=document.getElementById('michelStatus');
   if(!st) return;
-  if(MICHEL_KEY){
-    st.textContent='✅ Michel autorizado · Meta liberada';
-    st.style.color='#166534';
-  }else{
-    st.textContent='Meta bloqueada — só Michel desbloqueia';
-    st.style.color='#888';
-  }
+  if(MICHEL_KEY){st.textContent='✅ Michel autorizado';st.style.color='#166534';}
+  else{st.textContent='Meta bloqueada';st.style.color='#888';}
 }
 function unlockMichel(){
   const pwd=(document.getElementById('michelPwd')?.value||'').trim();
   if(!pwd){toast('Digite a chave do Michel');return;}
-  if(pwd==='Davi2026@'){toast('Senha do gestor não executa Meta — só o Michel');return;}
-  MICHEL_KEY=pwd;
-  sessionStorage.setItem('michelKey', pwd);
-  refreshMichelGate();
-  toast('Michel autorizado · pode clicar na Meta');
+  if(pwd==='Davi2026@'){toast('Senha do gestor não executa Meta');return;}
+  MICHEL_KEY=pwd;sessionStorage.setItem('michelKey',pwd);refreshMichelGate();toast('Michel autorizado');
 }
 function exigeMichel(){
   if(MICHEL_KEY) return true;
-  toast('Desbloqueie com a chave do Michel antes de clicar na Meta');
+  toast('Desbloqueie com a chave do Michel');
   document.getElementById('michelPwd')?.focus();
   return false;
 }
-
 function showTab(t){
   ['ativas','ranking','gestor'].forEach(k=>{
     document.getElementById('tab-'+k).style.display=k===t?'block':'none';
   });
   document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));
 }
-
 function unlock(){
   const pwd=document.getElementById('pwd').value;
   if(pwd==='Davi2026@'){
@@ -221,127 +198,88 @@ function unlock(){
   }else alert('Senha incorreta');
 }
 function openStop(id){if(!exigeMichel())return;currentCamp=id;document.getElementById('modalStop').style.display='flex';}
-function openBudget(id){if(!exigeMichel())return;currentCamp=id;document.getElementById('budgetInput').value='';document.getElementById('modalBudget').style.display='flex';}
+function openBudget(id, preset){
+  if(!exigeMichel())return;
+  currentCamp=id;
+  document.getElementById('budgetInput').value=preset!=null?preset:'';
+  document.getElementById('modalBudget').style.display='flex';
+}
 function closeModal(id){document.getElementById(id).style.display='none';}
 
-function toggleFase(btn, key){
-  const box=document.getElementById(key);
-  if(!box) return;
-  const open=box.classList.toggle('show');
-  btn.classList.toggle('open', open);
-}
-
-function htmlFases(cam){
-  const forms=cam.forms??0;
-  const noFunil=cam.leadsTotal||0;
-  const fases=cam.fases||[];
-  if(!fases.length && !forms){
-    return `<div class="fase-box"><div class="fase-head"><div class="fase-n">0</div><span class="fase-label">Forms / fases Bitrix</span></div>
-      <span class="fase-meta">Sem forms nesta campanha</span></div>`;
+function htmlFunil(cam){
+  const f=cam.funilPainel;
+  if(!f||!(f.etapas||[]).length){
+    return `<div class="funil"><div class="funil-h">Funil de Conversão</div><div class="funil-sub">${cam.semRastreio?'⚠ SEM RASTREIO — conferir Make (Campanha/Conjunto Origem)':'Sem deals no funil ainda'}</div></div>`;
   }
-  const pills=fases.map((f,i)=>{
-    const key=`fase-${String(cam.id).replace(/\W/g,'_')}-${i}`;
-    const zero=!f.n;
-    if(zero) return `<span class="fase-pill zero">${esc(f.nome)} · 0</span>`;
-    return `<button type="button" class="fase-pill" data-fase="${key}" onclick="toggleFase(this,'${key}')">${esc(f.nome)} · ${f.n}</button>`;
-  }).join('');
-  const panels=fases.map((f,i)=>{
-    if(!f.n) return '';
-    const key=`fase-${String(cam.id).replace(/\W/g,'_')}-${i}`;
-    const leads=(f.leads||[]).map(l=>{
-      const bx=(l.bitrixUrl||'').replace(/https?:\/\/katzer\.bitrix24\.com\.br/gi,'https://katzerassessoria.bitrix24.com.br');
-      const wa=l.whatsappUrl||'';
-      return `<div class="lead-line">
-        <div style="flex:1;min-width:0">
-          <b>${esc(l.nome||'Lead')}</b>
-          <div style="color:#888;font-size:10px">${esc(f.nome)}${l.telefone?` · ${esc(l.telefone)}`:''}</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          ${bx?`<a class="bx" href="${esc(bx)}" target="_blank" rel="noopener" style="padding:6px 10px;border-radius:8px;background:#1d4ed8;color:#fff;text-decoration:none;font-size:11px;font-weight:700">Bitrix</a>`:'<span style="color:#bbb;font-size:10px">sem Bitrix</span>'}
-          ${wa?`<a href="${esc(wa)}" target="_blank" rel="noopener" style="padding:6px 10px;border-radius:8px;background:#16a34a;color:#fff;text-decoration:none;font-size:11px;font-weight:700">WhatsApp</a>`:'<span style="color:#bbb;font-size:10px">sem WA</span>'}
-        </div>
-      </div>`;
-    }).join('') || `<div class="lead-line"><span style="color:#888">${esc(f.nome)} · ${f.n}</span></div>`;
-    return `<div class="fase-leads" id="${key}">${leads}</div>`;
-  }).join('');
-  return `<div class="fase-box">
-    <div class="fase-head">
-      <div class="fase-n">${forms}</div>
-      <div>
-        <div class="fase-label">Forms Meta → Funil Novo Katzer</div>
-        <div class="fase-meta">${noFunil} leads no funil${cam.fasesFonte?` · ${esc(cam.fasesFonte)}`:''} · toque a fase → leads certos · Bitrix · WhatsApp</div>
+  const rows=(f.etapas||[]).map((e,i)=>{
+    const lead=e.leads&&e.leads[0];
+    const bx=(lead&&lead.bitrixUrl)||'';
+    const wa=(lead&&lead.whatsappUrl)||'';
+    const bxClean=String(bx).replace(/https?:\/\/katzer\.bitrix24\.com\.br/gi,'https://katzerassessoria.bitrix24.com.br');
+    return `<div class="etapa">
+      <div class="etapa-n">${e.n||0}</div>
+      <div class="etapa-body"><b>${i+1} — ${esc(e.label)}</b><span>${esc(e.labelCusto||'—')}</span></div>
+      <div class="etapa-links">
+        ${bxClean?`<a class="bx" href="${esc(bxClean)}" target="_blank" rel="noopener">Bitrix</a>`:`<span class="muted">Bitrix</span>`}
+        ${wa?`<a class="wa" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>`:`<span class="muted">WhatsApp</span>`}
       </div>
-    </div>
-    <div class="fase-pills">${pills||'<span class="fase-meta">Carregando fases…</span>'}</div>
-    ${panels}
+    </div>`;
+  }).join('');
+  return `<div class="funil">
+    <div class="funil-h">Funil de Conversão</div>
+    <div class="funil-sub">Valores por etapa + Total investido: ${esc(f.gastoFmt||cam.gasto||'—')}</div>
+    ${rows}
   </div>`;
 }
 
-function cardHtml(cam,{showPos=false, showActions=true}={}){
-  const cls=cam.alertaVisual==='ruim'?'ruim':(cam.alertaVisual==='oportunidade'?'oportunidade':'');
-  const badgeTxt=cam.qual==='bad'?'RUIM · '+cam.custo:(cam.qual==='good'?'OPORTUNIDADE · '+cam.custo:cam.custo+' /lead');
-  const nf=cam.notaFunil||{};
-  const notaTxt=nf.nota!=null?`Nota funil ${nf.selo||''} ${nf.nota}`:null;
-  return `<div class="card ${cls}">
+function htmlParecer(cam){
+  const dec=(cam.parecerKatzer&&cam.parecerKatzer.decisoes)||[];
+  if(!dec.length) return '';
+  return `<div class="parecer"><div class="funil-h">💡 Parecer Katzer OS</div>${dec.map(d=>`
+    <div class="dec ${esc(d.cor||'cinza')}"><b>${esc(d.texto||d.acao)}</b>${esc(d.motivo||'')}</div>
+  `).join('')}</div>`;
+}
+
+function cardHtml(cam,{showPos=false}={}){
+  const cpv=cam.custoPorVendaFmt||cam.funilPainel?.custoPorVendaFmt||'—';
+  const badge=cam.semRastreio?'<span class="badge warn">SEM RASTREIO</span>':(cam.qual==='bad'?'<span class="badge bad">RUIM</span>':(cam.qual==='good'?'<span class="badge good">OK</span>':''));
+  const add=cam.parecerKatzer?.decisoes?.find(d=>d.acao==='MANTER_ADICIONAR');
+  const plus=add&&add.incrementoDia!=null?add.incrementoDia:20;
+  return `<div class="card">
     <div class="card-head">
-      <h3>${showPos&&cam.pos?`<span class="pos">${cam.pos}º</span>`:''}${esc(cam.name)}${cam.ativa===false?' <span style="color:#999;font-size:10px">· pausada</span>':''}</h3>
-      <span class="badge ${cam.qual||''}">${esc(badgeTxt)}</span>
+      <h3>${showPos&&cam.pos?cam.pos+'º · ':''}📍 ${esc(cam.name)}${cam.ativa===false?' <span style="color:#999;font-size:10px">· pausada</span>':''}</h3>
+      ${badge}
     </div>
-    <div class="row">
-      <div class="col"><b>${esc(cam.inicio)}</b><span>Início</span></div>
-      <div class="col"><b>${esc(cam.gasto)}</b><span>Gasto</span></div>
-      <div class="col"><b>${esc(cam.imp)}</b><span>Impressões</span></div>
-      <div class="col"><b>${cam.forms??0}</b><span>Forms</span></div>
-      <div class="col"><b>${esc(cam.custo)}</b><span>Custo/Lead</span></div>
-      ${notaTxt?`<div class="col"><b>${esc(notaTxt)}</b><span title="${esc(nf.motivo||'')}">Qualidade Bitrix</span></div>`:''}
+    <div class="metrics">
+      <div class="m"><b>${esc(cam.gasto||'—')}</b><span>Investido</span></div>
+      <div class="m"><b>${cam.forms??0} · ${esc(cam.custo||'—')}</b><span>Leads / CPL</span></div>
+      <div class="m highlight"><b>${esc(cpv)}</b><span>Custo por venda</span></div>
     </div>
-    ${nf.motivo?`<div class="fase-meta" style="margin:4px 0 8px;color:#555">${esc(nf.motivo)}</div>`:''}
-    ${cam.metaDecisao?`<div class="meta-decisao ${escAttr(cam.metaDecisao.acao||'')}"><b>Meta · ${esc((cam.metaDecisao.acao||'').replace(/_/g,' '))}</b>${esc(cam.metaDecisao.motivo||'')}</div>`:''}
-    <div class="row"><div class="col"><b>Qualidade IA + fases Bitrix</b>
-      <div class="quality">
-        <span class="q pot">${cam.detail?.pot||0} Potencial</span>
-        <span class="q int">${cam.detail?.int||0} Interessado</span>
-        <span class="q cur">${cam.detail?.cur||0} Curioso</span>
-        ${cam.detail?.fake?`<span class="q fake">${cam.detail.fake} Fake</span>`:''}
-        ${cam.detail?.ruim?`<span class="q ruim">${cam.detail.ruim} Ruim</span>`:''}
-      </div>
-      ${htmlFases(cam)}
-    </div></div>
-    ${showActions?`<div class="actions">
-      <button class="btn" onclick="doAction('manter','${escAttr(cam.id)}')">Manter</button>
-      <button class="btn" onclick="openBudget('${escAttr(cam.id)}')">R$ +/-</button>
-      <button class="btn danger" onclick="openStop('${escAttr(cam.id)}')">Parar</button>
-    </div>`:''}
+    ${htmlFunil(cam)}
+    ${htmlParecer(cam)}
+    <div class="actions">
+      <button class="btn" onclick="doAction('manter','${escAttr(cam.id)}')">MANTER =</button>
+      <button class="btn primary" onclick="openBudget('${escAttr(cam.id)}', ${(cam.gastoNum||0)/30+plus})">ADICIONAR +</button>
+      <button class="btn" onclick="openBudget('${escAttr(cam.id)}')">DIMINUIR −</button>
+      <button class="btn danger" onclick="openStop('${escAttr(cam.id)}')">PARAR</button>
+    </div>
   </div>`;
+}
+
+function rankList(arr){
+  if(!arr.length) return '<div class="rank-row">Sem dados</div>';
+  return arr.map(c=>`<div class="rank-row">
+    <div><b>${c.pos}. ${esc(c.name)}</b><div style="color:#888;font-size:10px">${c.forms||0} leads · CPL ${esc(c.custo||'—')} · vendas ${c.vendas??0}</div></div>
+    <div style="text-align:right;font-weight:700">${esc(c.custoPorVendaFmt||c.funilPainel?.custoPorVendaFmt||'—')}</div>
+  </div>`).join('');
 }
 
 function renderLists(){
-  const a=document.getElementById('listAtivas');
-  a.innerHTML=ATIVAS.length
+  document.getElementById('listAtivas').innerHTML=ATIVAS.length
     ? ATIVAS.map(c=>cardHtml(c)).join('')
-    : '<div class="card"><div class="row">Nenhuma campanha ACTIVE no momento.</div></div>';
-  document.getElementById('listMelhores').innerHTML=MELHORES.length
-    ? MELHORES.map(c=>cardHtml(c,{showPos:true})).join('')
-    : '<div class="card"><div class="row">Sem dados desde 12/07/2025 ainda.</div></div>';
-  document.getElementById('listPiores').innerHTML=PIORES.length
-    ? PIORES.map(c=>cardHtml(c,{showPos:true})).join('')
-    : '<div class="card"><div class="row">Sem dados.</div></div>';
-}
-
-function updateLeadsAlert(n){
-  const el=document.getElementById('alertLeads');
-  if(!el) return;
-  if(n>0){
-    el.style.display='block';
-    const novo=lastLeadsHoje!=null && n>lastLeadsHoje;
-    el.textContent=novo
-      ? `🔔 Novo lead! ${n} lead(s) de tráfego hoje — abra as fases e confira no WhatsApp`
-      : `🔔 ${n} lead(s) de tráfego hoje — fases Bitrix + WhatsApp abaixo`;
-    if(novo) toast(`🔔 ${n-lastLeadsHoje} lead(s) novo(s) chegaram`);
-  }else{
-    el.style.display='none';
-  }
-  lastLeadsHoje=n;
+    : '<div class="card"><div class="rank-row">Nenhuma campanha ACTIVE.</div></div>';
+  document.getElementById('listMelhores').innerHTML=rankList(MELHORES);
+  document.getElementById('listPiores').innerHTML=rankList(PIORES);
 }
 
 async function postAcao(body){
@@ -353,15 +291,12 @@ async function postAcao(body){
   }).then(r=>r.json()).catch(()=>({ok:false}));
   if(!res.ok){
     if(res.precisaMichel){MICHEL_KEY='';sessionStorage.removeItem('michelKey');refreshMichelGate();}
-    toast(res.erro||'Falhou');
-    return res;
+    toast(res.erro||'Falhou');return res;
   }
   toast(res.toast||'Registrado');
   if(res.alertaMichel){const el=document.getElementById('alertMichel');el.style.display='block';el.textContent=res.alertaMichel;}
-  if(res.alertaGestor){const el=document.getElementById('alertGestor');if(el){el.style.display='block';el.textContent=res.alertaGestor;}}
   if(GESTOR_KEY) loadGestor();
-  // Recarrega lista (Parar remove da aba Ativas)
-  setTimeout(loadMichel, 800);
+  setTimeout(loadMichel,800);
   return res;
 }
 async function doAction(act,id){
@@ -388,17 +323,15 @@ async function loadMichel(){
   MELHORES=DATA.top10Melhores||[];
   PIORES=DATA.top10Piores||[];
   const info=document.getElementById('infoAtivas');
-  if(info) info.innerHTML=`Só campanhas <b>ACTIVE</b> na Meta (sem [TESTE]) · <b>${ATIVAS.length}</b> agora. ${esc(DATA.avisoAbas||'')}${DATA.bitrixOk===false?' · <span style="color:#b91c1c">Bitrix: webhook ainda não ligado — fases parciais</span>':(DATA.bitrixOk?' · Bitrix OK':'')}`;
+  if(info) info.innerHTML=`ACTIVE sem [TESTE]: <b>${ATIVAS.length}</b>. ${esc(DATA.avisoAbas||'')} Ranking: <b>custo por venda</b>.`;
   const ir=document.getElementById('infoRanking');
-  if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> até <b>${esc(DATA.rankingAte||'hoje')}</b> · Top 10 por <b>qualidade do funil Bitrix</b> (fase + contato + comentários) · CPL só desempatando.`;
-  const fbM=document.getElementById('fbMelhores');
-  const fbP=document.getElementById('fbPiores');
-  if(fbM) fbM.innerHTML='<br>'+(DATA.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>');
-  if(fbP) fbP.innerHTML='<br>'+(DATA.feedbackPiores||[]).map(x=>'• '+esc(x)).join('<br>');
-  updateLeadsAlert(DATA.leadsHoje||0);
-  if(DATA.alertaLeadsHoje && (DATA.leadsHoje||0)>0){
-    const el=document.getElementById('alertLeads');
-    if(el && lastLeadsHoje===null){ el.style.display='block'; el.textContent=DATA.alertaLeadsHoje; }
+  if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> · regra <b>${esc(DATA.rankingRegra||'custo_por_venda')}</b> · Make Campanha/Conjunto Origem.`;
+  const foot=document.getElementById('footAtivas');
+  if(foot) foot.textContent=`Atualizado ${DATA.data||''} ${DATA.agora||''} — Dados via Meta + Bitrix + WhatsApp`;
+  const el=document.getElementById('alertLeads');
+  if(el){
+    if((DATA.leadsHoje||0)>0){el.style.display='block';el.textContent=DATA.alertaLeadsHoje||(`${DATA.leadsHoje} lead(s) hoje`);}
+    else el.style.display='none';
   }
   renderLists();
 }
@@ -409,18 +342,14 @@ async function loadGestor(){
   if(!r.ok){toast(r.erro||'Gestor indisponível');return;}
   const g=r.gestor||{};
   const feed=document.getElementById('feed');
-  const itens=(g.feed||[]).map(i=>`<div class="feed-item">${esc(i.texto||'')}</div>`).join('')||'<div class="feed-item">Aguardando ações do Michel hoje...</div>';
-  feed.innerHTML=`<div class="small-card">Hoje: ${g.hoje||0} · Acumulado desde 12/07/2025: ${g.acumulado||127} · ${esc(g.email14h||'E-mail 14h')}</div>${itens}`;
-  document.getElementById('qualTotais').textContent=g.qualidadeTexto||'';
-  document.getElementById('topMelhores').innerHTML=(g.melhores||[]).map(m=>`<div>${m.pos}. ${esc(m.nome)} — nota ${m.nota??'—'} (${m.selo||'—'}) — ${esc(m.custo)} — ${m.forms} forms</div>`).join('')||'—';
-  document.getElementById('feedbackBox').innerHTML=`
-    <div class="col"><b>Melhores em comum</b><br><span>${(g.feedbackMelhores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>
-    <div class="col"><b>Piores</b><br><span>${(g.feedbackPiores||[]).map(x=>'• '+esc(x)).join('<br>')}</span></div>`;
+  const itens=(g.feed||[]).map(i=>`<div class="feed-item">${esc(i.texto||'')}</div>`).join('')||'<div class="feed-item">Aguardando ações do Michel…</div>';
+  feed.innerHTML=`<div class="small">Hoje: ${g.hoje||0} · Acumulado: ${g.acumulado||0}</div>${itens}`;
+  document.getElementById('topMelhores').innerHTML=(g.melhores||[]).map(m=>`<div>${m.pos}. ${esc(m.nome)} — CPV ${m.custoPorVenda!=null?('R$'+Math.round(m.custoPorVenda)):'—'} · ${m.vendas||0} vendas · ${esc(m.custo)}</div>`).join('')||'—';
 }
 
 loadMichel();
 refreshMichelGate();
-setInterval(loadMichel, 45000);
+setInterval(loadMichel,45000);
 </script>
 </body>
 </html>

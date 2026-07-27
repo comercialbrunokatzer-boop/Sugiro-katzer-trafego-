@@ -1,4 +1,11 @@
 // Funil Novo Katzer (CATEGORY_ID=1) — IDs confirmados Helena/Maestro 19/07.
+
+/** Campos oficiais de rastreio Meta → Make → Bitrix (CEO 2026-07-26). */
+export const UF_CAMPANHA_ORIGEM = 'UF_CRM_CAMPANHA_ORIGEM';
+export const UF_ADSET_ORIGEM = 'UF_CRM_ADSET_ORIGEM';
+/** Alias se o Bitrix renomear o label para "Conjunto Origem". */
+export const UF_CONJUNTO_ORIGEM = 'UF_CRM_CONJUNTO_ORIGEM';
+
 export const ESTAGIO_BITRIX = {
   'Leads Novos': 'C1:NEW',
   'Tentando Contato': 'C1:PREPARATION',
@@ -189,6 +196,8 @@ async function listaDealsViaHelena({ limit = 400, produtos = [] } = {}) {
       sourceDescription: d.sourceDescription || '',
       utmCampaign: d.utmCampaign || '',
       utmContent: d.utmContent || '',
+      campanhaOrigem: d.campanhaOrigem || d[UF_CAMPANHA_ORIGEM] || d.ufCampanhaOrigem || '',
+      adsetOrigem: d.adsetOrigem || d[UF_ADSET_ORIGEM] || d[UF_CONJUNTO_ORIGEM] || d.ufAdsetOrigem || d.conjuntoOrigem || '',
       telefone: d.telefone || null,
       whatsappUrl: d.whatsappUrl || linkWhatsApp(d.telefone),
       dateCreate: d.dateCreate || null,
@@ -220,10 +229,13 @@ export async function listaDealsFunil({
     let start = 0;
     while (all.length < limit) {
       const page = await bitrixCall('crm.deal.list', {
+        // Nunca filter vazio global sem campanha — CATEGORY + campos de rastreio no select.
+        // Match por campanha é feito em dealBateCampanha (UF_CRM_CAMPANHA_ORIGEM).
         filter: { CATEGORY_ID: categoryId },
         select: [
           'ID', 'TITLE', 'STAGE_ID', 'CONTACT_ID', 'DATE_CREATE', 'COMMENTS',
           'SOURCE_DESCRIPTION', 'UTM_CAMPAIGN', 'UTM_CONTENT',
+          UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, UF_CONJUNTO_ORIGEM,
         ],
         order: { DATE_MODIFY: 'DESC' },
         start,
@@ -243,6 +255,9 @@ export async function listaDealsFunil({
           sourceDescription: d.SOURCE_DESCRIPTION || '',
           utmCampaign: d.UTM_CAMPAIGN || '',
           utmContent: d.UTM_CONTENT || '',
+          campanhaOrigem: d[UF_CAMPANHA_ORIGEM] || '',
+          adsetOrigem: d[UF_ADSET_ORIGEM] || d[UF_CONJUNTO_ORIGEM] || '',
+          dateCreate: d.DATE_CREATE || null,
         });
       }
       if (batch.length < 50) break;
@@ -418,9 +433,79 @@ export function nomeExibicaoDeal(deal) {
   return id ? `Lead #${id}` : 'Lead sem nome';
 }
 
+/** Normaliza nome de campanha pra comparar Meta ↔ UF_CRM_CAMPANHA_ORIGEM. */
+export function normalizaNomeCampanha(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Filtro Bitrix REST (crm.lead.list / crm.deal.list) por campanha.
+ * Usa LIKE `%NOME%` — NUNCA filter: {}.
+ */
+export function filtroBitrixPorCampanha(nomeCampanha) {
+  const nome = String(nomeCampanha || '').trim();
+  if (!nome) return null;
+  return { [UF_CAMPANHA_ORIGEM]: `%${nome}%` };
+}
+
+export const SELECT_LEAD_RASTREIO = [
+  'ID', 'STATUS_ID', 'DATE_CREATE', UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, UF_CONJUNTO_ORIGEM, 'TITLE',
+];
+
+/**
+ * Compara nome Meta com valor gravado no UF (Make manda campaign_name).
+ * Exact / contains — sem fuzzy de produto (evita vazamento Fort Myers).
+ */
+export function campanhaOrigemBate(origemUf, nomeCampanha) {
+  const a = normalizaNomeCampanha(origemUf);
+  const b = normalizaNomeCampanha(nomeCampanha);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.includes(b) || b.includes(a)) return true;
+  // Remove colchetes de data [dd/mm/aa] e compara núcleo
+  const strip = (x) => x.replace(/\[[^\]]*\]/g, ' ').replace(/\s+/g, ' ').trim();
+  const as = strip(a);
+  const bs = strip(b);
+  if (as && bs && (as === bs || as.includes(bs) || bs.includes(as))) return true;
+  return false;
+}
+
+export function dealTemRastreio(deal = {}) {
+  const origem = String(
+    deal.campanhaOrigem
+    || deal[UF_CAMPANHA_ORIGEM]
+    || '',
+  ).trim();
+  return origem.length > 0;
+}
+
+/**
+ * Casa deal/lead com campanha SOMENTE via UF_CRM_CAMPANHA_ORIGEM.
+ * Se o campo estiver vazio → NÃO conta no funil (badge SEM RASTREIO no app).
+ * Fuzzy antigo (produto no título) ficou em dealBateCampanhaLegacy — desligado.
+ */
 export function dealBateCampanha(deal, nomeCampanha) {
+  const origem = String(
+    deal?.campanhaOrigem
+    || deal?.[UF_CAMPANHA_ORIGEM]
+    || '',
+  ).trim();
+  if (!origem) return false;
+  return campanhaOrigemBate(origem, nomeCampanha);
+}
+
+/**
+ * Match legado por produto/título — SÓ se opts.legacyFuzzy === true.
+ * Mantido para testes históricos; NÃO usar no painel (vazava funil entre campanhas).
+ */
+export function dealBateCampanhaLegacy(deal, nomeCampanha) {
   const hay = [
-    deal.titleForm, // prioriza título do form Bitrix (produto), não o nome da pessoa
+    deal.titleForm,
     deal.title,
     deal.comments,
     deal.sourceDescription,
@@ -430,11 +515,9 @@ export function dealBateCampanha(deal, nomeCampanha) {
   const nome = String(nomeCampanha || '').toUpperCase();
   if (!hay || !nome) return false;
 
-  // Se a campanha tem produto conhecido → SÓ casa deal desse produto (fase correta)
   const produto = produtoCampanha(nomeCampanha);
   if (produto) return hayContemProduto(hay, produto, nome);
 
-  // Fallbacks só quando não há produto no nome
   const isBrSc = /(?:^|[^A-Z0-9])BR[_-\s]?SC(?:[^A-Z0-9]|$)/.test(nome) || /_BR_SC/.test(nome);
   if (isBrSc && hayContemProduto(hay, 'BR_SC')) return true;
   if (/\bPORTUGAL\b/.test(nome) && /\bPORTUGAL\b/.test(hay)) return true;
@@ -446,6 +529,44 @@ export function dealBateCampanha(deal, nomeCampanha) {
   if (!toks.length) return false;
   const hits = toks.filter((t) => hay.includes(t));
   return hits.length >= 1 && hits.every((t) => !STOP_MATCH.has(t));
+}
+
+/**
+ * Lista leads (crm.lead.list) filtrados por UF_CRM_CAMPANHA_ORIGEM.
+ * Complementa o funil de deals — nunca filter: {}.
+ */
+export async function listaLeadsPorCampanha(nomeCampanha, { limit = 100 } = {}) {
+  const filtro = filtroBitrixPorCampanha(nomeCampanha);
+  if (!filtro) return { ok: false, leads: [], motivo: 'nome de campanha vazio' };
+  const all = [];
+  let start = 0;
+  while (all.length < limit) {
+    const page = await bitrixCall('crm.lead.list', {
+      filter: filtro,
+      select: SELECT_LEAD_RASTREIO,
+      order: { DATE_CREATE: 'DESC' },
+      start,
+    });
+    if (!page.ok) return { ok: false, leads: all, motivo: page.motivo };
+    const batch = Array.isArray(page.result) ? page.result : [];
+    if (!batch.length) break;
+    for (const L of batch) {
+      const origem = String(L[UF_CAMPANHA_ORIGEM] || '').trim();
+      if (!origem) continue; // SEM RASTREIO — não conta
+      if (!campanhaOrigemBate(origem, nomeCampanha)) continue;
+      all.push({
+        id: L.ID,
+        statusId: L.STATUS_ID,
+        dateCreate: L.DATE_CREATE,
+        campanhaOrigem: origem,
+        adsetOrigem: L[UF_ADSET_ORIGEM] || L[UF_CONJUNTO_ORIGEM] || '',
+        title: L.TITLE || '',
+      });
+    }
+    if (batch.length < 50) break;
+    start += 50;
+  }
+  return { ok: true, leads: all, fonte: 'crm.lead.list' };
 }
 
 /**
@@ -533,9 +654,12 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], {
     .concat([...map.values()].filter((f) => !ordem.includes(f.nome)));
 
   const total = fases.reduce((s, f) => s + f.n, 0);
+  const semRastreio = (deals || []).filter((d) => !dealTemRastreio(d)).length;
   return {
     total,
     fases,
-    fonte: matched.length ? 'bitrix+local' : (leadsLocais.length ? 'local' : 'vazio'),
+    fonte: matched.length ? 'uf_campanha_origem' : (leadsLocais.length ? 'local' : 'vazio'),
+    semRastreioPool: semRastreio,
+    matched: matched.length,
   };
 }
