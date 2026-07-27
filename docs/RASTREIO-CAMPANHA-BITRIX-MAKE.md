@@ -43,8 +43,10 @@ IDs técnicos esperados pelo painel:
 
 | Campo Bitrix | Valor Make (Facebook) |
 |--------------|------------------------|
-| Campanha origem | `campaign_name` |
-| Adset origem | `adset_name` |
+| Campanha origem / Campanha Origem | `campaign_name` |
+| Adset origem / Conjunto Origem | `adset_name` |
+
+> No painel Katzer OS o ranking usa **custo por venda** (gasto ÷ Ganhou). Parecer por conjunto lê `UF_CRM_ADSET_ORIGEM` (alias `UF_CRM_CONJUNTO_ORIGEM`).
 
 4. Salvar e deixar o cenário **ON**
 

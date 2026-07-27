@@ -3,6 +3,8 @@
 /** Campos oficiais de rastreio Meta → Make → Bitrix (CEO 2026-07-26). */
 export const UF_CAMPANHA_ORIGEM = 'UF_CRM_CAMPANHA_ORIGEM';
 export const UF_ADSET_ORIGEM = 'UF_CRM_ADSET_ORIGEM';
+/** Alias se o Bitrix renomear o label para "Conjunto Origem". */
+export const UF_CONJUNTO_ORIGEM = 'UF_CRM_CONJUNTO_ORIGEM';
 
 export const ESTAGIO_BITRIX = {
   'Leads Novos': 'C1:NEW',
@@ -195,7 +197,7 @@ async function listaDealsViaHelena({ limit = 400, produtos = [] } = {}) {
       utmCampaign: d.utmCampaign || '',
       utmContent: d.utmContent || '',
       campanhaOrigem: d.campanhaOrigem || d[UF_CAMPANHA_ORIGEM] || d.ufCampanhaOrigem || '',
-      adsetOrigem: d.adsetOrigem || d[UF_ADSET_ORIGEM] || d.ufAdsetOrigem || '',
+      adsetOrigem: d.adsetOrigem || d[UF_ADSET_ORIGEM] || d[UF_CONJUNTO_ORIGEM] || d.ufAdsetOrigem || d.conjuntoOrigem || '',
       telefone: d.telefone || null,
       whatsappUrl: d.whatsappUrl || linkWhatsApp(d.telefone),
       dateCreate: d.dateCreate || null,
@@ -233,7 +235,7 @@ export async function listaDealsFunil({
         select: [
           'ID', 'TITLE', 'STAGE_ID', 'CONTACT_ID', 'DATE_CREATE', 'COMMENTS',
           'SOURCE_DESCRIPTION', 'UTM_CAMPAIGN', 'UTM_CONTENT',
-          UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM,
+          UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, UF_CONJUNTO_ORIGEM,
         ],
         order: { DATE_MODIFY: 'DESC' },
         start,
@@ -254,7 +256,7 @@ export async function listaDealsFunil({
           utmCampaign: d.UTM_CAMPAIGN || '',
           utmContent: d.UTM_CONTENT || '',
           campanhaOrigem: d[UF_CAMPANHA_ORIGEM] || '',
-          adsetOrigem: d[UF_ADSET_ORIGEM] || '',
+          adsetOrigem: d[UF_ADSET_ORIGEM] || d[UF_CONJUNTO_ORIGEM] || '',
           dateCreate: d.DATE_CREATE || null,
         });
       }
@@ -452,7 +454,7 @@ export function filtroBitrixPorCampanha(nomeCampanha) {
 }
 
 export const SELECT_LEAD_RASTREIO = [
-  'ID', 'STATUS_ID', 'DATE_CREATE', UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, 'TITLE',
+  'ID', 'STATUS_ID', 'DATE_CREATE', UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, UF_CONJUNTO_ORIGEM, 'TITLE',
 ];
 
 /**
@@ -557,7 +559,7 @@ export async function listaLeadsPorCampanha(nomeCampanha, { limit = 100 } = {}) 
         statusId: L.STATUS_ID,
         dateCreate: L.DATE_CREATE,
         campanhaOrigem: origem,
-        adsetOrigem: L[UF_ADSET_ORIGEM] || '',
+        adsetOrigem: L[UF_ADSET_ORIGEM] || L[UF_CONJUNTO_ORIGEM] || '',
         title: L.TITLE || '',
       });
     }

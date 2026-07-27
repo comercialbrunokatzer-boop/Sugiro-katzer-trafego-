@@ -26,9 +26,9 @@ import {
 import { notaCampanha } from './_nota-funil.mjs';
 import {
   enrichCampanhaInteligente,
-  top10Inteligente,
   cardsResumoMichel,
 } from './_ranking-inteligente.mjs';
+import { enrichPainelKatzerOs, top10CustoVenda } from './_painel-katzer-os.mjs';
 import { metaPauseCampaign, metaActivateCampaign, metaSetCampaignDailyBudget, metaInsightsPeriodo } from './_meta-acoes.mjs';
 import { montaPlacar } from './_placar.mjs';
 import { mensagemAcaoMichel } from './_alerta-ceo-campanhas.mjs';
@@ -240,7 +240,8 @@ function montaCampanhasApp(placar, cicloMapa, leads, dealsBitrix = [], { periodo
       },
       metaDecisao,
     };
-    return enrichCampanhaInteligente(row);
+    const enriched = enrichCampanhaInteligente(row);
+    return enrichPainelKatzerOs(enriched, dealsCamp);
   });
   return rows.sort((a, b) => (b.gastoNum || 0) - (a.gastoNum || 0));
 }
@@ -256,31 +257,30 @@ function totaisQualidade(leads) {
 }
 
 function topFeedback(campanhas) {
-  const { melhores: m, piores: p } = top10Inteligente(campanhas);
+  const { melhores: m, piores: p } = top10CustoVenda(campanhas);
   const mapRow = (c) => ({
     pos: c.pos,
     nome: c.name,
     custo: c.custo,
     forms: c.forms,
     qual: c.qual,
+    custoPorVenda: c.custoPorVenda ?? null,
+    vendas: c.vendas ?? 0,
     nota: c.notaInteligente?.nota ?? c.notaFunil?.nota ?? null,
     selo: c.notaInteligente?.selo ?? c.notaFunil?.selo ?? null,
-    custoPorAvanco: c.metricas?.custoPorAvanco ?? null,
-    taxaPerda: c.metricas?.taxaPerda ?? null,
-    acaoMichel: c.acaoMichel?.tipo ?? null,
   });
   return {
     melhores: m.map(mapRow),
     piores: p.map(mapRow),
     feedbackMelhores: [
-      'Menor custo por avanço (≥ Mapeamento) no funil',
-      'Baixa taxa de perda Meta → Bitrix (UF_CRM_CAMPANHA_ORIGEM)',
-      'CPL só desempatando — avanço real manda',
+      'Menor custo por venda',
+      'Conjuntos com venda — candidatas a +R$/dia',
+      'Campanha Origem + Conjunto Origem no Make',
     ],
     feedbackPiores: [
-      'Custo/avanço alto ou sem avanço no funil',
-      'Taxa de perda alta (forms sem rastreio/Make)',
-      'CPL caro (ex.: SC R$72) cai no fim do ranking',
+      'Gasto sem venda',
+      'Conjunto pra PARAR (0 venda + CPL alto)',
+      'SEM RASTREIO se UF vazio',
     ],
   };
 }
@@ -334,10 +334,12 @@ async function payloadApp({ incluirGestor = false } = {}) {
   } else {
     historicoRows = todas;
   }
-  // Top 10 inteligente: custoPorAvanco ASC → CPL ASC → taxaPerda ASC
-  const { melhores: top10Melhores, piores: top10Piores } = top10Inteligente(historicoRows);
+  // Top 10 Katzer OS: menor custo/venda · piores = sem venda / CPL alto
+  const { melhores: top10Melhores, piores: top10Piores } = top10CustoVenda(historicoRows);
   const ranking = [...top10Melhores, ...top10Piores];
   const resumoMichel = cardsResumoMichel(historicoRows);
+  // Campanha ativa destaque = maior gasto ACTIVE (ou primeira do Top melhores)
+  const campanhaDestaque = ativas[0] || top10Melhores[0] || null;
 
   const tot = totaisQualidade(leadsDoc.leads || []);
   const hoje = itensHoje(feed, now.data);
@@ -352,12 +354,13 @@ async function payloadApp({ incluirGestor = false } = {}) {
     periodoLabel: 'Janela móvel últimos 30 dias',
     rankingDesde: '2025-07-12',
     rankingAte: histMeta.until || now.data,
-    rankingRegra: 'custo_por_avanco_cpl_taxa_perda',
+    rankingRegra: 'custo_por_venda',
     prazo: 'Fazer até 10:15',
     fontes: 'PATROCINADO CORRETOR, FACEBOOK ADS, FORMULARIO CRM, CANAL ABERTO',
-    avisoAbas: `Aba 1 = ACTIVE na Meta sem [TESTE] (${ativas.length}; Meta ACTIVE bruto: ${ativasMetaBruto}). Aba 2 = Top 10 inteligente (custo/avanço → CPL → perda) desde 12/07/2025. Funil só com UF_CRM_CAMPANHA_ORIGEM.`,
+    avisoAbas: `Aba 1 = ACTIVE (${ativas.length}). Aba 2 = Top 10 por custo/venda (Make: Campanha Origem + Conjunto Origem). Gestor 🔒.`,
     campanhas: ativas,
     ativas,
+    campanhaDestaque,
     nAtivas: ativas.length,
     nAtivasMetaBruto: ativasMetaBruto,
     ranking,
@@ -367,24 +370,24 @@ async function payloadApp({ incluirGestor = false } = {}) {
     todas,
     qualidadeTotais: tot,
     qualidadeRotulos: QUAL_TRAFEGO_ROTULO,
-    iaComo: 'Ranking: custo por avanço (≥ Mapeamento) + CPL + taxa de perda. Funil filtrado por UF_CRM_CAMPANHA_ORIGEM (Make). Sem UF = SEM RASTREIO.',
+    iaComo: 'Custo por venda = gasto ÷ vendas (Ganhou). Funil por etapa atual. Parecer por Conjunto (adset). UF_CRM_CAMPANHA_ORIGEM + UF_CRM_ADSET_ORIGEM.',
     leadsHoje,
     alertaLeadsHoje: leadsHoje > 0
       ? `🔔 ${leadsHoje} lead(s) de tráfego hoje — confira fases e WhatsApp`
       : null,
     feedbackMelhores: [
-      'Menor custo por avanço no funil (≥ Mapeamento)',
-      'Baixa perda Meta → Bitrix com UF preenchido',
-      'CPL só desempatando — SC cara (R$72) fica no fim',
+      'Menor custo por venda (com pelo menos 1 Ganhou no Bitrix)',
+      'Conjunto (adset) com eficiência — candidata a +R$/dia',
+      'Make gravando Campanha Origem + Conjunto Origem',
     ],
     feedbackPiores: [
-      'Custo/avanço alto, sem avanço, ou perda > 50%',
-      'SEM RASTREIO — corrigir Make (UF_CRM_CAMPANHA_ORIGEM)',
-      'CPL > R$70 → badge CORTAR',
+      'Investimento sem venda (Ganhou = 0)',
+      'CPL alto / conjunto pra PARAR',
+      'SEM RASTREIO se UF vazio',
     ],
     sugestaoSemanal: {
-      texto: '30% da verba nas VERDE (escalar) — não nas de menor CPL frio',
-      destaque: top10Melhores[0] || null,
+      texto: 'Escalar conjuntos com venda · parar conjuntos 0 venda + CPL alto',
+      destaque: top10Melhores[0] || campanhaDestaque || null,
     },
     agora: now.hm,
     data: now.data,
