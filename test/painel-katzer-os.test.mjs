@@ -101,3 +101,30 @@ describe('enrichPainelKatzerOs', () => {
     assert.equal(out.parecerKatzer.decisoes.find((d) => d.acao === 'PARAR')?.conjunto, 'A');
   });
 });
+
+describe('normalizaLeadLinks', () => {
+  it('sintetiza bitrixUrl a partir do id do deal', async () => {
+    const { normalizaLeadLinks } = await import('../netlify/functions/_painel-katzer-os.mjs');
+    const l = normalizaLeadLinks({ id: 99901, nome: 'Maria', telefone: '47999998888' });
+    assert.match(l.bitrixUrl, /\/crm\/deal\/details\/99901\//);
+    assert.match(l.whatsappUrl, /wa\.me\/55/);
+    assert.equal(l.temBitrix, true);
+    assert.equal(l.temWhatsApp, true);
+  });
+
+  it('etapa vazia traz motivoVazio claro', () => {
+    const funil = montaFunilCusto({ gasto: 100, deals: [] });
+    assert.equal(funil.etapas[0].motivoVazio, 'Nenhum lead nesta etapa.');
+    assert.equal(funil.etapas[0].temBitrix, false);
+  });
+
+  it('com deal id → temBitrix mesmo sem bitrixUrl prévio', () => {
+    const funil = montaFunilCusto({
+      gasto: 100,
+      deals: [{ id: 42, fase: 'Mapeamento', nomeContato: 'Ana' }],
+    });
+    assert.equal(funil.etapas[0].n, 1);
+    assert.equal(funil.etapas[0].temBitrix, true);
+    assert.ok(funil.etapas[0].leads[0].bitrixUrl);
+  });
+});

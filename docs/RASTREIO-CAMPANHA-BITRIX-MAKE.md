@@ -27,11 +27,13 @@ No Bitrix Katzer → CRM → Campos personalizados → **Lead**:
 1. **Campanha origem** (tipo Série/texto, não obrigatório, mostrar no filtro)  
 2. **Adset origem** (tipo Série/texto, não obrigatório, mostrar no filtro)
 
-IDs técnicos esperados pelo painel:
+IDs técnicos esperados pelo painel (no **negócio/deal** do Funil Novo Katzer):
 - `UF_CRM_CAMPANHA_ORIGEM`
 - `UF_CRM_ADSET_ORIGEM`
 
-> Confirmar no Bitrix (editar campo → ver ID) se os códigos internos batem com esses nomes. Se o Bitrix gerou outro ID numérico, avisar o Cursor para ajustar o código.
+> O App Decisão lê **crm.deal** (CATEGORY_ID=1), não só Lead. Se o Make gravar só no Lead, o funil continua **SEM RASTREIO** e os botões Bitrix/WhatsApp ficam sem lead na etapa. Ideal: mesmos campos no Deal **ou** Make atualizar o negócio.
+>
+> Confirmar no Bitrix (editar campo → ver ID) se os códigos internos batem. Se o Bitrix gerou outro ID numérico, avisar o Cursor.
 
 ---
 

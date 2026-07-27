@@ -27,9 +27,15 @@ const PRODUTOS_BUSCA = [
   'GOLDEN BEACH',
 ];
 
+/** Rastreio Meta → Make → Bitrix (App Decisão casa funil por estes UF). */
+const UF_CAMPANHA_ORIGEM = 'UF_CRM_CAMPANHA_ORIGEM';
+const UF_ADSET_ORIGEM = 'UF_CRM_ADSET_ORIGEM';
+const UF_CONJUNTO_ORIGEM = 'UF_CRM_CONJUNTO_ORIGEM';
+
 const SELECT_DEAL = [
   'ID', 'TITLE', 'STAGE_ID', 'CONTACT_ID', 'DATE_CREATE', 'DATE_MODIFY',
   'COMMENTS', 'SOURCE_DESCRIPTION', 'SOURCE_ID', 'UTM_CAMPAIGN', 'UTM_CONTENT', 'UTM_SOURCE',
+  UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, UF_CONJUNTO_ORIGEM,
 ];
 
 function soDigitos(s) {
@@ -67,6 +73,8 @@ function json(statusCode, body) {
 }
 
 function mapaDeal(d) {
+  const campanhaOrigem = String(d[UF_CAMPANHA_ORIGEM] || '').trim();
+  const adsetOrigem = String(d[UF_ADSET_ORIGEM] || d[UF_CONJUNTO_ORIGEM] || '').trim();
   return {
     id: d.ID,
     title: d.TITLE || '',
@@ -82,6 +90,13 @@ function mapaDeal(d) {
     dateCreate: d.DATE_CREATE || null,
     dateModify: d.DATE_MODIFY || null,
     bitrixUrl: `${PORTAL}/crm/deal/details/${d.ID}/`,
+    campanhaOrigem,
+    adsetOrigem,
+    // aliases lidos pelo App Decisão (_bitrix-funil listaDealsViaHelena)
+    ufCampanhaOrigem: campanhaOrigem,
+    ufAdsetOrigem: adsetOrigem,
+    [UF_CAMPANHA_ORIGEM]: campanhaOrigem,
+    [UF_ADSET_ORIGEM]: adsetOrigem,
   };
 }
 

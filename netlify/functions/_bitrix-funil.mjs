@@ -103,6 +103,117 @@ function linkWhatsApp(telefone) {
   return `https://wa.me/${full}`;
 }
 
+/** Exportado p/ painel — mesmo normalizador de wa.me. */
+export { linkWhatsApp, portalBase };
+
+function contaUfCampanha(deals = []) {
+  return (deals || []).filter((d) => String(d.campanhaOrigem || d[UF_CAMPANHA_ORIGEM] || '').trim()).length;
+}
+
+async function listaDealsWebhookLocal({ limit = 300 } = {}) {
+  const baseNow = bitrixBase();
+  const baseOk = baseNow && /bitrix24\.com/i.test(baseNow);
+  if (!baseOk) {
+    return {
+      ok: false,
+      deals: [],
+      motivo: baseNow ? 'BITRIX_WEBHOOK inválido (sem host bitrix24)' : 'BITRIX_WEBHOOK ausente no runtime',
+    };
+  }
+  const categoryId = Number(process.env.BITRIX_CATEGORY_ID || 1);
+  const all = [];
+  let start = 0;
+  let localMotivo = null;
+  while (all.length < limit) {
+    const page = await bitrixCall('crm.deal.list', {
+      filter: { CATEGORY_ID: categoryId },
+      select: [
+        'ID', 'TITLE', 'STAGE_ID', 'CONTACT_ID', 'DATE_CREATE', 'COMMENTS',
+        'SOURCE_DESCRIPTION', 'UTM_CAMPAIGN', 'UTM_CONTENT',
+        UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, UF_CONJUNTO_ORIGEM,
+      ],
+      order: { DATE_MODIFY: 'DESC' },
+      start,
+    });
+    if (!page.ok) { localMotivo = page.motivo || 'crm.deal.list falhou'; break; }
+    const batch = Array.isArray(page.result) ? page.result : [];
+    if (!batch.length) break;
+    for (const d of batch) {
+      all.push({
+        id: d.ID,
+        title: d.TITLE || '',
+        stageId: d.STAGE_ID,
+        fase: nomeFasePorStageId(d.STAGE_ID) || d.STAGE_ID || '—',
+        contactId: d.CONTACT_ID,
+        bitrixUrl: `${portalBase()}/crm/deal/details/${d.ID}/`,
+        comments: d.COMMENTS || '',
+        sourceDescription: d.SOURCE_DESCRIPTION || '',
+        utmCampaign: d.UTM_CAMPAIGN || '',
+        utmContent: d.UTM_CONTENT || '',
+        campanhaOrigem: d[UF_CAMPANHA_ORIGEM] || '',
+        adsetOrigem: d[UF_ADSET_ORIGEM] || d[UF_CONJUNTO_ORIGEM] || '',
+        dateCreate: d.DATE_CREATE || null,
+      });
+    }
+    if (batch.length < 50) break;
+    start += 50;
+    if (start > 400) break;
+  }
+  if (!all.length) {
+    return { ok: false, deals: [], motivo: localMotivo || 'webhook local respondeu vazio' };
+  }
+  const contatos = await telefonesPorContato(all.map((d) => d.contactId));
+  for (const d of all) {
+    const c = contatos[String(d.contactId)] || null;
+    d.telefone = c?.telefone || null;
+    d.whatsappUrl = c?.whatsappUrl || null;
+    d.nomeContato = c?.nome || null;
+    d.titleForm = d.titleForm || d.title || '';
+    if (c?.nome && (tituloEhFormulario(d.title) || !d.title || /^\d+$/.test(d.title))) {
+      d.title = c.nome;
+    }
+  }
+  return { ok: true, deals: all, fonte: 'webhook-local', ufPreenchidos: contaUfCampanha(all) };
+}
+
+/**
+ * Lista negócios do funil Katzer com etapa + WhatsApp.
+ * Prefere a fonte que traz UF_CRM_CAMPANHA_ORIGEM (senão o funil fica SEM RASTREIO e botões cinza).
+ */
+export async function listaDealsFunil({
+  limit = 300,
+  produtos = ['ALICERCE', 'PUNTA', 'GRANT', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'FORT MYERS', 'AMANAY'],
+} = {}) {
+  const [viaHelena, viaLocal] = await Promise.all([
+    listaDealsViaHelena({ limit, produtos }),
+    listaDealsWebhookLocal({ limit }),
+  ]);
+
+  const hUf = viaHelena.ok ? contaUfCampanha(viaHelena.deals) : 0;
+  const lUf = viaLocal.ok ? contaUfCampanha(viaLocal.deals) : 0;
+
+  // 1) Quem tem UF preenchido ganha (habilita match por campanha → links no funil)
+  if (lUf > 0 && lUf >= hUf) {
+    return { ...viaLocal, ufPreenchidos: lUf };
+  }
+  if (hUf > 0) {
+    return { ...viaHelena, ufPreenchidos: hUf, fonte: viaHelena.fonte || 'helena' };
+  }
+  // 2) Sem UF ainda: Helena costuma ter mais telefone (contact.get); local tem select UF pronto p/ Make
+  if (viaHelena.ok && (viaHelena.deals || []).length) {
+    return { ...viaHelena, ufPreenchidos: 0, fonte: viaHelena.fonte || 'helena' };
+  }
+  if (viaLocal.ok && (viaLocal.deals || []).length) {
+    return { ...viaLocal, ufPreenchidos: 0 };
+  }
+
+  return {
+    ok: false,
+    deals: [],
+    motivo: [viaHelena.motivo, viaLocal.motivo].filter(Boolean).join(' | ') || 'funil indisponível',
+  };
+}
+
 async function bitrixCall(metodo, params = {}) {
   const base = bitrixBase();
   if (!base) return { ok: false, result: [], motivo: 'BITRIX_WEBHOOK ausente' };
@@ -206,89 +317,6 @@ async function listaDealsViaHelena({ limit = 400, produtos = [] } = {}) {
   } catch (e) {
     return { ok: false, deals: [], motivo: String(e.message || e) };
   }
-}
-
-/**
- * Lista negócios do funil Katzer com etapa + WhatsApp.
- * 1) webhook local  2) proxy Helena (regal-chaja)
- */
-export async function listaDealsFunil({
-  limit = 300,
-  produtos = ['ALICERCE', 'PUNTA', 'GRANT', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'FORT MYERS', 'AMANAY'],
-} = {}) {
-  // Helena primeiro: já enriquece nome/telefone (contact.get) e evita doble hit no Bitrix
-  const viaHelena = await listaDealsViaHelena({ limit, produtos });
-  if (viaHelena.ok && (viaHelena.deals || []).length) return viaHelena;
-
-  let localMotivo = null;
-  const baseNow = bitrixBase();
-  const baseOk = baseNow && /bitrix24\.com/i.test(baseNow);
-  if (baseOk) {
-    const categoryId = Number(process.env.BITRIX_CATEGORY_ID || 1);
-    const all = [];
-    let start = 0;
-    while (all.length < limit) {
-      const page = await bitrixCall('crm.deal.list', {
-        // Nunca filter vazio global sem campanha — CATEGORY + campos de rastreio no select.
-        // Match por campanha é feito em dealBateCampanha (UF_CRM_CAMPANHA_ORIGEM).
-        filter: { CATEGORY_ID: categoryId },
-        select: [
-          'ID', 'TITLE', 'STAGE_ID', 'CONTACT_ID', 'DATE_CREATE', 'COMMENTS',
-          'SOURCE_DESCRIPTION', 'UTM_CAMPAIGN', 'UTM_CONTENT',
-          UF_CAMPANHA_ORIGEM, UF_ADSET_ORIGEM, UF_CONJUNTO_ORIGEM,
-        ],
-        order: { DATE_MODIFY: 'DESC' },
-        start,
-      });
-      if (!page.ok) { localMotivo = page.motivo || 'crm.deal.list falhou'; break; }
-      const batch = Array.isArray(page.result) ? page.result : [];
-      if (!batch.length) break;
-      for (const d of batch) {
-        all.push({
-          id: d.ID,
-          title: d.TITLE || '',
-          stageId: d.STAGE_ID,
-          fase: nomeFasePorStageId(d.STAGE_ID) || d.STAGE_ID || '—',
-          contactId: d.CONTACT_ID,
-          bitrixUrl: `${portalBase()}/crm/deal/details/${d.ID}/`,
-          comments: d.COMMENTS || '',
-          sourceDescription: d.SOURCE_DESCRIPTION || '',
-          utmCampaign: d.UTM_CAMPAIGN || '',
-          utmContent: d.UTM_CONTENT || '',
-          campanhaOrigem: d[UF_CAMPANHA_ORIGEM] || '',
-          adsetOrigem: d[UF_ADSET_ORIGEM] || d[UF_CONJUNTO_ORIGEM] || '',
-          dateCreate: d.DATE_CREATE || null,
-        });
-      }
-      if (batch.length < 50) break;
-      start += 50;
-      if (start > 400) break;
-    }
-    if (all.length) {
-      const contatos = await telefonesPorContato(all.map((d) => d.contactId));
-      for (const d of all) {
-        const c = contatos[String(d.contactId)] || null;
-        d.telefone = c?.telefone || null;
-        d.whatsappUrl = c?.whatsappUrl || null;
-        d.nomeContato = c?.nome || null;
-        d.titleForm = d.titleForm || d.title || '';
-        if (c?.nome && (tituloEhFormulario(d.title) || !d.title || /^\d+$/.test(d.title))) {
-          d.title = c.nome;
-        }
-      }
-      return { ok: true, deals: all, fonte: 'webhook-local' };
-    }
-    localMotivo = localMotivo || 'webhook local respondeu vazio';
-  } else {
-    localMotivo = baseNow ? 'BITRIX_WEBHOOK inválido (sem host bitrix24)' : 'BITRIX_WEBHOOK ausente no runtime';
-  }
-
-  if (viaHelena.ok) return viaHelena;
-  return {
-    ok: false,
-    deals: [],
-    motivo: [viaHelena.motivo, localMotivo].filter(Boolean).join(' | ') || 'funil indisponível',
-  };
 }
 
 /** Produtos/praças — match ESTRITO (nunca corretor/criativo). */
@@ -612,8 +640,9 @@ export function fasesPorCampanha(deals, nomeCampanha, leadsLocais = [], {
       nome: nomeExibicaoDeal(d),
       fase,
       stageId: d.stageId || null,
-      bitrixUrl: d.bitrixUrl,
-      whatsappUrl: d.whatsappUrl || null,
+      contactId: d.contactId || null,
+      bitrixUrl: d.bitrixUrl || (d.id ? `${portalBase()}/crm/deal/details/${d.id}/` : null),
+      whatsappUrl: d.whatsappUrl || linkWhatsApp(d.telefone) || null,
       telefone: d.telefone || null,
       form: d.titleForm || null,
       // p/ nota de qualidade (COMMENTS + contato)

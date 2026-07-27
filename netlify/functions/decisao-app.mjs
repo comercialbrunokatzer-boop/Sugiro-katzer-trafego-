@@ -350,6 +350,8 @@ async function payloadApp({ incluirGestor = false } = {}) {
     metaStatus: meta,
     bitrixOk: !!bitrix.ok,
     bitrixMotivo: bitrix.motivo || null,
+    bitrixFonte: bitrix.fonte || null,
+    bitrixUfPreenchidos: bitrix.ufPreenchidos ?? null,
     periodo: 'last_30d',
     periodoLabel: 'Janela móvel últimos 30 dias',
     rankingDesde: '2025-07-12',
