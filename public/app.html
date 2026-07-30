@@ -22,41 +22,54 @@ body{background:#fff;color:#111;min-height:100vh}
 .info{margin:12px 16px;font-size:11px;color:#666;background:#fafafa;border:1px solid #eee;padding:8px 12px;border-radius:10px}
 .sec{margin:16px 16px 8px;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700}
 .sec-sub{margin:0 16px 10px;font-size:11px;color:#888}
-.card{background:#fff;border:1px solid #eee;border-radius:16px;margin:12px 16px;overflow:hidden}
+.card{background:#fff;border:1px solid #eee;border-radius:16px;margin:12px 16px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .card-head{padding:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-bottom:1px solid #f5f5f5}
 .card-head h3{font-size:14px;font-weight:700;line-height:1.3}
-.metrics{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:8px;padding:12px 14px}
+.card-head .pin{color:#16a34a;margin-right:4px}
+.metrics{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:8px;padding:12px 14px}
 .m{background:#fafafa;border:1px solid #f0f0f0;border-radius:12px;padding:10px}
 .m b{display:block;font-size:15px;font-weight:700}
 .m span{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em}
 .m.highlight{background:#ecfdf5;border-color:#bbf7d0}
-.m.highlight b{color:#166534}
+.m.highlight b{color:#166534;font-size:18px}
 .funil{padding:4px 14px 14px}
-.funil-h{font-size:12px;font-weight:700;margin:8px 0 4px}
-.funil-sub{font-size:10px;color:#888;margin-bottom:8px}
-.etapa{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #f0f0f0;border-radius:12px;margin-bottom:8px;background:#fff}
-.etapa-n{min-width:28px;height:28px;border-radius:8px;background:#111;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800}
+.funil-h{font-size:13px;font-weight:700;margin:10px 0 4px;font-family:'Instrument Sans',sans-serif}
+.funil-sub{font-size:11px;color:#888;margin-bottom:10px}
+.etapa{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #eee;border-radius:14px;margin-bottom:8px;background:#fff}
+.etapa-n{min-width:32px;height:32px;border-radius:999px;background:#dbeafe;color:#1d4ed8;display:grid;place-items:center;font-size:13px;font-weight:800;flex:none}
 .etapa-body{flex:1;min-width:0}
-.etapa-body b{font-size:12px;display:block}
-.etapa-body span{font-size:11px;color:#666}
-.etapa-links{display:flex;gap:6px;flex-shrink:0}
-.etapa-links a,.etapa-links span{font-size:10px;padding:6px 8px;border-radius:8px;text-decoration:none;font-weight:700}
-.bx{background:#eff6ff;color:#1d4ed8;border:0;cursor:pointer;font-family:inherit}
-.wa{background:#ecfdf5;color:#15803d;border:0;cursor:pointer;font-family:inherit}
-.etapa-empty{font-size:11px;color:#9a3412;margin-top:4px;display:block;font-weight:600}
-.aviso-rastreio{margin:0 14px 10px;padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;font-size:12px;color:#9a3412;font-weight:600;line-height:1.35}
-.muted{background:#f5f5f5;color:#888;font-size:9px!important}
-.etapa.vazia{background:#fffbeb;border-color:#fde68a}
-.parecer{padding:0 14px 14px;display:grid;gap:8px}
-.dec{border-radius:12px;padding:12px;font-size:12px;border:1px solid #eee}
-.dec.vermelho{border-color:#fecaca;background:#fff5f5}
-.dec.verde{border-color:#bbf7d0;background:#f0fdf4}
+.etapa-body b{font-size:13px;display:block;font-weight:700}
+.etapa-body span{font-size:11px;color:#666;margin-top:2px;display:block}
+.etapa-links{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:800;text-decoration:none;border:0;cursor:pointer;font-family:inherit;padding:0}
+.ico.bx{background:#1d4ed8;color:#fff}
+.ico.wa{background:#16a34a;color:#fff}
+.ico.bx.off,.ico.wa.off{background:#eef0f3;color:#b0b6be;cursor:default}
+.etapa-empty{color:#9a3412;font-weight:600}
+.aviso-rastreio{margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;font-size:12px;color:#9a3412;font-weight:600;line-height:1.4}
+.etapa.vazia{background:#fff;border-color:#eee}
+.parecer{padding:0 14px 14px}
+.parecer-h{font-size:13px;font-weight:700;margin:4px 0 10px;font-family:'Instrument Sans',sans-serif}
+.parecer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:420px){.parecer-grid{grid-template-columns:1fr}}
+.dec{border-radius:14px;padding:12px;font-size:12px;border:1px solid #eee;background:#fff;position:relative;overflow:hidden;min-height:88px}
+.dec::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.dec.vermelho{border-color:#fecaca;background:#fffafa}
+.dec.vermelho::before{background:#dc2626}
+.dec.verde{border-color:#bbf7d0;background:#f7fdf9}
+.dec.verde::before{background:#16a34a}
 .dec.cinza{background:#fafafa}
-.dec b{display:block;margin-bottom:4px;font-size:12px}
+.dec.cinza::before{background:#94a3b8}
+.dec .dec-ico{width:22px;height:22px;border-radius:999px;display:inline-grid;place-items:center;font-size:12px;font-weight:800;margin-bottom:6px;color:#fff}
+.dec.vermelho .dec-ico{background:#dc2626}
+.dec.verde .dec-ico{background:#16a34a}
+.dec.cinza .dec-ico{background:#94a3b8}
+.dec b{display:block;margin-bottom:4px;font-size:12px;line-height:1.3}
+.dec .motivo{color:#555;font-size:11px;line-height:1.35}
 .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 14px;background:#fafafa;border-top:1px solid #f0f0f0}
 .btn{padding:10px 8px;border-radius:10px;border:1px solid #e5e5e5;background:#fff;font-size:11px;cursor:pointer;font-weight:700}
 .btn.primary{background:#16a34a;color:#fff;border-color:#16a34a}
-.btn.danger{color:#b91c1c}
+.btn.danger{color:#b91c1c;border-color:#fecaca}
 .badge{font-size:10px;padding:3px 8px;border-radius:999px;background:#f3f3f3;font-weight:700}
 .badge.bad{background:#fee2e2;color:#b91c1c}
 .badge.good{background:#dcfce7;color:#166534}
@@ -164,11 +177,17 @@ body{background:#fff;color:#111;min-height:100vh}
 <div class="toast" id="toast"></div>
 
 <script>
-const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
-const api=(p)=>API_BASE+p;
+/** App Decisão: no site isolado (dashing-elf) a API vive na Rotina (Blobs/Meta). */
+const ROTINA_API='https://rotina-produtiva-michel.netlify.app';
+const IS_CAMPANHAS_HOST=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname);
+const API_CANDIDATES=IS_CAMPANHAS_HOST
+  ? [ROTINA_API, ''] // 1º Rotina (fonte), 2º mesmo host (fallback)
+  : ['', ROTINA_API];
+const api=(base,p)=>(base||'')+p;
 let DATA=null, ATIVAS=[], MELHORES=[], PIORES=[], currentCamp=null, GESTOR_KEY='';
 let MICHEL_KEY=sessionStorage.getItem('michelKey')||'';
 let lastLeadsHoje=null;
+let API_BASE_OK=API_CANDIDATES[0];
 /** cache leads por chave campanha|etapa|canal p/ picker */
 const LEAD_CACHE={};
 
@@ -176,6 +195,39 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function acha(id){return [...ATIVAS,...MELHORES,...PIORES].find(c=>String(c.id)===String(id)||c.name===id);}
+
+async function fetchDecisao(path, opts={}){
+  const isPost=String(opts.method||'GET').toUpperCase()==='POST';
+  let last=null;
+  for(const base of API_CANDIDATES){
+    const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+    const t=ctrl?setTimeout(()=>ctrl.abort(),22000):null;
+    try{
+      const r=await fetch(api(base,path),{...opts,cache:'no-store',signal:ctrl?ctrl.signal:undefined});
+      const data=await r.json().catch(()=>({ok:false,erro:`HTTP ${r.status}`}));
+      if(t) clearTimeout(t);
+      // POST: devolve a 1ª resposta JSON válida (mesmo ok:false — ex.: precisaMichel)
+      if(isPost && data && typeof data==='object'){
+        API_BASE_OK=base;
+        return data;
+      }
+      if(r.ok && data && data.ok!==false){
+        API_BASE_OK=base;
+        return data;
+      }
+      last=data && typeof data==='object' ? data : {ok:false,erro:`HTTP ${r.status}`};
+      if(data && (Array.isArray(data.ativas)||Array.isArray(data.campanhas))){
+        API_BASE_OK=base;
+        return data;
+      }
+    }catch(e){
+      last={ok:false,erro:String((e&&e.message)||e)};
+    }finally{
+      if(t) clearTimeout(t);
+    }
+  }
+  return last||{ok:false,erro:'Falha de rede',ativas:[],top10Melhores:[],top10Piores:[]};
+}
 
 function refreshMichelGate(){
   const st=document.getElementById('michelStatus');
@@ -219,6 +271,14 @@ function openBudget(id, preset){
 }
 function closeModal(id){document.getElementById(id).style.display='none';}
 
+function nomeCampanhaCurto(name){
+  const s=String(name||'').trim();
+  if(!s) return 'Campanha';
+  // FortMyers_EUA_... → FortMyers
+  const head=s.split(/[_\[]/)[0].trim();
+  return head.length>=3?head:s.slice(0,28);
+}
+
 function htmlFunil(cam){
   const f=cam.funilPainel;
   if(!f||!(f.etapas||[]).length){
@@ -226,9 +286,9 @@ function htmlFunil(cam){
   }
   const totalLeads=(f.etapas||[]).reduce((s,e)=>s+(e.n||0),0);
   const aviso=cam.semRastreio
-    ? `<div class="aviso-rastreio">⚠ SEM RASTREIO — ${cam.forms||0} forms na Meta, 0 negócios no Bitrix com Campanha Origem desta campanha.<br>Botões Bitrix/WhatsApp ficam off até o Make gravar UF no Deal. Não é permissão nem bug de botão.</div>`
+    ? `<div class="aviso-rastreio">⚠ SEM RASTREIO — ${cam.forms||0} forms na Meta, 0 negócios no Bitrix com Campanha Origem desta campanha.<br>Ícones Bitrix/WhatsApp ficam apagados até o Make gravar a UF no Deal.</div>`
     : (totalLeads===0
-      ? `<div class="aviso-rastreio">Nenhum lead nas etapas deste funil agora. Botões cinza = etapa vazia (não é falha de permissão).</div>`
+      ? `<div class="aviso-rastreio">Nenhum lead nas etapas deste funil agora. Ícones apagados = etapa vazia.</div>`
       : '');
   const rows=(f.etapas||[]).map((e,i)=>{
     const leads=e.leads||[];
@@ -236,32 +296,36 @@ function htmlFunil(cam){
     const key=`${escAttr(cam.id)}|${escAttr(e.id)}`;
     LEAD_CACHE[key]=leads;
     const bxBtn=(()=>{
-      if(!n) return `<span class="muted">sem lead</span>`;
+      if(!n) return `<span class="ico bx off" title="Sem lead">B</span>`;
       const comBx=leads.filter(l=>l.bitrixUrl||l.temBitrix);
-      if(!comBx.length) return `<span class="muted" title="Lead sem ID Bitrix">sem ID</span>`;
+      if(!comBx.length) return `<span class="ico bx off" title="Lead sem ID Bitrix">B</span>`;
       if(comBx.length===1){
         const u=String(comBx[0].bitrixUrl||'').replace(/https?:\/\/katzer\.bitrix24\.com\.br/gi,'https://katzerassessoria.bitrix24.com.br');
-        return `<a class="bx" href="${esc(u)}" target="_blank" rel="noopener">Bitrix</a>`;
+        return `<a class="ico bx" href="${esc(u)}" target="_blank" rel="noopener" title="Abrir Bitrix">B</a>`;
       }
-      return `<button type="button" class="bx" onclick="openLeadsPicker('${key}','bitrix','${escAttr(e.label)}')">Bitrix (${comBx.length})</button>`;
+      return `<button type="button" class="ico bx" onclick="openLeadsPicker('${key}','bitrix','${escAttr(e.label)}')" title="Escolher lead Bitrix">B</button>`;
     })();
     const waBtn=(()=>{
-      if(!n) return `<span class="muted">sem lead</span>`;
+      if(!n) return `<span class="ico wa off" title="Sem lead">WA</span>`;
       const comWa=leads.filter(l=>l.whatsappUrl||l.temWhatsApp);
-      if(!comWa.length) return `<span class="muted" title="Sem telefone no contato">sem tel</span>`;
-      if(comWa.length===1) return `<a class="wa" href="${esc(comWa[0].whatsappUrl)}" target="_blank" rel="noopener">WhatsApp</a>`;
-      return `<button type="button" class="wa" onclick="openLeadsPicker('${key}','whatsapp','${escAttr(e.label)}')">WhatsApp (${comWa.length})</button>`;
+      if(!comWa.length) return `<span class="ico wa off" title="Sem telefone">WA</span>`;
+      if(comWa.length===1) return `<a class="ico wa" href="${esc(comWa[0].whatsappUrl)}" target="_blank" rel="noopener" title="WhatsApp">WA</a>`;
+      return `<button type="button" class="ico wa" onclick="openLeadsPicker('${key}','whatsapp','${escAttr(e.label)}')" title="Escolher WhatsApp">WA</button>`;
     })();
-    const custoLabel=n?esc(e.labelCusto||'—'):'Nenhum lead nesta etapa.';
+    // Mock CEO: "10 — Mapeamento" + "R$144,44 por mapeamento"
+    const titulo=`${n} — ${esc(e.label)}`;
+    const custoLabel=n
+      ? esc(e.labelCusto || (e.custoFmt ? `${e.custoFmt} por ${e.label}` : '—'))
+      : 'Nenhum lead nesta etapa.';
     return `<div class="etapa${n?'':' vazia'}">
-      <div class="etapa-n">${n}</div>
-      <div class="etapa-body"><b>${i+1} — ${esc(e.label)}</b><span class="${n?'':'etapa-empty'}">${custoLabel}</span></div>
+      <div class="etapa-n">${i+1}</div>
+      <div class="etapa-body"><b>${titulo}</b><span class="${n?'':'etapa-empty'}">${custoLabel}</span></div>
       <div class="etapa-links">${bxBtn}${waBtn}</div>
     </div>`;
   }).join('');
   return `<div class="funil">
     <div class="funil-h">Funil de Conversão</div>
-    <div class="funil-sub">Valores por etapa + Total investido: ${esc(f.gastoFmt||cam.gasto||'—')}</div>
+    <div class="funil-sub">Valores por etapa · Total investido: ${esc(f.gastoFmt||cam.gasto||'—')}</div>
     ${aviso}
     ${rows}
   </div>`;
@@ -287,11 +351,23 @@ function openLeadsPicker(key, canal, label){
 }
 
 function htmlParecer(cam){
-  const dec=(cam.parecerKatzer&&cam.parecerKatzer.decisoes)||[];
-  if(!dec.length) return '';
-  return `<div class="parecer"><div class="funil-h">💡 Parecer Katzer OS</div>${dec.map(d=>`
-    <div class="dec ${esc(d.cor||'cinza')}"><b>${esc(d.texto||d.acao)}</b>${esc(d.motivo||'')}</div>
-  `).join('')}</div>`;
+  let dec=(cam.parecerKatzer&&cam.parecerKatzer.decisoes)||[];
+  // Layout da direita (mock CEO): sempre tentar PARAR | MANTER+ADICIONAR lado a lado
+  if(!dec.length){
+    dec=[{acao:'MANTER',cor:'cinza',texto:'MANTER',motivo:'Sem sinal por conjunto ainda'}];
+  }
+  const ico=(d)=>d.acao==='PARAR'?'!':(d.acao==='MANTER_ADICIONAR'?'+':'=');
+  const cards=dec.map(d=>`
+    <div class="dec ${esc(d.cor||'cinza')}">
+      <span class="dec-ico">${ico(d)}</span>
+      <b>${esc(d.texto||d.acao)}</b>
+      <div class="motivo">${esc(d.motivo||'')}</div>
+    </div>`).join('');
+  const grid=dec.length>=2?'parecer-grid':'';
+  return `<div class="parecer">
+    <div class="parecer-h">💡 Parecer Katzer OS</div>
+    <div class="${grid}">${cards}</div>
+  </div>`;
 }
 
 function cardHtml(cam,{showPos=false}={}){
@@ -299,23 +375,26 @@ function cardHtml(cam,{showPos=false}={}){
   const badge=cam.semRastreio?'<span class="badge warn">SEM RASTREIO</span>':(cam.qual==='bad'?'<span class="badge bad">RUIM</span>':(cam.qual==='good'?'<span class="badge good">OK</span>':''));
   const add=cam.parecerKatzer?.decisoes?.find(d=>d.acao==='MANTER_ADICIONAR');
   const plus=add&&add.incrementoDia!=null?add.incrementoDia:20;
+  const titulo=showPos&&cam.pos
+    ? `${cam.pos}º · ${esc(nomeCampanhaCurto(cam.name))}`
+    : `Campanha: ${esc(nomeCampanhaCurto(cam.name))}`;
   return `<div class="card">
     <div class="card-head">
-      <h3>${showPos&&cam.pos?cam.pos+'º · ':''}📍 ${esc(cam.name)}${cam.ativa===false?' <span style="color:#999;font-size:10px">· pausada</span>':''}</h3>
+      <h3><span class="pin">📍</span>${titulo}${cam.ativa===false?' <span style="color:#999;font-size:10px">· pausada</span>':''}</h3>
       ${badge}
     </div>
     <div class="metrics">
       <div class="m"><b>${esc(cam.gasto||'—')}</b><span>Investido</span></div>
-      <div class="m"><b>${cam.forms??0} · ${esc(cam.custo||'—')}</b><span>Leads / CPL</span></div>
+      <div class="m"><b>${cam.forms??0} · ${esc(cam.custo||'—')}</b><span>Leads · CPL</span></div>
       <div class="m highlight"><b>${esc(cpv)}</b><span>Custo por venda</span></div>
     </div>
     ${htmlFunil(cam)}
     ${htmlParecer(cam)}
     <div class="actions">
-      <button class="btn" onclick="doAction('manter','${escAttr(cam.id)}')">MANTER =</button>
-      <button class="btn primary" onclick="openBudget('${escAttr(cam.id)}', ${(cam.gastoNum||0)/30+plus})">ADICIONAR +</button>
-      <button class="btn" onclick="openBudget('${escAttr(cam.id)}')">DIMINUIR −</button>
-      <button class="btn danger" onclick="openStop('${escAttr(cam.id)}')">PARAR</button>
+      <button class="btn" onclick="doAction('manter','${escAttr(cam.id)}')">= MANTER =</button>
+      <button class="btn primary" onclick="openBudget('${escAttr(cam.id)}', ${(cam.gastoNum||0)/30+plus})">+ ADICIONAR +</button>
+      <button class="btn" onclick="openBudget('${escAttr(cam.id)}')">— DIMINUIR —</button>
+      <button class="btn danger" onclick="openStop('${escAttr(cam.id)}')">! PARAR</button>
     </div>
   </div>`;
 }
@@ -330,20 +409,27 @@ function rankList(arr){
 
 function renderLists(){
   Object.keys(LEAD_CACHE).forEach(k=>delete LEAD_CACHE[k]);
-  document.getElementById('listAtivas').innerHTML=ATIVAS.length
-    ? ATIVAS.map(c=>cardHtml(c)).join('')
-    : '<div class="card"><div class="rank-row">Nenhuma campanha ACTIVE.</div></div>';
+  const box=document.getElementById('listAtivas');
+  if(!box) return;
+  try{
+    box.innerHTML=ATIVAS.length
+      ? ATIVAS.map(c=>cardHtml(c)).join('')
+      : `<div class="card"><div class="rank-row">${esc((DATA&&DATA.erro)||'Nenhuma campanha ACTIVE.')}</div></div>`;
+  }catch(e){
+    box.innerHTML=`<div class="card"><div class="rank-row">Erro ao montar cards: ${esc(e.message||e)}</div></div>`;
+  }
   document.getElementById('listMelhores').innerHTML=rankList(MELHORES);
   document.getElementById('listPiores').innerHTML=rankList(PIORES);
 }
 
 async function postAcao(body){
   if(!exigeMichel())return {ok:false};
-  const res=await fetch(api('/api/decisao-app'),{
+  const res=await fetchDecisao('/api/decisao-app',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-michel-key':MICHEL_KEY},
     body:JSON.stringify({...body,michelKey:MICHEL_KEY,quem:'Michel'}),
-  }).then(r=>r.json()).catch(()=>({ok:false}));
+  });
+  // fetchDecisao trata ok:false; para POST precisamos do corpo mesmo com erro
   if(!res.ok){
     if(res.precisaMichel){MICHEL_KEY='';sessionStorage.removeItem('michelKey');refreshMichelGate();}
     toast(res.erro||'Falhou');return res;
@@ -373,16 +459,25 @@ async function confirmBudget(){
 }
 
 async function loadMichel(){
-  try{DATA=await fetch(api('/api/decisao-app?_='+Date.now())).then(r=>r.json());}catch{DATA={ativas:[],top10Melhores:[],top10Piores:[]};}
+  const info=document.getElementById('infoAtivas');
+  const box=document.getElementById('listAtivas');
+  if(info) info.innerHTML='Sincronizando campanhas ACTIVE…';
+  if(box && !ATIVAS.length) box.innerHTML='<div class="card"><div class="rank-row">Sincronizando…</div></div>';
+  DATA=await fetchDecisao('/api/decisao-app?_='+Date.now());
   ATIVAS=DATA.ativas||DATA.campanhas||[];
   MELHORES=DATA.top10Melhores||[];
   PIORES=DATA.top10Piores||[];
-  const info=document.getElementById('infoAtivas');
-  if(info) info.innerHTML=`ACTIVE sem [TESTE]: <b>${ATIVAS.length}</b>. ${esc(DATA.avisoAbas||'')} Ranking: <b>custo por venda</b>.`;
+  if(info){
+    if(DATA.ok===false && !ATIVAS.length){
+      info.innerHTML=`<span style="color:#b91c1c">Sem dados: ${esc(DATA.erro||'falha na API')}</span> · tente recarregar`;
+    } else {
+      info.innerHTML=`ACTIVE sem [TESTE]: <b>${ATIVAS.length}</b>. ${esc(DATA.avisoAbas||'')} Ranking: <b>custo por venda</b>.${DATA.bitrixOk===false?' · <span style="color:#b91c1c">Bitrix parcial</span>':''}`;
+    }
+  }
   const ir=document.getElementById('infoRanking');
   if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> · regra <b>${esc(DATA.rankingRegra||'custo_por_venda')}</b> · Make Campanha/Conjunto Origem.`;
   const foot=document.getElementById('footAtivas');
-  if(foot) foot.textContent=`Atualizado ${DATA.data||''} ${DATA.agora||''} — Dados via Meta + Bitrix + WhatsApp`;
+  if(foot) foot.textContent=`Atualizado ${DATA.data||''} ${DATA.agora||''} — Meta + Bitrix + WhatsApp`;
   const el=document.getElementById('alertLeads');
   if(el){
     if((DATA.leadsHoje||0)>0){el.style.display='block';el.textContent=DATA.alertaLeadsHoje||(`${DATA.leadsHoje} lead(s) hoje`);}
@@ -393,7 +488,7 @@ async function loadMichel(){
 
 async function loadGestor(){
   if(!GESTOR_KEY) return;
-  const r=await fetch(api('/api/decisao-app?gestor=1'),{headers:{'x-gestor-key':GESTOR_KEY}}).then(x=>x.json()).catch(()=>({ok:false}));
+  const r=await fetchDecisao('/api/decisao-app?gestor=1',{headers:{'x-gestor-key':GESTOR_KEY}});
   if(!r.ok){toast(r.erro||'Gestor indisponível');return;}
   const g=r.gestor||{};
   const feed=document.getElementById('feed');

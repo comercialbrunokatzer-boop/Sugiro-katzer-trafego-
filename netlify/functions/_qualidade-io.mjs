@@ -1,22 +1,25 @@
 // I/O da qualidade de leads (Bom/Curioso/Errado/Comprador).
-import { getStore } from '@netlify/blobs';
 import { normalizaQualidade } from './_qualidade.mjs';
+import { abreStoreSafe } from './_blobs-store.mjs';
 
 const STORE = 'placar-michel';
 const KEY = 'qualidade-v1';
 
 function abreStore() {
-  const siteID = process.env.BLOBS_SITE_ID;
-  const token = process.env.BLOBS_TOKEN;
-  if (siteID && token) return getStore({ name: STORE, siteID, token });
-  return getStore(STORE);
+  return abreStoreSafe(STORE);
 }
 
 export async function leQualidade() {
-  const atual = await abreStore().get(KEY, { type: 'json' });
-  return atual && typeof atual === 'object'
-    ? { campanhas: atual.campanhas || {}, atualizadoEm: atual.atualizadoEm || null }
-    : { campanhas: {}, atualizadoEm: null };
+  try {
+    const store = abreStore();
+    if (!store) return { campanhas: {}, atualizadoEm: null, blobsDegraded: true };
+    const atual = await store.get(KEY, { type: 'json' });
+    return atual && typeof atual === 'object'
+      ? { campanhas: atual.campanhas || {}, atualizadoEm: atual.atualizadoEm || null }
+      : { campanhas: {}, atualizadoEm: null };
+  } catch {
+    return { campanhas: {}, atualizadoEm: null, blobsDegraded: true };
+  }
 }
 
 export async function salvaQualidadeCampanha({
@@ -25,6 +28,11 @@ export async function salvaQualidadeCampanha({
   const chave = String(id || nome || '').trim();
   if (!chave) throw new Error('informe id ou nome da campanha');
   const store = abreStore();
+  if (!store) {
+    const err = new Error('Blobs indisponível ao salvar qualidade');
+    err.code = 'BLOBS_INDISPONIVEL';
+    throw err;
+  }
   const atual = await leQualidade();
   const item = normalizaQualidade(
     { bom, curioso, errado, comprador },

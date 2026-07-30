@@ -13,8 +13,12 @@ function abreStore() {
 }
 
 export async function leTravaEnviados() {
-  const doc = await abreStore().get(KEY, { type: 'json' });
-  return doc || { chaves: {}, atualizadoEm: null };
+  try {
+    const doc = await abreStore().get(KEY, { type: 'json' });
+    return doc || { chaves: {}, atualizadoEm: null };
+  } catch {
+    return { chaves: {}, atualizadoEm: null, blobsDegraded: true };
+  }
 }
 
 export { chaveTrava, filtrarTravaPendentes } from './_whatsapp-mensagens.mjs';

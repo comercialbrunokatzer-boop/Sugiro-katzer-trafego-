@@ -291,7 +291,7 @@ async function payloadApp({ incluirGestor = false } = {}) {
     lePlacar({ preset: 'last_30d' }),
     leCicloCampanhas().catch(() => ({ mapa: {} })),
     leLeadsHoje().catch(() => ({ leads: [] })),
-    leFeedDecisao(),
+    leFeedDecisao().catch(() => ({ acumulado: 127, itens: [], blobsDegraded: true })),
     listaDealsFunil({
       limit: 400,
       produtos: ['ALICERCE', 'PUNTA', 'GRANT', 'PORTUGAL', 'BRASILEIROS', 'NOVACONFIG', 'FORT MYERS', 'AMANAY'],
@@ -517,7 +517,12 @@ export async function handler(event) {
       alerta,
       texto: textoFeed,
       meta: metaAcao,
-    });
+    }).catch((e) => ({
+      acumulado: 127,
+      itens: [],
+      blobsDegraded: true,
+      blobsErro: String((e && e.message) || e),
+    }));
 
     // Aviso OBRIGATÓRIO ao Bruno — toda ação do Michel (meta / campanha / orçamento)
     const ceo = process.env.WHATSAPP_CEO || '';
@@ -575,6 +580,19 @@ export async function handler(event) {
     const payload = await payloadApp({ incluirGestor: gestor });
     return json(200, payload);
   } catch (e) {
-    return json(500, { ok: false, erro: String((e && e.message) || e) });
+    // Nunca deixar a aba Ativas em branco por Blobs/infra — UI mostra o erro.
+    return json(200, {
+      ok: false,
+      confiavel: false,
+      erro: String((e && e.message) || e),
+      ativas: [],
+      campanhas: [],
+      top10Melhores: [],
+      top10Piores: [],
+      ranking: [],
+      avisoAbas: 'Falha ao montar o painel — tente de novo. Se persistir, conferir BLOBS_TOKEN / Meta.',
+      data: null,
+      agora: null,
+    });
   }
 }

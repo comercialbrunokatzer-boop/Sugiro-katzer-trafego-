@@ -13,8 +13,12 @@ function abreStore() {
 }
 
 export async function leSnapshotAtivas() {
-  const doc = await abreStore().get(KEY_SNAP, { type: 'json' });
-  return doc || { atualizadoEm: null, ativas: {} };
+  try {
+    const doc = await abreStore().get(KEY_SNAP, { type: 'json' });
+    return doc || { atualizadoEm: null, ativas: {} };
+  } catch {
+    return { atualizadoEm: null, ativas: {}, blobsDegraded: true };
+  }
 }
 
 export async function salvaSnapshotAtivas(ativas = {}) {
@@ -27,8 +31,12 @@ export async function salvaSnapshotAtivas(ativas = {}) {
 }
 
 export async function leAlertasEnviados() {
-  const doc = await abreStore().get(KEY_SENT, { type: 'json' });
-  return doc || { chaves: {}, atualizadoEm: null };
+  try {
+    const doc = await abreStore().get(KEY_SENT, { type: 'json' });
+    return doc || { chaves: {}, atualizadoEm: null };
+  } catch {
+    return { chaves: {}, atualizadoEm: null, blobsDegraded: true };
+  }
 }
 
 /** Marca chaves enviadas; limpa entradas com mais de 3 dias. */
