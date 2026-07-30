@@ -3,8 +3,8 @@
 // WhatsApp: Evolution API (preferida) → fallback Z-API.
 //
 // REGRA P0 (#50): falha de Blobs NÃO derruba leitura — devolve estado vazio + flag.
-import { getStore } from '@netlify/blobs';
 import { estadoVazio } from './_rotina.mjs';
+import { abreStoreSafe } from './_blobs-store.mjs';
 
 const STORE = 'rotina-michel';
 
@@ -17,13 +17,8 @@ export class BlobsUnavailableError extends Error {
   }
 }
 
-// Site deployado por CLI (não por Git) não recebe o contexto automático do Blobs,
-// então usamos o MODO MANUAL: siteID + token nas env vars (BLOBS_SITE_ID / BLOBS_TOKEN).
 function abreStore() {
-  const siteID = process.env.BLOBS_SITE_ID;
-  const token = process.env.BLOBS_TOKEN;
-  if (siteID && token) return getStore({ name: STORE, siteID, token });
-  return getStore(STORE); // fallback: modo automático (se algum dia rodar por Git)
+  return abreStoreSafe(STORE);
 }
 
 function msgBlobs(e) {
@@ -33,7 +28,14 @@ function msgBlobs(e) {
 /** Lê o estado do dia (cria vazio se não existir). Nunca lança por falha de Blobs. */
 export async function leEstado(data, modoPadrao = 'casa') {
   try {
-    const atual = await abreStore().get(data, { type: 'json' });
+    const store = abreStore();
+    if (!store) {
+      const vazio = estadoVazio(data, modoPadrao);
+      vazio._blobsOk = false;
+      vazio._blobsErro = 'Blobs sem siteID/token';
+      return vazio;
+    }
+    const atual = await store.get(data, { type: 'json' });
     const estado = atual || estadoVazio(data, modoPadrao);
     estado._blobsOk = true;
     return estado;
@@ -49,9 +51,12 @@ export async function leEstado(data, modoPadrao = 'casa') {
 export async function salvaEstado(estado) {
   try {
     const { _blobsOk, _blobsErro, ...limpo } = estado || {};
-    await abreStore().setJSON(limpo.data, limpo);
+    const store = abreStore();
+    if (!store) throw new BlobsUnavailableError(new Error('sem store'));
+    await store.setJSON(limpo.data, limpo);
     return limpo;
   } catch (e) {
+    if (e instanceof BlobsUnavailableError) throw e;
     throw new BlobsUnavailableError(e);
   }
 }

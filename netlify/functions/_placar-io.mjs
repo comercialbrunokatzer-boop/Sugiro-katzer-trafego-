@@ -1,10 +1,10 @@
 // I/O do Placar-quadradinho (arquivo "_" = NÃO vira função): Blobs + Meta.
 // REGRA: erro de integração NUNCA vira gasto R$ 0 “de verdade”.
-import { getStore } from '@netlify/blobs';
 import { montaPlacar, inventariarAcoes } from './_placar.mjs';
 import { decisoesVazias } from './_placar-estado.mjs';
 import { classificaMetaResultado, mensagemMeta } from './_meta-status.mjs';
 import { META_AD_ACCOUNT, META_GRAPH } from './_meta-config.mjs';
+import { abreStoreSafe, blobsGetJson, blobsSetJson } from './_blobs-store.mjs';
 
 export { classificaMetaResultado, mensagemMeta } from './_meta-status.mjs';
 export { inventariarAcoes } from './_placar.mjs';
@@ -14,30 +14,20 @@ const PLACAR_TTL_MS = 10 * 60 * 1000;
 const CACHE_KEY = 'placar-cache-v3';
 
 function abreStore() {
-  const siteID = process.env.BLOBS_SITE_ID;
-  const token = process.env.BLOBS_TOKEN;
-  if (siteID && token) return getStore({ name: STORE, siteID, token });
-  return getStore(STORE);
+  return abreStoreSafe(STORE);
 }
 
 export async function leDecisoes(data) {
   try {
-    const atual = await abreStore().get(`dec-${data}`, { type: 'json' });
+    const atual = await blobsGetJson(abreStore(), `dec-${data}`);
     return atual || decisoesVazias(data);
   } catch {
     return decisoesVazias(data);
   }
 }
 export async function salvaDecisoes(decisoes) {
-  try {
-    await abreStore().setJSON(`dec-${decisoes.data}`, decisoes);
-    return decisoes;
-  } catch (e) {
-    const err = new Error('Blobs indisponível ao salvar decisões');
-    err.code = 'BLOBS_INDISPONIVEL';
-    err.cause = e;
-    throw err;
-  }
+  await blobsSetJson(abreStore(), `dec-${decisoes.data}`, decisoes);
+  return decisoes;
 }
 
 async function buscaMetaPlacar(preset) {
@@ -95,7 +85,7 @@ async function buscaMetaPlacar(preset) {
 export async function lePlacar({ preset = 'last_7d', force = false } = {}) {
   const store = abreStore();
   let cache = null;
-  try { cache = await store.get(CACHE_KEY, { type: 'json' }); } catch { /* ignore */ }
+  try { cache = store ? await store.get(CACHE_KEY, { type: 'json' }) : null; } catch { /* ignore */ }
   const agora = Date.now();
 
   if (!force && cache && cache.preset === preset && cache.confiavel
@@ -113,9 +103,11 @@ export async function lePlacar({ preset = 'last_7d', force = false } = {}) {
 
   if (meta.confiavel) {
     try {
-      await store.setJSON(CACHE_KEY, {
-        ts: agora, preset, placar, meta, inventario: inventario || null, confiavel: true,
-      });
+      if (store) {
+        await store.setJSON(CACHE_KEY, {
+          ts: agora, preset, placar, meta, inventario: inventario || null, confiavel: true,
+        });
+      }
     } catch { /* ignore */ }
     return { placar, ts: agora, cacheHit: false, meta, inventario: inventario || null };
   }

@@ -1,16 +1,13 @@
 // I/O do Caçador — leads de hoje + marcas (Blobs).
-import { getStore } from '@netlify/blobs';
 import { resolveLeadsDoDia, normalizaLead, marcaLead, totaisPorCampanha, marcaAuditoria } from './_cacador.mjs';
 import { leQualidade, salvaQualidadeCampanha } from './_qualidade-io.mjs';
+import { abreStoreSafe } from './_blobs-store.mjs';
 
 const STORE = 'placar-michel';
 const KEY = 'cacador-leads-v1';
 
 function abreStore() {
-  const siteID = process.env.BLOBS_SITE_ID;
-  const token = process.env.BLOBS_TOKEN;
-  if (siteID && token) return getStore({ name: STORE, siteID, token });
-  return getStore(STORE);
+  return abreStoreSafe(STORE);
 }
 
 function dataBRT(d = new Date()) {
@@ -25,9 +22,11 @@ function allowDemoCacador() {
 
 export async function leLeadsHoje() {
   const hoje = dataBRT();
+  const store = abreStore();
+  if (!store) return { data: hoje, leads: [], fonte: 'blobs-off' };
   let doc = null;
   try {
-    doc = await abreStore().get(KEY, { type: 'json' });
+    doc = await store.get(KEY, { type: 'json' });
   } catch {
     return { data: hoje, leads: [], fonte: 'blobs-off' };
   }
@@ -40,7 +39,7 @@ export async function leLeadsHoje() {
       fonte: resolved.fonte,
       atualizadoEm: new Date().toISOString(),
     };
-    try { await abreStore().setJSON(KEY, novo); } catch { /* ignore */ }
+    try { await store.setJSON(KEY, novo); } catch { /* ignore */ }
   }
   return { data: hoje, leads, fonte: resolved.fonte };
 }
@@ -53,8 +52,14 @@ export async function salvaLeadsHoje(leads, { fonte = 'blobs' } = {}) {
     fonte,
     atualizadoEm: new Date().toISOString(),
   };
+  const store = abreStore();
+  if (!store) {
+    const err = new Error('Blobs indisponível ao salvar leads');
+    err.code = 'BLOBS_INDISPONIVEL';
+    throw err;
+  }
   try {
-    await abreStore().setJSON(KEY, doc);
+    await store.setJSON(KEY, doc);
   } catch (e) {
     const err = new Error('Blobs indisponível ao salvar leads');
     err.code = 'BLOBS_INDISPONIVEL';

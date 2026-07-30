@@ -164,11 +164,17 @@ body{background:#fff;color:#111;min-height:100vh}
 <div class="toast" id="toast"></div>
 
 <script>
-const API_BASE=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname)?'https://rotina-produtiva-michel.netlify.app':'';
-const api=(p)=>API_BASE+p;
+/** App Decisão: no site isolado (dashing-elf) a API vive na Rotina (Blobs/Meta). */
+const ROTINA_API='https://rotina-produtiva-michel.netlify.app';
+const IS_CAMPANHAS_HOST=/campanhas-katzer|dashing-elf-41a723/i.test(location.hostname);
+const API_CANDIDATES=IS_CAMPANHAS_HOST
+  ? [ROTINA_API, ''] // 1º Rotina (fonte), 2º mesmo host (fallback)
+  : ['', ROTINA_API];
+const api=(base,p)=>(base||'')+p;
 let DATA=null, ATIVAS=[], MELHORES=[], PIORES=[], currentCamp=null, GESTOR_KEY='';
 let MICHEL_KEY=sessionStorage.getItem('michelKey')||'';
 let lastLeadsHoje=null;
+let API_BASE_OK=API_CANDIDATES[0];
 /** cache leads por chave campanha|etapa|canal p/ picker */
 const LEAD_CACHE={};
 
@@ -176,6 +182,39 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function acha(id){return [...ATIVAS,...MELHORES,...PIORES].find(c=>String(c.id)===String(id)||c.name===id);}
+
+async function fetchDecisao(path, opts={}){
+  const isPost=String(opts.method||'GET').toUpperCase()==='POST';
+  let last=null;
+  for(const base of API_CANDIDATES){
+    const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+    const t=ctrl?setTimeout(()=>ctrl.abort(),22000):null;
+    try{
+      const r=await fetch(api(base,path),{...opts,cache:'no-store',signal:ctrl?ctrl.signal:undefined});
+      const data=await r.json().catch(()=>({ok:false,erro:`HTTP ${r.status}`}));
+      if(t) clearTimeout(t);
+      // POST: devolve a 1ª resposta JSON válida (mesmo ok:false — ex.: precisaMichel)
+      if(isPost && data && typeof data==='object'){
+        API_BASE_OK=base;
+        return data;
+      }
+      if(r.ok && data && data.ok!==false){
+        API_BASE_OK=base;
+        return data;
+      }
+      last=data && typeof data==='object' ? data : {ok:false,erro:`HTTP ${r.status}`};
+      if(data && (Array.isArray(data.ativas)||Array.isArray(data.campanhas))){
+        API_BASE_OK=base;
+        return data;
+      }
+    }catch(e){
+      last={ok:false,erro:String((e&&e.message)||e)};
+    }finally{
+      if(t) clearTimeout(t);
+    }
+  }
+  return last||{ok:false,erro:'Falha de rede',ativas:[],top10Melhores:[],top10Piores:[]};
+}
 
 function refreshMichelGate(){
   const st=document.getElementById('michelStatus');
@@ -330,20 +369,27 @@ function rankList(arr){
 
 function renderLists(){
   Object.keys(LEAD_CACHE).forEach(k=>delete LEAD_CACHE[k]);
-  document.getElementById('listAtivas').innerHTML=ATIVAS.length
-    ? ATIVAS.map(c=>cardHtml(c)).join('')
-    : '<div class="card"><div class="rank-row">Nenhuma campanha ACTIVE.</div></div>';
+  const box=document.getElementById('listAtivas');
+  if(!box) return;
+  try{
+    box.innerHTML=ATIVAS.length
+      ? ATIVAS.map(c=>cardHtml(c)).join('')
+      : `<div class="card"><div class="rank-row">${esc((DATA&&DATA.erro)||'Nenhuma campanha ACTIVE.')}</div></div>`;
+  }catch(e){
+    box.innerHTML=`<div class="card"><div class="rank-row">Erro ao montar cards: ${esc(e.message||e)}</div></div>`;
+  }
   document.getElementById('listMelhores').innerHTML=rankList(MELHORES);
   document.getElementById('listPiores').innerHTML=rankList(PIORES);
 }
 
 async function postAcao(body){
   if(!exigeMichel())return {ok:false};
-  const res=await fetch(api('/api/decisao-app'),{
+  const res=await fetchDecisao('/api/decisao-app',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-michel-key':MICHEL_KEY},
     body:JSON.stringify({...body,michelKey:MICHEL_KEY,quem:'Michel'}),
-  }).then(r=>r.json()).catch(()=>({ok:false}));
+  });
+  // fetchDecisao trata ok:false; para POST precisamos do corpo mesmo com erro
   if(!res.ok){
     if(res.precisaMichel){MICHEL_KEY='';sessionStorage.removeItem('michelKey');refreshMichelGate();}
     toast(res.erro||'Falhou');return res;
@@ -373,16 +419,25 @@ async function confirmBudget(){
 }
 
 async function loadMichel(){
-  try{DATA=await fetch(api('/api/decisao-app?_='+Date.now())).then(r=>r.json());}catch{DATA={ativas:[],top10Melhores:[],top10Piores:[]};}
+  const info=document.getElementById('infoAtivas');
+  const box=document.getElementById('listAtivas');
+  if(info) info.innerHTML='Sincronizando campanhas ACTIVE…';
+  if(box && !ATIVAS.length) box.innerHTML='<div class="card"><div class="rank-row">Sincronizando…</div></div>';
+  DATA=await fetchDecisao('/api/decisao-app?_='+Date.now());
   ATIVAS=DATA.ativas||DATA.campanhas||[];
   MELHORES=DATA.top10Melhores||[];
   PIORES=DATA.top10Piores||[];
-  const info=document.getElementById('infoAtivas');
-  if(info) info.innerHTML=`ACTIVE sem [TESTE]: <b>${ATIVAS.length}</b>. ${esc(DATA.avisoAbas||'')} Ranking: <b>custo por venda</b>.`;
+  if(info){
+    if(DATA.ok===false && !ATIVAS.length){
+      info.innerHTML=`<span style="color:#b91c1c">Sem dados: ${esc(DATA.erro||'falha na API')}</span> · tente recarregar`;
+    } else {
+      info.innerHTML=`ACTIVE sem [TESTE]: <b>${ATIVAS.length}</b>. ${esc(DATA.avisoAbas||'')} Ranking: <b>custo por venda</b>.${DATA.bitrixOk===false?' · <span style="color:#b91c1c">Bitrix parcial</span>':''}`;
+    }
+  }
   const ir=document.getElementById('infoRanking');
   if(ir) ir.innerHTML=`Desde <b>${esc(DATA.rankingDesde||'2025-07-12')}</b> · regra <b>${esc(DATA.rankingRegra||'custo_por_venda')}</b> · Make Campanha/Conjunto Origem.`;
   const foot=document.getElementById('footAtivas');
-  if(foot) foot.textContent=`Atualizado ${DATA.data||''} ${DATA.agora||''} — Dados via Meta + Bitrix + WhatsApp`;
+  if(foot) foot.textContent=`Atualizado ${DATA.data||''} ${DATA.agora||''} — Meta + Bitrix + WhatsApp`;
   const el=document.getElementById('alertLeads');
   if(el){
     if((DATA.leadsHoje||0)>0){el.style.display='block';el.textContent=DATA.alertaLeadsHoje||(`${DATA.leadsHoje} lead(s) hoje`);}
@@ -393,7 +448,7 @@ async function loadMichel(){
 
 async function loadGestor(){
   if(!GESTOR_KEY) return;
-  const r=await fetch(api('/api/decisao-app?gestor=1'),{headers:{'x-gestor-key':GESTOR_KEY}}).then(x=>x.json()).catch(()=>({ok:false}));
+  const r=await fetchDecisao('/api/decisao-app?gestor=1',{headers:{'x-gestor-key':GESTOR_KEY}});
   if(!r.ok){toast(r.erro||'Gestor indisponível');return;}
   const g=r.gestor||{};
   const feed=document.getElementById('feed');
