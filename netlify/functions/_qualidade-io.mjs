@@ -28,6 +28,11 @@ export async function salvaQualidadeCampanha({
   const chave = String(id || nome || '').trim();
   if (!chave) throw new Error('informe id ou nome da campanha');
   const store = abreStore();
+  if (!store) {
+    const err = new Error('Blobs indisponível ao salvar qualidade');
+    err.code = 'BLOBS_INDISPONIVEL';
+    throw err;
+  }
   const atual = await leQualidade();
   const item = normalizaQualidade(
     { bom, curioso, errado, comprador },
