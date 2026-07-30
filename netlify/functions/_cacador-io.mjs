@@ -24,9 +24,13 @@ function allowDemoCacador() {
 }
 
 export async function leLeadsHoje() {
-  const store = abreStore();
-  const doc = await store.get(KEY, { type: 'json' });
   const hoje = dataBRT();
+  let doc = null;
+  try {
+    doc = await abreStore().get(KEY, { type: 'json' });
+  } catch {
+    return { data: hoje, leads: [], fonte: 'blobs-off' };
+  }
   const resolved = resolveLeadsDoDia({ hoje, doc, allowDemo: allowDemoCacador() });
   const leads = (resolved.leads || []).map(normalizaLead);
   if (resolved.persistir) {
@@ -36,7 +40,7 @@ export async function leLeadsHoje() {
       fonte: resolved.fonte,
       atualizadoEm: new Date().toISOString(),
     };
-    try { await store.setJSON(KEY, novo); } catch { /* ignore */ }
+    try { await abreStore().setJSON(KEY, novo); } catch { /* ignore */ }
   }
   return { data: hoje, leads, fonte: resolved.fonte };
 }
@@ -49,7 +53,14 @@ export async function salvaLeadsHoje(leads, { fonte = 'blobs' } = {}) {
     fonte,
     atualizadoEm: new Date().toISOString(),
   };
-  await abreStore().setJSON(KEY, doc);
+  try {
+    await abreStore().setJSON(KEY, doc);
+  } catch (e) {
+    const err = new Error('Blobs indisponível ao salvar leads');
+    err.code = 'BLOBS_INDISPONIVEL';
+    err.cause = e;
+    throw err;
+  }
   return doc;
 }
 

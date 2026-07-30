@@ -17,16 +17,24 @@ function abreStore() {
 export async function persisteGarimpo(registro) {
   const data = registro.data; // YYYY-MM-DD
   const key = `garimpo-log-${data}`;
-  const store = abreStore();
-  let log = (await store.get(key, { type: 'json' })) || { data, rows: [] };
-  log.rows.push(registro);
-  log.atualizadoEm = new Date().toISOString();
-  await store.setJSON(key, log);
+  let blobs = { ok: false, key, n: 0 };
+  try {
+    const store = abreStore();
+    let log = (await store.get(key, { type: 'json' })) || { data, rows: [] };
+    log.rows.push(registro);
+    log.atualizadoEm = new Date().toISOString();
+    await store.setJSON(key, log);
+    blobs = { ok: true, key, n: log.rows.length };
+  } catch (e) {
+    blobs = { ok: false, key, n: 0, erro: String((e && e.message) || e) };
+  }
 
   const sheets = await enviaSheetsGarimpo(registro);
+  // Sem Blobs e sem Sheets obrigatório → ainda permite seguir (estado grava à parte)
+  const ok = blobs.ok || (sheets.required ? sheets.ok : true);
   return {
-    ok: sheets.required ? sheets.ok : true,
-    blobs: { ok: true, key, n: log.rows.length },
+    ok,
+    blobs,
     sheets,
   };
 }

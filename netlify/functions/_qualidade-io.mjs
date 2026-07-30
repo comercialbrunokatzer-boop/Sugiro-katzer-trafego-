@@ -13,10 +13,14 @@ function abreStore() {
 }
 
 export async function leQualidade() {
-  const atual = await abreStore().get(KEY, { type: 'json' });
-  return atual && typeof atual === 'object'
-    ? { campanhas: atual.campanhas || {}, atualizadoEm: atual.atualizadoEm || null }
-    : { campanhas: {}, atualizadoEm: null };
+  try {
+    const atual = await abreStore().get(KEY, { type: 'json' });
+    return atual && typeof atual === 'object'
+      ? { campanhas: atual.campanhas || {}, atualizadoEm: atual.atualizadoEm || null }
+      : { campanhas: {}, atualizadoEm: null };
+  } catch {
+    return { campanhas: {}, atualizadoEm: null, blobsDegraded: true };
+  }
 }
 
 export async function salvaQualidadeCampanha({

@@ -31,9 +31,11 @@
   .modo button{flex:1;border:0;background:transparent;color:var(--sub);font-weight:700;font-size:.92rem;padding:10px;border-radius:8px;font-family:inherit;cursor:pointer}
   .modo button.on{background:linear-gradient(150deg,var(--sea),#134f49);color:#fff}
   .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 4px}
+  .strip.helena{grid-template-columns:repeat(2,1fr);margin-bottom:0}
   .strip .b{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:10px 8px;text-align:center;box-shadow:var(--shadow)}
   .strip .n{font-size:1.35rem;font-weight:800;line-height:1}.strip .l{font-size:.65rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
   .strip .b.late .n{color:var(--late)}.strip .b.ok .n{color:var(--ok)}.strip .b.run .n{color:var(--run)}
+  .aviso-blobs{display:none;margin:12px 0 0;padding:11px 13px;border-radius:12px;border:1px solid var(--late);background:var(--late-bg);color:var(--late);font-size:.82rem;font-weight:600;line-height:1.4}
   .prio{background:var(--panel);border:1px solid var(--hair);border-radius:14px;box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
   .prio h2{margin:0 0 8px;font-size:.88rem;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
   .prio li{margin:4px 0;font-size:.88rem}
@@ -104,21 +106,23 @@
 
   <p class="eyebrow">Katzer OS · Placar Michel · V6</p>
   <h1>Bom dia, Michel 👋</h1>
-  <p class="date" id="date">carregando…</p>
+  <p class="date" id="date">Sincronizando…</p>
 
   <div class="modo" id="modo">
     <button data-modo="casa">🏠 Casa (08:00)</button>
     <button data-modo="katzer">🏢 Katzer (08:45)</button>
   </div>
 
+  <div class="aviso-blobs" id="avisoBlobs"></div>
+  <div class="strip helena" id="stripHelena"></div>
   <div class="strip" id="strip"></div>
 
   <div class="prio" id="prio">
     <h2>Prioridades do dia</h2>
-    <ol id="prioList"><li>Carregando…</li></ol>
+    <ol id="prioList"><li>Sincronizando…</li></ol>
   </div>
 
-  <div class="orient" id="orient">Carregando orientação…</div>
+  <div class="orient" id="orient">Sincronizando…</div>
 
   <div class="sec">Rotina do dia</div>
   <div id="tasks"></div>
@@ -153,7 +157,26 @@ const $=(s)=>document.querySelector(s);
 let ST=null, tickTimer=null;
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
 async function api(body){const r=await fetch('/api/registrar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
-async function load(){try{const r=await fetch('/api/estado');ST=await r.json();render();}catch(e){}}
+function mostraSemDados(msg){
+  $('#date').textContent='Sem dados disponíveis';
+  $('#prioList').innerHTML=`<li>${msg||'Sem dados disponíveis'}</li>`;
+  $('#orient').textContent=msg||'Sem dados disponíveis. Recarregue a página.';
+  const sh=$('#stripHelena'); if(sh) sh.innerHTML='';
+  $('#strip').innerHTML='';
+}
+async function load(){
+  try{
+    const r=await fetch('/api/estado',{cache:'no-store'});
+    ST=await r.json().catch(()=>null);
+    if(!ST||!ST.ok){
+      mostraSemDados((ST&&ST.erro)||'Sem dados disponíveis');
+      return;
+    }
+    render();
+  }catch(e){
+    mostraSemDados('Falha de rede. Recarregue a página.');
+  }
+}
 function diaSemana(d){const [y,m,dd]=d.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,dd));return ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][dt.getUTCDay()];}
 function fmtData(d){const [y,m,dd]=d.split('-');const mes=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+m-1];return `${diaSemana(d)}, ${+dd} de ${mes} de ${y}`;}
 function nowMin(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o=Object.fromEntries(p.map(x=>[x.type,x.value]));return (+o.hour%24)*60+(+o.minute);}
@@ -169,6 +192,20 @@ function resumoTarefas(){
 }
 
 function renderStrip(){
+  const H=ST.helena||{};
+  const sh=$('#stripHelena');
+  if(sh){
+    if(H.ok){
+      const env=H.enviados!=null?H.enviados:'—';
+      const resp=H.respondidos!=null?H.respondidos:'—';
+      sh.innerHTML=`
+        <div class="b ok"><div class="n">${env}</div><div class="l">Helena enviados</div></div>
+        <div class="b run"><div class="n">${resp}</div><div class="l">Respondidos</div></div>`;
+    } else {
+      sh.innerHTML=`<div class="b"><div class="n">—</div><div class="l">Helena</div></div>
+        <div class="b"><div class="n">—</div><div class="l">Sem sync</div></div>`;
+    }
+  }
   const R=resumoTarefas();
   $('#strip').innerHTML=`
     <div class="b ok"><div class="n">${R.feitas}</div><div class="l">Feitas</div></div>
@@ -183,6 +220,9 @@ function renderPrioridades(){
   const next=ts.filter(t=>!t.feito&&t.estado==='aguardando').slice(0,2);
   const camp=ts.find(t=>t.id==='campanhas'&&!t.feito);
   const items=[];
+  if(ST.blobsDegraded||ST.leituraSomente){
+    items.push('⚠️ Rotina só leitura (Blobs off) — métricas Helena acima');
+  }
   urg.forEach(t=>items.push(`🔴 ${t.nome} — atrasando (previsto ${t.previsto})`));
   if(camp&&!urg.find(u=>u.id==='campanhas')) items.push(`📊 Campanhas — abrir o painel se ainda não fez`);
   next.forEach(t=>{if(t.id!=='campanhas'||items.every(i=>!i.includes('Campanhas'))) items.push(`➡️ Próximo: ${t.nome} (${t.previsto})`);});
@@ -190,7 +230,8 @@ function renderPrioridades(){
   $('#prioList').innerHTML=items.slice(0,4).map(i=>`<li>${i}</li>`).join('');
 
   let orient='';
-  if(ST.domingo) orient='<b>Hoje:</b> folga. Não há rotina.';
+  if(ST.blobsDegraded||ST.leituraSomente) orient='<b>Agora:</b> painel em modo leitura. Regenerar BLOBS_TOKEN no Netlify para marcar “Feito”.';
+  else if(ST.domingo) orient='<b>Hoje:</b> folga. Não há rotina.';
   else if(urg.length) orient=`<b>Agora:</b> regular o atraso em <b>${urg[0].nome}</b>. Depois volte à ordem.`;
   else if(camp) orient='<b>Agora:</b> no horário de Campanhas, só OLHE o resumo e abra o Painel. Executar (decisão/insights) fica no app Campanhas.';
   else orient='<b>Agora:</b> siga a próxima tarefa da lista. Sem atalho fora da ordem.';
@@ -225,10 +266,24 @@ function htmlCardCampanhas(t){
 }
 
 function render(){
-  if(!ST||!ST.ok)return;
-  $('#date').textContent=fmtData(ST.data)+(ST.domingo?' · folga 🎉':'');
+  if(!ST||!ST.ok){mostraSemDados((ST&&ST.erro)||'Sem dados disponíveis');return;}
+  const av=$('#avisoBlobs');
+  if(av){
+    if(ST.blobsDegraded||ST.leituraSomente){
+      av.style.display='block';
+      av.textContent=ST.avisoBlobs||'Persistência (Blobs) off — só leitura. Regenerar BLOBS_TOKEN no Netlify.';
+    } else {
+      av.style.display='none';
+      av.textContent='';
+    }
+  }
+  $('#date').textContent=(ST.data?fmtData(ST.data):'—')+(ST.domingo?' · folga 🎉':'');
   document.querySelectorAll('#modo button').forEach(b=>b.classList.toggle('on',b.dataset.modo===ST.modo));
   renderStrip();renderPrioridades();
+  if(!(ST.tarefas||[]).length){
+    $('#tasks').innerHTML='<div class="task"><div class="nm"><b>Sem dados da rotina</b><small>Blobs off ou dia ainda sem registros</small></div></div>';
+    return;
+  }
 
   const box=$('#tasks');box.innerHTML='';
   ST.tarefas.forEach(t=>{

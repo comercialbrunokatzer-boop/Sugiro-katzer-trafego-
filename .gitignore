@@ -1,4 +1,5 @@
 
+node_modules/
 helena-ship/node_modules/
 helena-ship/_pub/
 helena-ship/package-lock.json

@@ -21,12 +21,23 @@ function abreStore() {
 }
 
 export async function leDecisoes(data) {
-  const atual = await abreStore().get(`dec-${data}`, { type: 'json' });
-  return atual || decisoesVazias(data);
+  try {
+    const atual = await abreStore().get(`dec-${data}`, { type: 'json' });
+    return atual || decisoesVazias(data);
+  } catch {
+    return decisoesVazias(data);
+  }
 }
 export async function salvaDecisoes(decisoes) {
-  await abreStore().setJSON(`dec-${decisoes.data}`, decisoes);
-  return decisoes;
+  try {
+    await abreStore().setJSON(`dec-${decisoes.data}`, decisoes);
+    return decisoes;
+  } catch (e) {
+    const err = new Error('Blobs indisponível ao salvar decisões');
+    err.code = 'BLOBS_INDISPONIVEL';
+    err.cause = e;
+    throw err;
+  }
 }
 
 async function buscaMetaPlacar(preset) {

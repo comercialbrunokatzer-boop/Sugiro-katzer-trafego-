@@ -1,10 +1,21 @@
 // Infra compartilhada (arquivo "_" = não vira função): armazenamento + WhatsApp.
 // Persistência = Netlify Blobs (auto). Gestor /api/estado atualiza sozinho (poll).
 // WhatsApp: Evolution API (preferida) → fallback Z-API.
+//
+// REGRA P0 (#50): falha de Blobs NÃO derruba leitura — devolve estado vazio + flag.
 import { getStore } from '@netlify/blobs';
 import { estadoVazio } from './_rotina.mjs';
 
 const STORE = 'rotina-michel';
+
+export class BlobsUnavailableError extends Error {
+  constructor(cause) {
+    super('Armazenamento (Blobs) indisponível — regenerar BLOBS_TOKEN no Netlify');
+    this.name = 'BlobsUnavailableError';
+    this.code = 'BLOBS_INDISPONIVEL';
+    this.cause = cause;
+  }
+}
 
 // Site deployado por CLI (não por Git) não recebe o contexto automático do Blobs,
 // então usamos o MODO MANUAL: siteID + token nas env vars (BLOBS_SITE_ID / BLOBS_TOKEN).
@@ -15,16 +26,34 @@ function abreStore() {
   return getStore(STORE); // fallback: modo automático (se algum dia rodar por Git)
 }
 
-/** Lê o estado do dia (cria vazio se não existir). */
-export async function leEstado(data, modoPadrao = 'casa') {
-  const atual = await abreStore().get(data, { type: 'json' });
-  return atual || estadoVazio(data, modoPadrao);
+function msgBlobs(e) {
+  return String((e && e.message) || e || 'blobs erro');
 }
 
-/** Grava o estado do dia. */
+/** Lê o estado do dia (cria vazio se não existir). Nunca lança por falha de Blobs. */
+export async function leEstado(data, modoPadrao = 'casa') {
+  try {
+    const atual = await abreStore().get(data, { type: 'json' });
+    const estado = atual || estadoVazio(data, modoPadrao);
+    estado._blobsOk = true;
+    return estado;
+  } catch (e) {
+    const vazio = estadoVazio(data, modoPadrao);
+    vazio._blobsOk = false;
+    vazio._blobsErro = msgBlobs(e);
+    return vazio;
+  }
+}
+
+/** Grava o estado do dia. Lança BlobsUnavailableError se Blobs estiver off. */
 export async function salvaEstado(estado) {
-  await abreStore().setJSON(estado.data, estado);
-  return estado;
+  try {
+    const { _blobsOk, _blobsErro, ...limpo } = estado || {};
+    await abreStore().setJSON(limpo.data, limpo);
+    return limpo;
+  } catch (e) {
+    throw new BlobsUnavailableError(e);
+  }
 }
 
 function soDig(s) {
@@ -113,10 +142,17 @@ export async function enviaEmail(para, assunto, html) {
   }
 }
 
-export function json(statusCode, body) {
+export function json(statusCode, body, { noStore = true } = {}) {
+  const headers = {
+    'content-type': 'application/json; charset=utf-8',
+    'access-control-allow-origin': '*',
+  };
+  if (noStore) {
+    headers['cache-control'] = 'no-store, no-cache, must-revalidate';
+  }
   return {
     statusCode,
-    headers: { 'content-type': 'application/json; charset=utf-8', 'access-control-allow-origin': '*' },
+    headers,
     body: JSON.stringify(body, null, 2),
   };
 }

@@ -17,13 +17,23 @@ export function dataDesde() {
 }
 
 export async function leFeedDecisao() {
-  const doc = await abreStore().get(KEY_FEED, { type: 'json' });
-  return doc || {
-    desde: DESDE,
-    acumulado: 127, // seed histórico Bruno até blobs ligar
-    itens: [],
-    atualizadoEm: null,
-  };
+  try {
+    const doc = await abreStore().get(KEY_FEED, { type: 'json' });
+    return doc || {
+      desde: DESDE,
+      acumulado: 127, // seed histórico Bruno até blobs ligar
+      itens: [],
+      atualizadoEm: null,
+    };
+  } catch {
+    return {
+      desde: DESDE,
+      acumulado: 127,
+      itens: [],
+      atualizadoEm: null,
+      blobsDegraded: true,
+    };
+  }
 }
 
 export async function registraFeedDecisao(item) {
@@ -35,7 +45,14 @@ export async function registraFeedDecisao(item) {
   doc.itens = [entrada, ...(doc.itens || [])].slice(0, 500);
   doc.acumulado = (Number(doc.acumulado) || 127) + 1;
   doc.atualizadoEm = entrada.em;
-  await abreStore().setJSON(KEY_FEED, doc);
+  try {
+    await abreStore().setJSON(KEY_FEED, doc);
+  } catch (e) {
+    const err = new Error('Blobs indisponível ao registrar feed');
+    err.code = 'BLOBS_INDISPONIVEL';
+    err.cause = e;
+    throw err;
+  }
   return doc;
 }
 

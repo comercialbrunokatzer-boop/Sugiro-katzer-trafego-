@@ -9,7 +9,7 @@
 //   acao='gestor-decisao' { id, campanha, tipo, decisao, ajuste? }  -> pausar/escalar
 import { createHash } from 'node:crypto';
 import { agoraBRT, previstoMin, min2hm, hm2min, TAREFAS } from './_rotina.mjs';
-import { leEstado, salvaEstado, enviaWhats, json } from './_infra.mjs';
+import { leEstado, salvaEstado, enviaWhats, json, BlobsUnavailableError } from './_infra.mjs';
 import { registraDecisao, rotuloDecisao } from './_placar-estado.mjs';
 import { leDecisoes, salvaDecisoes } from './_placar-io.mjs';
 import { validaGarimpo, mensagemAlertaGarimpo } from './_garimpo.mjs';
@@ -33,6 +33,22 @@ function emojiDif(dif) {
 }
 
 export async function handler(event) {
+  try {
+    return await handlerInner(event);
+  } catch (e) {
+    if (e instanceof BlobsUnavailableError || (e && e.code === 'BLOBS_INDISPONIVEL')) {
+      return json(503, {
+        ok: false,
+        erro: 'Não deu pra salvar — Blobs off. Regenerar BLOBS_TOKEN no Netlify.',
+        blobsDegraded: true,
+        detalhe: String((e && e.message) || e),
+      });
+    }
+    throw e;
+  }
+}
+
+async function handlerInner(event) {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -51,6 +67,14 @@ export async function handler(event) {
   const acao = body.acao;
   const now = agoraBRT();
   const estado = await leEstado(now.data, body.modo || 'casa');
+  if (estado._blobsOk === false) {
+    return json(503, {
+      ok: false,
+      erro: 'Somente leitura agora — Blobs off. Regenerar BLOBS_TOKEN no Netlify.',
+      blobsDegraded: true,
+      detalhe: estado._blobsErro || null,
+    });
+  }
   if (!estado.overrides) estado.overrides = {};
   const ceo = process.env.WHATSAPP_CEO || '';
 

@@ -1,7 +1,8 @@
-// ESTADO — Rotina + card Campanhas (só resumo + link pro app separado).
-// GET /api/estado        → tarefas + obs + modo + campanhas{resumo}
+// ESTADO — Rotina + card Campanhas (só resumo + link pro app separado) + fatia Helena (katzer-os).
+// GET /api/estado        → tarefas + obs + modo + campanhas{resumo} + helena
 // GET /api/estado?ceo=1  → + pontualidade (% + saldo) + decisoesCampanha[]
 //
+// P0 (#50): Blobs off NÃO vira 502 — responde ok:true com rotina vazia + helena da fonte única.
 // Decisão / quadradinho NÃO vive aqui. App: CAMPANHAS_APP_URL
 import { createHash } from 'node:crypto';
 import { agoraBRT, pontualidade, TAREFAS, previstoMin, min2hm } from './_rotina.mjs';
@@ -12,6 +13,7 @@ import { leQualidade, mapaQualidade } from './_qualidade-io.mjs';
 import { enriqueceComQualidade, resumoCplBomQualidade } from './_qualidade.mjs';
 import { leCicloCampanhas, enrichComCiclo } from './_meta-ciclo.mjs';
 import { leDecisoesCampanha } from './_campanhas-dia.mjs';
+import { buscaFatiaHelena } from './_katzer-os-cliente.mjs';
 
 const GESTOR_HASH = 'ab341344e639296c0070e1a831d551d0e24798f926e27576078b5c95341ef143';
 const CAMPANHAS_APP_URL = (process.env.CAMPANHAS_APP_URL || 'https://dashing-elf-41a723.netlify.app').replace(/\/+$/, '');
@@ -172,50 +174,86 @@ async function resumoCampanhas(data) {
 }
 
 export async function handler(event) {
-  const params = event.queryStringParameters || {};
-  const now = agoraBRT();
-  const estado = await leEstado(now.data);
-  const domingo = now.dow === 0;
-  const fimDiaMin = estado.modo === 'katzer' ? (14 * 60 + 30) : (13 * 60);
+  try {
+    const params = event.queryStringParameters || {};
+    const now = agoraBRT();
+    const [estado, helena] = await Promise.all([
+      leEstado(now.data),
+      buscaFatiaHelena(),
+    ]);
+    const blobsOk = estado._blobsOk !== false;
+    const domingo = now.dow === 0;
+    const fimDiaMin = estado.modo === 'katzer' ? (14 * 60 + 30) : (13 * 60);
 
-  const tarefas = TAREFAS.map((t) => {
-    const prev = previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
-    const reg = estado.tarefas[t.id];
-    const vencida = !domingo && now.min > prev && !(reg && reg.min != null);
-    let estadoTarefa = 'aguardando';
-    if (domingo) estadoTarefa = 'bloqueado';
-    else if (reg && reg.min != null) estadoTarefa = 'concluido';
-    else if (vencida && now.min >= fimDiaMin) estadoTarefa = 'nao_realizado';
-    else if (vencida) estadoTarefa = 'atrasado';
-    else if (reg && reg.iniciado) estadoTarefa = 'em_andamento';
-    return {
-      id: t.id, nome: t.nome, previsto: min2hm(prev),
-      feito: !!(reg && reg.min != null), hora: reg ? reg.hora : null, nota: reg ? reg.nota : '',
-      atrasoAberto: vencida ? now.min - prev : 0,
-      estado: estadoTarefa,
-      override: !!(estado.overrides && estado.overrides[t.id] != null),
-      garimpo: reg && reg.garimpo ? reg.garimpo : null,
+    const tarefas = TAREFAS.map((t) => {
+      const prev = previstoMin(t, estado.modo, estado.inicioMin, estado.overrides);
+      const reg = estado.tarefas[t.id];
+      const vencida = !domingo && now.min > prev && !(reg && reg.min != null);
+      let estadoTarefa = 'aguardando';
+      if (domingo) estadoTarefa = 'bloqueado';
+      else if (reg && reg.min != null) estadoTarefa = 'concluido';
+      else if (vencida && now.min >= fimDiaMin) estadoTarefa = 'nao_realizado';
+      else if (vencida) estadoTarefa = 'atrasado';
+      else if (reg && reg.iniciado) estadoTarefa = 'em_andamento';
+      return {
+        id: t.id, nome: t.nome, previsto: min2hm(prev),
+        feito: !!(reg && reg.min != null), hora: reg ? reg.hora : null, nota: reg ? reg.nota : '',
+        atrasoAberto: vencida ? now.min - prev : 0,
+        estado: estadoTarefa,
+        override: !!(estado.overrides && estado.overrides[t.id] != null),
+        garimpo: reg && reg.garimpo ? reg.garimpo : null,
+      };
+    });
+
+    const campanhas = await resumoCampanhas(now.data);
+
+    const base = {
+      ok: true,
+      data: now.data,
+      agora: now.hm,
+      modo: estado.modo,
+      domingo,
+      tarefas,
+      obs: estado.obs || [],
+      campanhas,
+      overrides: estado.overrides || {},
+      auto: true, // V6: persiste sozinho; gestor só olha (poll)
+      helena,
+      blobsOk,
+      blobsDegraded: !blobsOk,
+      leituraSomente: !blobsOk,
+      avisoBlobs: blobsOk
+        ? null
+        : 'Persistência (Blobs) off — rotina do dia só leitura. Regenerar BLOBS_TOKEN no Netlify.',
     };
-  });
 
-  const campanhas = await resumoCampanhas(now.data);
-
-  const base = {
-    ok: true, data: now.data, agora: now.hm, modo: estado.modo,
-    domingo, tarefas, obs: estado.obs,
-    campanhas,
-    overrides: estado.overrides || {},
-    auto: true, // V6: persiste sozinho; gestor só olha (poll)
-  };
-
-  if (params.ceo) {
-    if (!senhaGestorOk(event, params)) {
-      return json(401, { ok: false, precisaSenha: true, erro: 'senha do gestor necessária' });
+    if (params.ceo) {
+      if (!senhaGestorOk(event, params)) {
+        return json(401, { ok: false, precisaSenha: true, erro: 'senha do gestor necessária' });
+      }
+      base.pontualidade = pontualidade(estado, now.min, { domingo, fimDiaMin });
+      // Lembrete de campanha: só no Gestor (Michel não vê via ?ceo=1).
+      // NÃO sobrescreve base.campanhas (resumo Meta + link do card).
+      try {
+        base.decisoesCampanha = await leDecisoesCampanha(now.data);
+      } catch {
+        base.decisoesCampanha = [];
+      }
     }
-    base.pontualidade = pontualidade(estado, now.min, { domingo, fimDiaMin });
-    // Lembrete de campanha: só no Gestor (Michel não vê via ?ceo=1).
-    // NÃO sobrescreve base.campanhas (resumo Meta + link do card).
-    base.decisoesCampanha = await leDecisoesCampanha(now.data);
+    return json(200, base);
+  } catch (e) {
+    // Última rede de segurança: nunca 502 por Blobs/infra
+    return json(200, {
+      ok: true,
+      data: null,
+      tarefas: [],
+      obs: [],
+      campanhas: { confiavel: false, resumo: 'Sem dados disponíveis.' },
+      helena: { ok: false },
+      blobsOk: false,
+      blobsDegraded: true,
+      leituraSomente: true,
+      avisoBlobs: String((e && e.message) || e),
+    });
   }
-  return json(200, base);
 }
